@@ -1,3 +1,4 @@
+<img width="480" height="264" alt="tenor" src="https://github.com/user-attachments/assets/ca79ac53-4aea-47a8-a05c-8e3eee9edc41" />
 ﻿# Visual Notes
 
 A visual workspace for [Obsidian](https://obsidian.md) — Milanote/Notion/Trello-style boards with icon tiles, a freeform canvas, kanban, tables, sticky notes, checklists, callouts, maps, colour swatches, and more. Everything is stored in a real, spec-compliant `.canvas` file in your vault, and boards nest inside each other and inside Obsidian's own native Canvas files too.
