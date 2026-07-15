@@ -1,0 +1,1197 @@
+{
+  "nodes": [
+    {
+      "id": "master-title",
+      "x": -1200,
+      "y": -760,
+      "width": 2460,
+      "height": 90,
+      "type": "text",
+      "text": "> [!note] ✨\n> A connected working system: capture, plan, research, discuss, schedule, and go deeper. Every major card type is ready to explore.",
+      "color": "#7C3AED",
+      "ib": {
+        "kind": "callout",
+        "id": "master-title",
+        "text": "A connected working system: capture, plan, research, discuss, schedule, and go deeper. Every major card type is ready to explore.",
+        "icon": "✨",
+        "color": "#7C3AED"
+      }
+    },
+    {
+      "id": "master-focus",
+      "x": 450,
+      "y": -625,
+      "width": 360,
+      "height": 185,
+      "type": "file",
+      "file": "_Templates/Visual Notes Masterclass — Deep Dive.canvas",
+      "color": "#7C3AED",
+      "ib": {
+        "kind": "tile",
+        "id": "master-focus",
+        "label": "Focus: Deep-dive workspace",
+        "subtitle": "Open the linked board to develop one idea",
+        "icon": "sparkles",
+        "color": "#7C3AED",
+        "target": {
+          "kind": "board",
+          "path": "_Templates/Visual Notes Masterclass — Deep Dive.canvas"
+        },
+        "labels": [
+          {
+            "id": "mf-label",
+            "text": "START HERE",
+            "color": "#7C3AED"
+          }
+        ],
+        "reactions": [
+          "⭐"
+        ]
+      }
+    },
+    {
+      "id": "master-focus-note",
+      "x": 840,
+      "y": -625,
+      "width": 350,
+      "height": 185,
+      "type": "text",
+      "text": "🎯 FOCUS FLOW\n\n1. Capture a question\n2. Click the purple tile\n3. Develop it on the linked canvas\n4. Return here to plan the next action",
+      "color": "#F3E8FF",
+      "ib": {
+        "kind": "sticky",
+        "id": "master-focus-note",
+        "text": "🎯 FOCUS FLOW\n\n1. Capture a question\n2. Click the purple tile\n3. Develop it on the linked canvas\n4. Return here to plan the next action",
+        "color": "#F3E8FF",
+        "topColor": "#7C3AED",
+        "textScale": "lg"
+      }
+    },
+    {
+      "id": "master-write-group",
+      "x": -1180,
+      "y": -625,
+      "width": 690,
+      "height": 820,
+      "type": "group",
+      "label": "Capture, write & discuss",
+      "color": "#8B5CF6",
+      "ib": {
+        "kind": "group",
+        "id": "master-write-group",
+        "label": "Capture, write & discuss",
+        "color": "#8B5CF6"
+      }
+    },
+    {
+      "id": "master-note",
+      "x": -1140,
+      "y": -555,
+      "width": 295,
+      "height": 190,
+      "type": "text",
+      "text": "💡 Sticky note\n\nWrite an insight, format selected text, change its colours, or make it a round/triangle card from the context menu.",
+      "color": "#FEF3C7",
+      "ib": {
+        "kind": "sticky",
+        "id": "master-note",
+        "text": "💡 Sticky note\n\nWrite an insight, format selected text, change its colours, or make it a round/triangle card from the context menu.",
+        "color": "#FEF3C7",
+        "topColor": "#F59E0B",
+        "labels": [
+          {
+            "id": "mn-label",
+            "text": "IDEA",
+            "color": "#F59E0B"
+          }
+        ]
+      }
+    },
+    {
+      "id": "master-blank-card",
+      "x": -805,
+      "y": -555,
+      "width": 270,
+      "height": 190,
+      "type": "text",
+      "text": "Blank Card\n\nA neutral, freely resizable card. Use it as a label, stage, or visual building block.",
+      "color": "#E0F2FE",
+      "ib": {
+        "kind": "sticky",
+        "id": "master-blank-card",
+        "text": "Blank Card\n\nA neutral, freely resizable card. Use it as a label, stage, or visual building block.",
+        "color": "#E0F2FE",
+        "blank": true,
+        "shape": "rect",
+        "textAlign": "center"
+      }
+    },
+    {
+      "id": "master-checklist",
+      "x": -1140,
+      "y": -325,
+      "width": 295,
+      "height": 275,
+      "type": "text",
+      "text": "### To-do checklist\n\n- [ ] **Try the basics**\n  - [ ] Edit a card\n  - [ ] Change a colour\n- [ ] **Make progress**\n  - [ ] Check this task\n  - [ ] Add a child task",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "checklist",
+        "id": "master-checklist",
+        "title": "To-do checklist",
+        "color": "#FFFFFF",
+        "accentColor": "#8B5CF6",
+        "items": [
+          {
+            "id": "mc-h1",
+            "text": "Try the basics",
+            "done": false,
+            "isHeader": true
+          },
+          {
+            "id": "mc-1",
+            "text": "Edit a card",
+            "done": false,
+            "parentId": "mc-h1"
+          },
+          {
+            "id": "mc-2",
+            "text": "Change a colour",
+            "done": false,
+            "parentId": "mc-h1"
+          },
+          {
+            "id": "mc-h2",
+            "text": "Make progress",
+            "done": false,
+            "isHeader": true
+          },
+          {
+            "id": "mc-3",
+            "text": "Check this task",
+            "done": false,
+            "parentId": "mc-h2"
+          },
+          {
+            "id": "mc-4",
+            "text": "Add a child task",
+            "done": false,
+            "parentId": "mc-h2"
+          }
+        ]
+      }
+    },
+    {
+      "id": "master-comment",
+      "x": -805,
+      "y": -325,
+      "width": 270,
+      "height": 275,
+      "type": "text",
+      "text": "**Alex** _(14/07/2026, 10:00:00)_\nCould this be clearer?\n\n---\n**You** _(14/07/2026, 11:00:00)_\nReply here, then resolve the thread when it is settled.",
+      "color": "#FCE7F3",
+      "ib": {
+        "kind": "comment",
+        "id": "master-comment",
+        "text": "Could this be clearer?",
+        "author": "Alex",
+        "createdAt": 1783987200000,
+        "color": "#FCE7F3",
+        "resolved": false,
+        "replies": [
+          {
+            "id": "mcr-1",
+            "text": "Reply here, then resolve the thread when it is settled.",
+            "author": "You",
+            "createdAt": 1783990800000
+          }
+        ]
+      }
+    },
+    {
+      "id": "master-table",
+      "x": -1140,
+      "y": 5,
+      "width": 605,
+      "height": 155,
+      "type": "text",
+      "text": "### Typed table\n\n| Work item | Status | Due | Done | Effort |\n| --- | --- | --- | --- | --- |\n| Explore cards | In progress | 2026-07-15 |  | 2 |\n| Link ideas | Planned | 2026-07-18 |  | 3 |\n| Review board | Done | 2026-07-12 | true | 1 |",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "table",
+        "id": "master-table",
+        "title": "Typed table",
+        "color": "#FFFFFF",
+        "zoom": 0.9,
+        "columns": [
+          {
+            "id": "mt-work",
+            "label": "Work item",
+            "type": "text"
+          },
+          {
+            "id": "mt-status",
+            "label": "Status",
+            "type": "select",
+            "options": [
+              {
+                "label": "Planned",
+                "color": "#DBEAFE"
+              },
+              {
+                "label": "In progress",
+                "color": "#FEF3C7"
+              },
+              {
+                "label": "Done",
+                "color": "#DCFCE7"
+              }
+            ]
+          },
+          {
+            "id": "mt-due",
+            "label": "Due",
+            "type": "date",
+            "align": "center"
+          },
+          {
+            "id": "mt-done",
+            "label": "Done",
+            "type": "checkbox",
+            "align": "center"
+          },
+          {
+            "id": "mt-effort",
+            "label": "Effort",
+            "type": "number",
+            "align": "right"
+          }
+        ],
+        "rows": [
+          {
+            "id": "mtr-1",
+            "cells": {
+              "mt-work": "Explore cards",
+              "mt-status": "In progress",
+              "mt-due": "2026-07-15",
+              "mt-done": "",
+              "mt-effort": "2"
+            },
+            "color": "#FFF7ED"
+          },
+          {
+            "id": "mtr-2",
+            "cells": {
+              "mt-work": "Link ideas",
+              "mt-status": "Planned",
+              "mt-due": "2026-07-18",
+              "mt-done": "",
+              "mt-effort": "3"
+            }
+          },
+          {
+            "id": "mtr-3",
+            "cells": {
+              "mt-work": "Review board",
+              "mt-status": "Done",
+              "mt-due": "2026-07-12",
+              "mt-done": "true",
+              "mt-effort": "1"
+            },
+            "color": "#F0FDF4"
+          }
+        ]
+      }
+    },
+    {
+      "id": "master-kanban-group",
+      "x": -440,
+      "y": -625,
+      "width": 830,
+      "height": 520,
+      "type": "group",
+      "label": "Project delivery kanban",
+      "ib": {
+        "kind": "kanban-board",
+        "id": "master-kanban-group",
+        "title": "Project delivery kanban",
+        "locked": false,
+        "columns": [
+          {
+            "id": "mk-backlog",
+            "title": "Backlog",
+            "color": "#64748B",
+            "bgColor": "#F8FAFC",
+            "wipLimit": 5,
+            "items": [
+              {
+                "id": "mki-1",
+                "text": "Collect reference material",
+                "done": false,
+                "tags": [
+                  "research",
+                  "week-1"
+                ],
+                "icon": "search",
+                "iconColor": "#2563EB",
+                "thumbnail": {
+                  "type": "external",
+                  "url": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=400&q=80"
+                },
+                "subtasks": [
+                  {
+                    "id": "mkis-1",
+                    "text": "Find three reliable sources",
+                    "done": false
+                  },
+                  {
+                    "id": "mkis-2",
+                    "text": "Capture key quotes",
+                    "done": false
+                  },
+                  {
+                    "id": "mkis-3",
+                    "text": "Add source links",
+                    "done": false
+                  }
+                ]
+              },
+              {
+                "id": "mki-2",
+                "text": "Sketch a first approach",
+                "done": false,
+                "tags": [
+                  "design"
+                ],
+                "icon": "pencil",
+                "iconColor": "#8B5CF6",
+                "color": "#F5F3FF"
+              }
+            ]
+          },
+          {
+            "id": "mk-active",
+            "title": "In progress",
+            "color": "#F59E0B",
+            "bgColor": "#FFFBEB",
+            "items": [
+              {
+                "id": "mki-3",
+                "text": "Build the first draft",
+                "done": false,
+                "dueDate": "2026-07-16",
+                "tags": [
+                  "priority",
+                  "build"
+                ],
+                "icon": "hammer",
+                "iconColor": "#D97706",
+                "color": "#FEF3C7",
+                "linkedNotePath": "Ideas/cnc machine.md",
+                "linkUrl": "https://obsidian.md",
+                "subtasks": [
+                  {
+                    "id": "mkis-4",
+                    "text": "Create the outline",
+                    "done": true
+                  },
+                  {
+                    "id": "mkis-5",
+                    "text": "Add supporting evidence",
+                    "done": false
+                  },
+                  {
+                    "id": "mkis-6",
+                    "text": "Ask for feedback",
+                    "done": false
+                  }
+                ]
+              },
+              {
+                "id": "mki-4",
+                "text": "Review visual hierarchy",
+                "done": false,
+                "dueDate": "2026-07-17",
+                "tags": [
+                  "design",
+                  "review"
+                ],
+                "thumbnail": {
+                  "type": "external",
+                  "url": "https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&w=400&q=80"
+                },
+                "color": "#E0F2FE"
+              }
+            ]
+          },
+          {
+            "id": "mk-done",
+            "title": "Ready",
+            "color": "#10B981",
+            "bgColor": "#ECFDF5",
+            "items": [
+              {
+                "id": "mki-5",
+                "text": "Define the outcome",
+                "done": true,
+                "tags": [
+                  "planning"
+                ],
+                "icon": "check-circle-2",
+                "iconColor": "#16A34A"
+              },
+              {
+                "id": "mki-6",
+                "text": "Create a deep-dive board",
+                "done": true,
+                "tags": [
+                  "organize"
+                ],
+                "nestedBoardPath": "_Templates/Visual Notes Masterclass — Deep Dive.canvas",
+                "nestedBoardIcon": "sparkles"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "master-kanban-group::kbhdr::mk-backlog",
+      "type": "text",
+      "x": -428,
+      "y": -589,
+      "width": 260.6666666666667,
+      "height": 28,
+      "text": "**Backlog** (2)",
+      "color": "#64748B"
+    },
+    {
+      "id": "master-kanban-group::kbitem::mk-backlog::mki-1",
+      "type": "text",
+      "x": -428,
+      "y": -553,
+      "width": 260.6666666666667,
+      "height": 44,
+      "text": "- [ ] Collect reference material",
+      "ib": {
+        "id": "mki-1",
+        "text": "Collect reference material",
+        "done": false,
+        "tags": [
+          "research",
+          "week-1"
+        ],
+        "icon": "search",
+        "iconColor": "#2563EB",
+        "thumbnail": {
+          "type": "external",
+          "url": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=400&q=80"
+        },
+        "subtasks": [
+          {
+            "id": "mkis-1",
+            "text": "Find three reliable sources",
+            "done": false
+          },
+          {
+            "id": "mkis-2",
+            "text": "Capture key quotes",
+            "done": false
+          },
+          {
+            "id": "mkis-3",
+            "text": "Add source links",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "master-kanban-group::kbitem::mk-backlog::mki-2",
+      "type": "text",
+      "x": -428,
+      "y": -501,
+      "width": 260.6666666666667,
+      "height": 44,
+      "text": "- [ ] Sketch a first approach",
+      "ib": {
+        "id": "mki-2",
+        "text": "Sketch a first approach",
+        "done": false,
+        "tags": [
+          "design"
+        ],
+        "icon": "pencil",
+        "iconColor": "#8B5CF6",
+        "color": "#F5F3FF"
+      }
+    },
+    {
+      "id": "master-kanban-group::kbhdr::mk-active",
+      "type": "text",
+      "x": -155.33333333333331,
+      "y": -589,
+      "width": 260.6666666666667,
+      "height": 28,
+      "text": "**In progress** (2)",
+      "color": "#F59E0B"
+    },
+    {
+      "id": "master-kanban-group::kbitem::mk-active::mki-3",
+      "type": "text",
+      "x": -155.33333333333331,
+      "y": -553,
+      "width": 260.6666666666667,
+      "height": 44,
+      "text": "- [ ] Build the first draft",
+      "ib": {
+        "id": "mki-3",
+        "text": "Build the first draft",
+        "done": false,
+        "dueDate": "2026-07-16",
+        "tags": [
+          "priority",
+          "build"
+        ],
+        "icon": "hammer",
+        "iconColor": "#D97706",
+        "color": "#FEF3C7",
+        "linkedNotePath": "Ideas/cnc machine.md",
+        "linkUrl": "https://obsidian.md",
+        "subtasks": [
+          {
+            "id": "mkis-4",
+            "text": "Create the outline",
+            "done": true
+          },
+          {
+            "id": "mkis-5",
+            "text": "Add supporting evidence",
+            "done": false
+          },
+          {
+            "id": "mkis-6",
+            "text": "Ask for feedback",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "master-kanban-group::kbitem::mk-active::mki-4",
+      "type": "text",
+      "x": -155.33333333333331,
+      "y": -501,
+      "width": 260.6666666666667,
+      "height": 44,
+      "text": "- [ ] Review visual hierarchy",
+      "ib": {
+        "id": "mki-4",
+        "text": "Review visual hierarchy",
+        "done": false,
+        "dueDate": "2026-07-17",
+        "tags": [
+          "design",
+          "review"
+        ],
+        "thumbnail": {
+          "type": "external",
+          "url": "https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&w=400&q=80"
+        },
+        "color": "#E0F2FE"
+      }
+    },
+    {
+      "id": "master-kanban-group::kbhdr::mk-done",
+      "type": "text",
+      "x": 117.33333333333337,
+      "y": -589,
+      "width": 260.6666666666667,
+      "height": 28,
+      "text": "**Ready** (2)",
+      "color": "#10B981"
+    },
+    {
+      "id": "master-kanban-group::kbitem::mk-done::mki-5",
+      "type": "text",
+      "x": 117.33333333333337,
+      "y": -553,
+      "width": 260.6666666666667,
+      "height": 44,
+      "text": "- [x] Define the outcome",
+      "ib": {
+        "id": "mki-5",
+        "text": "Define the outcome",
+        "done": true,
+        "tags": [
+          "planning"
+        ],
+        "icon": "check-circle-2",
+        "iconColor": "#16A34A"
+      }
+    },
+    {
+      "id": "master-kanban-group::kbitem::mk-done::mki-6",
+      "type": "text",
+      "x": 117.33333333333337,
+      "y": -501,
+      "width": 260.6666666666667,
+      "height": 44,
+      "text": "- [x] Create a deep-dive board",
+      "ib": {
+        "id": "mki-6",
+        "text": "Create a deep-dive board",
+        "done": true,
+        "tags": [
+          "organize"
+        ],
+        "nestedBoardPath": "_Templates/Visual Notes Masterclass — Deep Dive.canvas",
+        "nestedBoardIcon": "sparkles"
+      }
+    },
+    {
+      "id": "master-calendar",
+      "x": -440,
+      "y": -65,
+      "width": 830,
+      "height": 350,
+      "type": "text",
+      "text": "📅 **Project calendar**\n*(Visual Notes calendar view)*",
+      "ib": {
+        "kind": "calendar",
+        "id": "master-calendar",
+        "title": "Project calendar",
+        "mode": "month",
+        "anchor": "2026-07-15",
+        "dayStyles": {
+          "2026-07-15": {
+            "color": "#DBEAFE",
+            "icon": "flag",
+            "importance": "high",
+            "nestedBoardPath": "_Templates/Visual Notes Masterclass — Deep Dive.canvas",
+            "nestedBoardIcon": "sparkles"
+          },
+          "2026-07-18": {
+            "color": "#DCFCE7",
+            "icon": "calendar-check",
+            "importance": "medium"
+          }
+        },
+        "notes": [
+          {
+            "id": "mcn-1",
+            "date": "2026-07-15",
+            "text": "Kick-off and choose a focus",
+            "color": "#DBEAFE",
+            "icon": "rocket",
+            "importance": "high",
+            "nestedBoardPath": "_Templates/Visual Notes Masterclass — Deep Dive.canvas",
+            "nestedBoardIcon": "sparkles"
+          },
+          {
+            "id": "mcn-2",
+            "date": "2026-07-18",
+            "text": "Review linked ideas",
+            "color": "#DCFCE7",
+            "icon": "messages-square",
+            "importance": "medium"
+          }
+        ]
+      }
+    },
+    {
+      "id": "master-media-group",
+      "x": 440,
+      "y": -400,
+      "width": 750,
+      "height": 595,
+      "type": "group",
+      "label": "Research, media & palettes",
+      "color": "#0EA5E9",
+      "ib": {
+        "kind": "group",
+        "id": "master-media-group",
+        "label": "Research, media & palettes",
+        "color": "#0EA5E9"
+      }
+    },
+    {
+      "id": "master-image",
+      "x": 480,
+      "y": -345,
+      "width": 320,
+      "height": 212,
+      "type": "link",
+      "url": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=800&q=80",
+      "ib": {
+        "kind": "image",
+        "id": "master-image",
+        "source": {
+          "type": "external",
+          "url": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=800&q=80"
+        },
+        "caption": "Image card — crop, resize, caption, and connect it to an idea.",
+        "captionHidden": false,
+        "captionColor": "#0F172A"
+      }
+    },
+    {
+      "id": "master-youtube",
+      "x": 835,
+      "y": -345,
+      "width": 320,
+      "height": 190,
+      "type": "link",
+      "url": "https://www.youtube.com/watch?v=IlU-zDU6aQ0",
+      "ib": {
+        "kind": "bookmark",
+        "id": "master-youtube",
+        "url": "https://www.youtube.com/watch?v=IlU-zDU6aQ0",
+        "title": "YouTube bookmark",
+        "description": "A YouTube link becomes a playable embedded preview.",
+        "fetchedAt": 1784004616596,
+        "fetchFailed": false
+      }
+    },
+    {
+      "id": "master-map",
+      "x": 480,
+      "y": -105,
+      "width": 320,
+      "height": 190,
+      "type": "link",
+      "url": "https://www.google.com/maps?q=Sydney+Opera+House",
+      "ib": {
+        "kind": "map",
+        "id": "master-map",
+        "url": "https://www.google.com/maps?q=Sydney+Opera+House"
+      }
+    },
+    {
+      "id": "master-audio",
+      "x": 835,
+      "y": -105,
+      "width": 320,
+      "height": 105,
+      "type": "file",
+      "file": "_Assets/Audio/Hannah radio 18 04 26#.mp3",
+      "ib": {
+        "kind": "audio",
+        "id": "master-audio",
+        "source": {
+          "type": "vault",
+          "path": "_Assets/Audio/Hannah radio 18 04 26#.mp3"
+        },
+        "title": "Audio card — play a vault clip"
+      }
+    },
+    {
+      "id": "master-note-link",
+      "x": 835,
+      "y": 35,
+      "width": 320,
+      "height": 95,
+      "type": "file",
+      "file": "Ideas/cnc machine.md",
+      "ib": {
+        "kind": "note-link",
+        "id": "master-note-link",
+        "path": "Ideas/cnc machine.md",
+        "displayMode": "preview"
+      }
+    },
+    {
+      "id": "master-swatch-1",
+      "x": 480,
+      "y": 120,
+      "width": 90,
+      "height": 95,
+      "type": "text",
+      "text": "#7C3AED — Purple Zing",
+      "color": "#7C3AED",
+      "ib": {
+        "kind": "swatch",
+        "id": "master-swatch-1",
+        "color": "#7C3AED"
+      }
+    },
+    {
+      "id": "master-swatch-2",
+      "x": 590,
+      "y": 120,
+      "width": 90,
+      "height": 95,
+      "type": "text",
+      "text": "#0EA5E9 — Azure Punch",
+      "color": "#0EA5E9",
+      "ib": {
+        "kind": "swatch",
+        "id": "master-swatch-2",
+        "color": "#0EA5E9"
+      }
+    },
+    {
+      "id": "master-swatch-3",
+      "x": 700,
+      "y": 120,
+      "width": 90,
+      "height": 95,
+      "type": "text",
+      "text": "#16A34A — Kelly Green",
+      "color": "#16A34A",
+      "ib": {
+        "kind": "swatch",
+        "id": "master-swatch-3",
+        "color": "#16A34A"
+      }
+    },
+    {
+      "id": "master-swatch-4",
+      "x": 810,
+      "y": 120,
+      "width": 90,
+      "height": 95,
+      "type": "text",
+      "text": "#F59E0B — Amber Zap",
+      "color": "#F59E0B",
+      "ib": {
+        "kind": "swatch",
+        "id": "master-swatch-4",
+        "color": "#F59E0B"
+      }
+    },
+    {
+      "id": "master-swatch-5",
+      "x": 920,
+      "y": 120,
+      "width": 90,
+      "height": 95,
+      "type": "text",
+      "text": "#EC4899 — French Rose",
+      "color": "#EC4899",
+      "ib": {
+        "kind": "swatch",
+        "id": "master-swatch-5",
+        "color": "#EC4899"
+      }
+    },
+    {
+      "id": "master-column",
+      "x": -1180,
+      "y": 245,
+      "width": 480,
+      "height": 390,
+      "type": "group",
+      "label": "Organize: container column",
+      "color": "#14B8A6",
+      "ib": {
+        "kind": "column",
+        "id": "master-column",
+        "title": "Organize: container column",
+        "color": "#14B8A6",
+        "bgColor": "#F0FDFA",
+        "trayColor": "#FFFFFF",
+        "borderColor": "#14B8A6",
+        "locked": false,
+        "children": [
+          {
+            "kind": "sticky",
+            "id": "mcol-1",
+            "x": 0,
+            "y": 0,
+            "w": 400,
+            "h": 95,
+            "text": "A full sticky card inside a container.",
+            "color": "#CCFBF1"
+          },
+          {
+            "kind": "checklist",
+            "id": "mcol-2",
+            "x": 0,
+            "y": 0,
+            "w": 400,
+            "h": 120,
+            "title": "Column to-do",
+            "color": "#FFFFFF",
+            "accentColor": "#14B8A6",
+            "items": [
+              {
+                "id": "mcolc-1",
+                "text": "Drag cards into this column",
+                "done": false
+              },
+              {
+                "id": "mcolc-2",
+                "text": "Lock it when settled",
+                "done": false
+              }
+            ]
+          },
+          {
+            "kind": "bookmark",
+            "id": "mcol-3",
+            "x": 0,
+            "y": 0,
+            "w": 400,
+            "h": 120,
+            "url": "https://obsidian.md",
+            "title": "Nested bookmark",
+            "description": "Columns hold fully functional cards."
+          }
+        ]
+      }
+    },
+    {
+      "id": "master-file",
+      "x": -660,
+      "y": 315,
+      "width": 210,
+      "height": 130,
+      "type": "file",
+      "file": "_Templates/Visual Notes Masterclass — Deep Dive.canvas",
+      "ib": {
+        "kind": "file",
+        "id": "master-file",
+        "path": "_Templates/Visual Notes Masterclass — Deep Dive.canvas"
+      }
+    },
+    {
+      "id": "master-pen-note",
+      "x": -660,
+      "y": 490,
+      "width": 210,
+      "height": 115,
+      "type": "text",
+      "text": "🖊️ Pen & highlighter\n\nThe ink around this card is saved drawing data. Select it to move, recolour, resize, or delete it.",
+      "color": "#DCFCE7",
+      "ib": {
+        "kind": "sticky",
+        "id": "master-pen-note",
+        "text": "🖊️ Pen & highlighter\n\nThe ink around this card is saved drawing data. Select it to move, recolour, resize, or delete it.",
+        "color": "#DCFCE7",
+        "topColor": "#16A34A"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "master-edge-focus",
+      "fromNode": "master-note",
+      "toNode": "master-focus",
+      "color": "#7C3AED",
+      "label": "develop this idea",
+      "ib": {
+        "labelSize": 16,
+        "routing": "straight",
+        "bend": -151,
+        "style": "solid",
+        "arrowhead": "end",
+        "thickness": 6
+      }
+    },
+    {
+      "id": "master-edge-plan",
+      "fromNode": "master-focus",
+      "toNode": "master-kanban-group",
+      "color": "#8B5CF6",
+      "label": "turn insight into work",
+      "ib": {
+        "labelSize": 14,
+        "routing": "elbow",
+        "elbowOrientation": "vertical-first",
+        "style": "dashed",
+        "arrowhead": "both",
+        "thickness": 4
+      }
+    },
+    {
+      "id": "master-edge-calendar",
+      "fromNode": "master-kanban-group",
+      "toNode": "master-calendar",
+      "color": "#16A34A",
+      "label": "schedule it",
+      "ib": {
+        "labelSize": 15,
+        "routing": "straight",
+        "bend": 55,
+        "style": "solid",
+        "arrowhead": "end",
+        "thickness": 4
+      }
+    },
+    {
+      "id": "master-edge-research",
+      "fromNode": "master-image",
+      "toNode": "master-kanban-group",
+      "color": "#0EA5E9",
+      "label": "research informs work",
+      "ib": {
+        "routing": "elbow",
+        "elbowOrientation": "horizontal-first",
+        "style": "dashed",
+        "arrowhead": "end",
+        "thickness": 2
+      }
+    },
+    {
+      "id": "master-edge-comment",
+      "fromNode": "master-comment",
+      "toNode": "master-table",
+      "color": "#EC4899",
+      "label": "review",
+      "ib": {
+        "routing": "straight",
+        "bend": -7,
+        "style": "dotted",
+        "arrowhead": "end",
+        "thickness": 2
+      }
+    },
+    {
+      "id": "master-edge-map",
+      "fromNode": "master-map",
+      "toNode": "master-calendar",
+      "color": "#F59E0B",
+      "label": "place & date",
+      "ib": {
+        "routing": "straight",
+        "bend": 35,
+        "style": "solid",
+        "arrowhead": "both",
+        "thickness": 2
+      }
+    }
+  ],
+  "ib": {
+    "version": 1,
+    "layout": "freeform",
+    "viewport": {
+      "zoom": 0.3489475203968811,
+      "x": 855.4398486635189,
+      "y": 672.6288589409482
+    },
+    "drawings": [
+      {
+        "id": "master-ink-1",
+        "groupId": "master-focus-ink",
+        "points": [
+          {
+            "x": 410,
+            "y": -650
+          },
+          {
+            "x": 435,
+            "y": -675
+          },
+          {
+            "x": 465,
+            "y": -660
+          },
+          {
+            "x": 490,
+            "y": -685
+          },
+          {
+            "x": 520,
+            "y": -660
+          },
+          {
+            "x": 550,
+            "y": -682
+          },
+          {
+            "x": 580,
+            "y": -660
+          },
+          {
+            "x": 610,
+            "y": -680
+          },
+          {
+            "x": 640,
+            "y": -660
+          },
+          {
+            "x": 670,
+            "y": -682
+          },
+          {
+            "x": 700,
+            "y": -660
+          },
+          {
+            "x": 730,
+            "y": -680
+          },
+          {
+            "x": 760,
+            "y": -660
+          },
+          {
+            "x": 790,
+            "y": -682
+          },
+          {
+            "x": 820,
+            "y": -660
+          }
+        ],
+        "color": "#7C3AED",
+        "width": 6
+      },
+      {
+        "id": "master-ink-2",
+        "groupId": "master-focus-ink",
+        "points": [
+          {
+            "x": 430,
+            "y": -425
+          },
+          {
+            "x": 800,
+            "y": -425
+          }
+        ],
+        "color": "#FDE047",
+        "width": 22,
+        "opacity": 0.28
+      },
+      {
+        "id": "master-ink-3",
+        "groupId": "master-pen-demo",
+        "points": [
+          {
+            "x": -653.9304699294561,
+            "y": 473.0871811925644
+          },
+          {
+            "x": -623.9304699294561,
+            "y": 453.0871811925644
+          },
+          {
+            "x": -593.9304699294561,
+            "y": 481.0871811925644
+          },
+          {
+            "x": -563.9304699294561,
+            "y": 451.0871811925644
+          },
+          {
+            "x": -533.9304699294561,
+            "y": 478.0871811925644
+          },
+          {
+            "x": -503.9304699294561,
+            "y": 453.0871811925644
+          },
+          {
+            "x": -473.9304699294561,
+            "y": 478.0871811925644
+          }
+        ],
+        "color": "#16A34A",
+        "width": 5
+      }
+    ]
+  }
+}

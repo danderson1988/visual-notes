@@ -1,0 +1,70 @@
+{
+  "nodes": [
+    { "id": "sh-callout", "x": -540, "y": -420, "width": 880, "height": 80, "type": "text",
+      "text": "> [!note] 🎓\n> Study HQ — assignments on the board, exams on the radar, readings ticked off, and focus in 25-minute blocks.",
+      "color": "#10B981",
+      "ib": { "kind": "callout", "id": "sh-callout", "text": "Study HQ — assignments on the board, exams on the radar, readings ticked off, and focus in 25-minute blocks.", "icon": "🎓", "color": "#10B981" } },
+    { "id": "sh-board", "x": -540, "y": -300, "width": 660, "height": 360, "type": "group", "label": "Assignments",
+      "ib": { "kind": "kanban-board", "id": "sh-board", "title": "Assignments", "columns": [
+        { "id": "as-todo", "title": "To do", "color": "#6B7280", "items": [
+          { "id": "asi-1", "text": "Essay outline — HIST201", "done": false },
+          { "id": "asi-2", "text": "Problem set 4 — MATH150", "done": false } ] },
+        { "id": "as-progress", "title": "In progress", "color": "#F59E0B", "items": [
+          { "id": "asi-3", "text": "Lab report — BIO110", "done": false } ] },
+        { "id": "as-submitted", "title": "Submitted", "color": "#10B981", "items": [
+          { "id": "asi-4", "text": "Reading response", "done": true } ] }
+      ] } },
+    { "id": "sh-board::kbhdr::as-todo", "x": -528, "y": -264, "width": 204, "height": 28, "type": "text", "text": "**To do** (2)", "color": "#6B7280" },
+    { "id": "sh-board::kbitem::as-todo::asi-1", "x": -528, "y": -228, "width": 204, "height": 44, "type": "text", "text": "- [ ] Essay outline — HIST201", "ib": { "id": "asi-1", "text": "Essay outline — HIST201", "done": false } },
+    { "id": "sh-board::kbitem::as-todo::asi-2", "x": -528, "y": -176, "width": 204, "height": 44, "type": "text", "text": "- [ ] Problem set 4 — MATH150", "ib": { "id": "asi-2", "text": "Problem set 4 — MATH150", "done": false } },
+    { "id": "sh-board::kbhdr::as-progress", "x": -312, "y": -264, "width": 204, "height": 28, "type": "text", "text": "**In progress** (1)", "color": "#F59E0B" },
+    { "id": "sh-board::kbitem::as-progress::asi-3", "x": -312, "y": -228, "width": 204, "height": 44, "type": "text", "text": "- [ ] Lab report — BIO110", "ib": { "id": "asi-3", "text": "Lab report — BIO110", "done": false } },
+    { "id": "sh-board::kbhdr::as-submitted", "x": -96, "y": -264, "width": 204, "height": 28, "type": "text", "text": "**Submitted** (1)", "color": "#10B981" },
+    { "id": "sh-board::kbitem::as-submitted::asi-4", "x": -96, "y": -228, "width": 204, "height": 44, "type": "text", "text": "- [x] Reading response", "ib": { "id": "asi-4", "text": "Reading response", "done": true } },
+    { "id": "sh-exams", "x": 160, "y": -300, "width": 460, "height": 300, "type": "text",
+      "text": "### Exams\n\n| Course | Date | Ready |\n| --- | --- | --- |\n| HIST201 | 2026-08-20 | Not yet |\n| MATH150 | 2026-08-24 | Revising |\n| BIO110 | 2026-09-02 | Not yet |",
+      "color": "#FFFFFF",
+      "ib": { "kind": "table", "id": "sh-exams", "title": "Exams", "color": "#FFFFFF", "columns": [
+        { "id": "ex-course", "label": "Course", "type": "text" },
+        { "id": "ex-date", "label": "Date", "type": "date", "align": "center" },
+        { "id": "ex-ready", "label": "Ready", "type": "select", "options": [
+          { "label": "Not yet", "color": "#DC2626" },
+          { "label": "Revising", "color": "#F59E0B" },
+          { "label": "Ready", "color": "#10B981" } ] }
+      ], "rows": [
+        { "id": "exr-1", "cells": { "ex-course": "HIST201", "ex-date": "2026-08-20", "ex-ready": "Not yet" } },
+        { "id": "exr-2", "cells": { "ex-course": "MATH150", "ex-date": "2026-08-24", "ex-ready": "Revising" } },
+        { "id": "exr-3", "cells": { "ex-course": "BIO110", "ex-date": "2026-09-02", "ex-ready": "Not yet" } }
+      ] } },
+    { "id": "sh-pomodoro", "x": 160, "y": 40, "width": 460, "height": 90, "type": "text",
+      "text": "> [!note] ⏱️\n> Pomodoro: 25 minutes on, 5 off. After four rounds, take 30. Phone in another room.",
+      "color": "#F59E0B",
+      "ib": { "kind": "callout", "id": "sh-pomodoro", "text": "Pomodoro: 25 minutes on, 5 off. After four rounds, take 30. Phone in another room.", "icon": "⏱️", "color": "#F59E0B" } },
+    { "id": "sh-reading", "x": -540, "y": 120, "width": 300, "height": 340, "type": "text",
+      "text": "### Reading List\n\n- [ ] **HIST201**\n  - [ ] Ch. 4–6\n  - [ ] Primary sources\n- [ ] **MATH150**\n  - [ ] Ch. 3 exercises\n- [ ] **BIO110**\n  - [ ] Lab prep notes",
+      "color": "#FFFFFF",
+      "ib": { "kind": "checklist", "id": "sh-reading", "title": "Reading List", "color": "#FFFFFF", "accentColor": "#10B981", "items": [
+        { "id": "rd-h1", "text": "HIST201", "done": false, "isHeader": true },
+        { "id": "rd-1", "text": "Ch. 4–6", "done": false, "parentId": "rd-h1" },
+        { "id": "rd-2", "text": "Primary sources", "done": false, "parentId": "rd-h1" },
+        { "id": "rd-h2", "text": "MATH150", "done": false, "isHeader": true },
+        { "id": "rd-3", "text": "Ch. 3 exercises", "done": false, "parentId": "rd-h2" },
+        { "id": "rd-h3", "text": "BIO110", "done": false, "isHeader": true },
+        { "id": "rd-4", "text": "Lab prep notes", "done": false, "parentId": "rd-h3" }
+      ] } },
+    { "id": "sh-video", "x": -200, "y": 120, "width": 420, "height": 240, "type": "link",
+      "url": "https://www.youtube.com/watch?v=IlU-zDU6aQ0",
+      "ib": { "kind": "bookmark", "id": "sh-video", "url": "https://www.youtube.com/watch?v=IlU-zDU6aQ0" } },
+    { "id": "sh-concepts", "x": 160, "y": 180, "width": 460, "height": 180, "type": "text",
+      "text": "🧠 KEY CONCEPTS\n\nExplain each one out loud, from memory. If you can't teach it, you don't know it yet.",
+      "color": "#EDE9FE",
+      "ib": { "kind": "sticky", "id": "sh-concepts", "text": "🧠 KEY CONCEPTS\n\nExplain each one out loud, from memory. If you can't teach it, you don't know it yet.", "color": "#EDE9FE" } }
+  ],
+  "edges": [
+    { "id": "she-1", "fromNode": "sh-board", "toNode": "sh-exams", "color": "#10B981", "label": "prep for",
+      "ib": { "routing": "straight", "style": "dashed", "arrowhead": "end", "thickness": 2 } },
+    { "id": "she-2", "fromNode": "sh-video", "toNode": "sh-pomodoro", "color": "#6B7280", "label": "technique",
+      "ib": { "routing": "straight", "style": "dashed", "arrowhead": "end", "thickness": 2 } }
+  ],
+  "ib": { "version": 1, "layout": "freeform", "viewport": { "x": 580, "y": 460, "zoom": 1 } }
+}

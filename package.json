@@ -1,0 +1,42 @@
+{
+  "name": "visual-notes",
+  "version": "1.0.0",
+  "description": "Visual Notes — a visual workspace for Obsidian",
+  "main": "main.js",
+  "scripts": {
+    "generate-templates": "node scripts/generate-starter-templates.mjs",
+    "generate-benchmarks": "node scripts/generate-benchmark-boards.mjs",
+    "predev": "npm run generate-templates",
+    "dev": "node esbuild.config.mjs",
+    "pretypecheck": "npm run generate-templates",
+    "typecheck": "tsc --noEmit -p .",
+    "pretest": "npm run generate-templates",
+    "test": "vitest run",
+    "build": "npm run typecheck && node esbuild.config.mjs production"
+  },
+  "keywords": [],
+  "author": "Daniel Anderson",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danderson1988/visual-notes.git"
+  },
+  "bugs": {
+    "url": "https://github.com/danderson1988/visual-notes/issues"
+  },
+  "homepage": "https://github.com/danderson1988/visual-notes#readme",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/sortablejs": "^1.15.9",
+    "@vitest/coverage-v8": "^4.1.10",
+    "esbuild": "^0.21.5",
+    "jsdom": "^29.1.1",
+    "obsidian": "1.12.3",
+    "tslib": "^2.6.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "sortablejs": "^1.15.7"
+  }
+}

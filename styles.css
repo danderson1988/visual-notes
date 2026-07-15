@@ -1,0 +1,6428 @@
+/* ============================================================
+   Visual Notes — styles
+   ============================================================ */
+
+/* ── Typography & elevation system ──────────────────────────── */
+
+body {
+  --ib-font-display: 'New York', Georgia, 'Book Antiqua', 'Palatino Linotype', serif;
+  --ib-font-body: var(--font-text);
+  --ib-card-bg: #FFFFFF;
+  --ib-card-text: #323B4A;
+  --ib-shadow-low:  0 1px 3px rgba(0,0,0,0.08), 0 1px 6px rgba(0,0,0,0.06);
+  --ib-shadow-mid:  0 3px 10px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.08);
+  --ib-shadow-high: 0 8px 28px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.10);
+}
+
+body.theme-dark {
+  --ib-card-bg: #333333;
+  --ib-card-text: #F2F2F2;
+  --ib-shadow-low:  0 1px 3px rgba(0,0,0,0.28), 0 1px 6px rgba(0,0,0,0.18);
+  --ib-shadow-mid:  0 3px 10px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.22);
+  --ib-shadow-high: 0 8px 28px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.30);
+}
+
+/* Container */
+.visual-notes-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--background-primary);
+}
+
+.visual-notes-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Every card, tile, and kanban item implements its own pointer-based drag
+   system (see startItemDrag/startColumnChildDrag/bindCardEvents in
+   freeform-view.ts). Browsers make <img> elements natively draggable by
+   default, which competes with that custom system: starting a drag on an
+   image can hijack the gesture into the browser's own HTML5 drag-and-drop
+   instead, and dropping that native drag onto an editable area elsewhere on
+   the board (a sticky note, a kanban item being edited, etc.) inserts a
+   stray duplicate <img> the app's own data model never sees — the
+   "dragging an image duplicates it" bug. Disabling native drag on every
+   image inside the plugin's own views leaves our custom drag as the only
+   way to drag anything. */
+.visual-notes-container img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+/* ── View header (back button + breadcrumb) ─────────────────── */
+.visual-notes-view-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+.visual-notes-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 80ms ease, color 80ms ease;
+}
+
+.visual-notes-back-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.visual-notes-back-btn.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.visual-notes-back-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Header icon buttons other than Back — save-as-template */
+.visual-notes-save-template-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 80ms ease, color 80ms ease;
+}
+
+.visual-notes-save-template-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.visual-notes-save-template-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Breadcrumb ─────────────────────────────────────────────── */
+.visual-notes-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.visual-notes-breadcrumb-ancestor {
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 1px;
+  transition: color 80ms ease;
+}
+
+.visual-notes-breadcrumb-ancestor:hover {
+  color: var(--text-normal);
+}
+
+.visual-notes-breadcrumb-sep {
+  color: var(--text-faint);
+  padding: 0 6px;
+  user-select: none;
+}
+
+.visual-notes-breadcrumb-current {
+  color: var(--text-normal);
+  font-weight: 600;
+  padding: 2px 4px;
+}
+
+/* ── Grid ───────────────────────────────────────────────────── */
+.visual-notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 32px 24px;
+  padding: 32px;
+}
+
+/* ── Tile wrapper (holds tile square + label + subtitle) ─────── */
+.visual-notes-tile-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  outline: none;
+  border-radius: 1px;
+}
+
+/* Keyboard focus ring — appears around the tile square */
+.visual-notes-tile-wrapper:focus-visible .visual-notes-tile {
+  box-shadow: 0 0 0 3px var(--interactive-accent), var(--ib-shadow-mid);
+  transform: scale(1.04);
+}
+
+/* ── Tile square ────────────────────────────────────────────── */
+.visual-notes-tile {
+  width: 112px;
+  height: 112px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  position: relative;
+  flex-shrink: 0;
+  background-color: var(--ib-tile-color, var(--interactive-accent));
+}
+
+.visual-notes-tile-wrapper:hover .visual-notes-tile {
+  transform: scale(1.04);
+  box-shadow: var(--ib-shadow-mid);
+}
+
+/* Small chevron in the bottom-right of board tiles */
+.visual-notes-tile-board-indicator {
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visual-notes-tile-board-indicator svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Icon inside the tile */
+.visual-notes-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 55%;
+  height: 55%;
+}
+
+/* Lucide SVG icons */
+.visual-notes-tile-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Emoji variant */
+.visual-notes-tile-emoji {
+  font-size: 38px;
+  line-height: 1;
+  width: auto;
+  height: auto;
+}
+
+/* Custom bundled-asset icon variant — shared by the freeform tile, grid
+   tile, kanban item badge, and tile modal preview (see custom-icons.ts). */
+.visual-notes-tile-custom-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* ── Tile label ─────────────────────────────────────────────── */
+.visual-notes-tile-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-normal);
+  text-align: center;
+  max-width: 128px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+/* ── Tile subtitle ──────────────────────────────────────────── */
+.visual-notes-tile-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 128px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Freeform canvas ────────────────────────────────────────── */
+
+.visual-notes-canvas-outer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: default;
+  user-select: none;
+  background-color: var(--ib-canvas-bg, #e6e6e6);
+  /* Dot grid background — color/radius configurable via plugin settings
+     (--ib-dot-color / --ib-dot-radius custom properties, set in JS);
+     fall back to the original look when neither is configured. */
+  background-image: radial-gradient(
+    circle,
+    var(--ib-dot-color, #d2d2d2) var(--ib-dot-radius, 2px),
+    transparent var(--ib-dot-radius, 2px)
+  );
+  background-size: 20px 20px;
+  outline: none;
+}
+
+.visual-notes-canvas-outer.no-dots {
+  background-image: none;
+}
+
+.visual-notes-canvas-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* ── Freeform cards ─────────────────────────────────────────── */
+
+.visual-notes-freeform-card {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  cursor: grab;
+  box-sizing: border-box;
+  border-radius: 3px;
+  transition: box-shadow 120ms ease;
+  /* Lets Chromium skip layout/paint for cards currently scrolled off
+     screen, without unmounting them — selection, search, drag, and
+     connections all keep working exactly as if every card were still
+     fully rendered, since nothing is actually removed from the DOM. Card
+     width/height are always set inline (see positionCardEl), so this only
+     matters as a rough pre-measurement fallback before a card's first
+     visibility check; the intrinsic size self-corrects once visible. Big
+     win on large boards (hundreds of mounted cards) where most are
+     off-screen at any given time. */
+  content-visibility: auto;
+  contain-intrinsic-size: 260px 200px;
+}
+
+/* Tile-specific layout within the base card */
+.visual-notes-freeform-tile-card {
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px 8px 0;
+  gap: 5px;
+}
+
+.visual-notes-freeform-card:active {
+  cursor: grabbing;
+}
+
+.visual-notes-freeform-card.is-selected {
+  box-shadow: 0 0 0 2px var(--interactive-accent), var(--ib-shadow-mid);
+}
+
+/* Tile cards keep a lot of blank padding around the icon+label so a ring
+   drawn at the full card edge (like every other card kind) reads as loose —
+   pull it inward with a negative outline-offset so it hugs the visible
+   content instead. */
+.visual-notes-freeform-tile-card.is-selected {
+  box-shadow: var(--ib-shadow-mid);
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -8px;
+  border-radius: 10px;
+}
+
+/* ── Card labels & reactions (universal, every card kind) ──────── */
+
+.visual-notes-card-badges {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.visual-notes-card-label-pill,
+.visual-notes-card-reaction-pill {
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 0 7px;
+  box-shadow: var(--ib-shadow-low);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.visual-notes-card-reaction-pill {
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  font-size: 13px;
+  padding: 0 6px;
+}
+
+.visual-notes-card-label-pill:hover,
+.visual-notes-card-reaction-pill:hover {
+  filter: brightness(1.08);
+  transform: scale(1.05);
+}
+
+/* Nested-board chip — same badge row as labels/reactions, but it's a
+   navigation affordance (click = open the child board), so it gets the
+   accent tint and doesn't scale-on-hover like the removable pills. */
+.visual-notes-card-nested-pill {
+  pointer-events: auto;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 0 8px 0 5px;
+  box-shadow: var(--ib-shadow-low);
+  background: color-mix(in srgb, var(--interactive-accent) 12%, var(--background-primary));
+  border: 1px solid color-mix(in srgb, var(--interactive-accent) 35%, transparent);
+  color: var(--interactive-accent);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.visual-notes-card-nested-pill:hover {
+  background: color-mix(in srgb, var(--interactive-accent) 22%, var(--background-primary));
+}
+
+/* Link target no longer resolvable (board renamed while this board was
+   closed, or deleted) — dim rather than hide, so the user can still see
+   the dangling link and unlink it from the context menu. */
+.visual-notes-card-nested-pill.is-missing,
+.visual-notes-kanban-item-board-pill.is-missing {
+  opacity: 0.5;
+  filter: grayscale(1);
+  cursor: help;
+}
+
+.visual-notes-card-nested-pill svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+}
+
+.visual-notes-nested-pill-img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* Tile square inside freeform card */
+.visual-notes-freeform-tile-square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* ── Resize handle ──────────────────────────────────────────── */
+
+.visual-notes-card-resize-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 100ms ease;
+  z-index: 10;
+  /* Bigger invisible hit area than the visible dot below, so corners are
+     easy to grab without needing pixel-perfect precision. */
+}
+
+.visual-notes-card-resize-handle::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: var(--interactive-accent);
+  border-radius: 2px;
+}
+
+.visual-notes-freeform-card.is-selected .visual-notes-card-resize-handle,
+.visual-notes-freeform-card:hover .visual-notes-card-resize-handle {
+  opacity: 1;
+}
+
+.visual-notes-card-resize-handle--nw { top: 0;    left: 0;  cursor: nw-resize; }
+.visual-notes-card-resize-handle--ne { top: 0;    right: 0; cursor: ne-resize; }
+.visual-notes-card-resize-handle--sw { bottom: 0; left: 0;  cursor: sw-resize; }
+.visual-notes-card-resize-handle--se { bottom: 0; right: 0; cursor: se-resize; }
+
+.visual-notes-freeform-sticky-card .visual-notes-card-resize-handle--nw,
+.visual-notes-freeform-sticky-card .visual-notes-card-resize-handle--sw { cursor: w-resize; }
+.visual-notes-freeform-sticky-card .visual-notes-card-resize-handle--ne,
+.visual-notes-freeform-sticky-card .visual-notes-card-resize-handle--se { cursor: e-resize; }
+
+/* Blank cards (the "Card" tool) resize freely in both directions, same as
+   any other card kind — only regular colorful sticky Notes are width-only. */
+.visual-notes-freeform-sticky-card.is-blank-card .visual-notes-card-resize-handle--nw { cursor: nw-resize; }
+.visual-notes-freeform-sticky-card.is-blank-card .visual-notes-card-resize-handle--ne { cursor: ne-resize; }
+.visual-notes-freeform-sticky-card.is-blank-card .visual-notes-card-resize-handle--sw { cursor: sw-resize; }
+.visual-notes-freeform-sticky-card.is-blank-card .visual-notes-card-resize-handle--se { cursor: se-resize; }
+
+/* ── Marquee ────────────────────────────────────────────────── */
+
+/* Visual confirmation during a touch-and-hold (see the manual long-press
+   detection in bindCanvasEvents) — without this there's no feedback at all
+   that the hold registered until the menu pops up ~500ms later. */
+.ib-longpress-active {
+  transition: filter 0.4s ease-out;
+  filter: brightness(0.85);
+}
+
+.visual-notes-marquee {
+  position: absolute;
+  pointer-events: none;
+  border: 2px solid var(--interactive-accent);
+  background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+  border-radius: 1px;
+  z-index: 9999;
+  width: var(--ib-marquee-w, 0px);
+  height: var(--ib-marquee-h, 0px);
+}
+
+/* A connection caught by a marquee drag-box — marked for deletion right
+   alongside whatever cards got selected in the same box (see startMarquee /
+   deleteSelected). Overrides the path's own inline `stroke` attribute,
+   since a CSS class always outranks a presentation attribute. */
+path.is-marquee-selected {
+  stroke: var(--interactive-accent);
+  filter: drop-shadow(0 0 3px var(--interactive-accent));
+}
+
+/* ── Freeform toolbar (vertical panel) ──────────────────────── */
+
+.visual-notes-freeform-toolbar {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 14px;
+  box-shadow: var(--ib-shadow-mid);
+  z-index: 100;
+}
+
+/* Left (default) */
+.visual-notes-freeform-toolbar.tb-pos-left {
+  flex-direction: column;
+  width: 72px;
+  padding: 10px 8px;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Right */
+.visual-notes-freeform-toolbar.tb-pos-right {
+  flex-direction: column;
+  width: 72px;
+  padding: 10px 8px;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Top */
+.visual-notes-freeform-toolbar.tb-pos-top {
+  flex-direction: row;
+  height: 72px;
+  padding: 8px 10px;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Bottom */
+.visual-notes-freeform-toolbar.tb-pos-bottom {
+  flex-direction: row;
+  height: 72px;
+  padding: 8px 10px;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Primary toolbar button */
+.visual-notes-tb-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 56px;
+  height: 52px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 80ms ease, color 80ms ease, transform 100ms ease, box-shadow 100ms ease;
+  flex-shrink: 0;
+}
+
+.visual-notes-tb-btn:hover,
+.visual-notes-tb-btn:focus-visible {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  outline: none;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16);
+}
+
+.visual-notes-tb-btn:active {
+  transform: translateY(-1px);
+  transition-duration: 40ms;
+}
+
+.visual-notes-tb-btn.is-active {
+  background: var(--background-modifier-active-hover);
+  color: var(--interactive-accent);
+}
+
+.visual-notes-tb-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.visual-notes-tb-btn-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.visual-notes-tb-btn-label {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 52px;
+}
+
+/* ··· overflow separator */
+.visual-notes-tb-overflow-sep {
+  background: var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+/* vertical toolbars: separator is a horizontal line */
+.tb-pos-left .visual-notes-tb-overflow-sep,
+.tb-pos-right .visual-notes-tb-overflow-sep {
+  width: 40px;
+  height: 1px;
+  margin: 4px 0;
+}
+
+/* horizontal toolbars: separator is a vertical line */
+.tb-pos-top .visual-notes-tb-overflow-sep,
+.tb-pos-bottom .visual-notes-tb-overflow-sep {
+  width: 1px;
+  height: 40px;
+  margin: 0 4px;
+}
+
+/* ··· overflow trigger button — inherits .visual-notes-tb-btn */
+.visual-notes-tb-overflow-btn {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  line-height: 1;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+/* ── Overflow popover ────────────────────────────────────────── */
+
+.visual-notes-tb-overflow {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: var(--ib-shadow-high);
+  z-index: 200;
+  min-width: 160px;
+}
+
+.visual-notes-tb-overflow-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--text-normal);
+  font-size: 13px;
+  transition: background 80ms ease, transform 100ms ease, box-shadow 100ms ease;
+  white-space: nowrap;
+}
+
+.visual-notes-tb-overflow-item:hover {
+  background: var(--background-modifier-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16);
+}
+
+.visual-notes-tb-overflow-item:active {
+  transform: translateY(-1px);
+  transition-duration: 40ms;
+}
+
+.visual-notes-tb-overflow-item.is-active {
+  color: var(--interactive-accent);
+}
+
+.visual-notes-tb-overflow-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.visual-notes-tb-overflow-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Toolbar FAB (narrow / mobile screens) ──────────────────── */
+
+.visual-notes-freeform-toolbar-fab {
+  display: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: var(--ib-shadow-mid);
+  transition: transform 100ms ease;
+}
+
+.visual-notes-freeform-toolbar-fab:active { transform: scale(0.92); }
+.visual-notes-freeform-toolbar-fab svg { width: 22px; height: 22px; }
+
+@media (max-width: 540px) {
+  .visual-notes-freeform-toolbar.tb-pos-left,
+  .visual-notes-freeform-toolbar.tb-pos-right,
+  .visual-notes-freeform-toolbar.tb-pos-top,
+  .visual-notes-freeform-toolbar.tb-pos-bottom {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    transform: none;
+    flex-direction: row;
+    justify-content: center;
+    width: auto;
+    height: 64px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    padding: 6px 8px;
+    gap: 2px;
+    overflow-x: auto;
+  }
+
+  .visual-notes-freeform-toolbar .ib-add-panel {
+    flex-direction: row;
+    width: auto;
+    height: 100%;
+  }
+
+  .visual-notes-freeform-toolbar .visual-notes-tb-overflow-sep {
+    width: 1px;
+    height: 32px;
+    margin: 0 4px;
+  }
+
+  .visual-notes-tb-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .visual-notes-tb-btn-label {
+    display: none;
+  }
+
+  .visual-notes-freeform-toolbar-fab {
+    display: none;
+  }
+}
+
+/* ── Context bar slot ────────────────────────────────────────── */
+
+/* Add panel: flex wrapper for the toolbar buttons */
+.ib-add-panel {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.tb-pos-left .ib-add-panel,
+.tb-pos-right .ib-add-panel {
+  flex-direction: column;
+  width: 100%;
+}
+.tb-pos-top .ib-add-panel,
+.tb-pos-bottom .ib-add-panel {
+  flex-direction: row;
+  height: 100%;
+}
+.ib-ctx-active .ib-add-panel {
+  display: none;
+}
+
+/* Context panel: hidden by default */
+.ib-ctx-panel {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+.tb-pos-left .ib-ctx-panel,
+.tb-pos-right .ib-ctx-panel {
+  flex-direction: column;
+  width: 100%;
+}
+.tb-pos-top .ib-ctx-panel,
+.tb-pos-bottom .ib-ctx-panel {
+  flex-direction: row;
+  height: 100%;
+}
+.ib-ctx-active .ib-ctx-panel {
+  display: flex;
+  pointer-events: auto;
+}
+
+/* Back button */
+.ib-ctx-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 80ms ease, color 80ms ease;
+}
+.ib-ctx-back-btn:hover,
+.ib-ctx-back-btn:focus-visible {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  outline: none;
+}
+.ib-ctx-back-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Spacer and separator before trash */
+.ib-ctx-spacer {
+  flex-shrink: 0;
+}
+.tb-pos-left .ib-ctx-spacer,
+.tb-pos-right .ib-ctx-spacer {
+  height: 8px;
+}
+.tb-pos-top .ib-ctx-spacer,
+.tb-pos-bottom .ib-ctx-spacer {
+  width: 8px;
+}
+.ib-ctx-trash-sep {
+  background: var(--background-modifier-border);
+  flex-shrink: 0;
+}
+.tb-pos-left .ib-ctx-trash-sep,
+.tb-pos-right .ib-ctx-trash-sep {
+  width: 40px;
+  height: 1px;
+  margin: 2px 0;
+}
+.tb-pos-top .ib-ctx-trash-sep,
+.tb-pos-bottom .ib-ctx-trash-sep {
+  width: 1px;
+  height: 40px;
+  margin: 0 2px;
+}
+
+/* Trash confirm state */
+.visual-notes-tb-btn.ib-ctx-trash--confirm {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+/* Color swatch grid */
+.ib-ctx-color-grid {
+  display: flex;
+  gap: 4px;
+  padding: 2px 0;
+  justify-content: center;
+}
+.tb-pos-left .ib-ctx-color-grid,
+.tb-pos-right .ib-ctx-color-grid {
+  flex-flow: row wrap;
+  width: 100%;
+}
+.tb-pos-top .ib-ctx-color-grid,
+.tb-pos-bottom .ib-ctx-color-grid {
+  flex-flow: column wrap;
+  height: 100%;
+}
+.ib-ctx-color-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 80ms ease;
+}
+.ib-ctx-color-swatch:hover {
+  transform: scale(1.2);
+}
+
+/* "None" swatch — diagonal slash to indicate removal */
+.ib-ctx-color-swatch--none {
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
+  position: relative;
+  overflow: hidden;
+}
+.ib-ctx-color-swatch--none::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 45%, #ef4444 45%, #ef4444 55%, transparent 55%);
+}
+
+/* Two-tab color picker (Background / Top strip) — stacked to fit 72px panel */
+.ib-ctx-tab-row {
+  display: flex;
+  gap: 2px;
+  padding: 0 4px;
+}
+.tb-pos-left .ib-ctx-tab-row,
+.tb-pos-right .ib-ctx-tab-row {
+  flex-direction: column;
+  width: 100%;
+}
+.tb-pos-top .ib-ctx-tab-row,
+.tb-pos-bottom .ib-ctx-tab-row {
+  flex-direction: row;
+  height: 100%;
+}
+.ib-ctx-tab {
+  text-align: center;
+  font-size: 9px;
+  font-family: var(--ib-font-body);
+  color: var(--text-muted);
+  padding: 4px 4px;
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  transition: background 80ms, color 80ms;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tb-pos-left .ib-ctx-tab,
+.tb-pos-right .ib-ctx-tab {
+  width: 100%;
+}
+.tb-pos-top .ib-ctx-tab,
+.tb-pos-bottom .ib-ctx-tab {
+  flex: 1;
+}
+.ib-ctx-tab:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.ib-ctx-tab--active,
+.ib-ctx-tab.ib-ctx-tab--active:hover {
+  background: var(--interactive-accent);
+  color: #ffffff;
+}
+.ib-ctx-swatch-area {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.tb-pos-left .ib-ctx-swatch-area,
+.tb-pos-right .ib-ctx-swatch-area {
+  flex-direction: column;
+  width: 100%;
+}
+.tb-pos-top .ib-ctx-swatch-area,
+.tb-pos-bottom .ib-ctx-swatch-area {
+  flex-direction: row;
+  height: 100%;
+}
+
+/* Custom color wheel input — invisible, triggered by its sibling button */
+.ib-ctx-color-wheel-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Toolbar drag ghost ──────────────────────────────────────── */
+.ib-toolbar-drag-ghost {
+  position: fixed;
+  width: 44px;
+  height: 44px;
+  background: var(--interactive-accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  color: white;
+  transform: translate(-50%, -50%);
+  opacity: 0.92;
+}
+.ib-toolbar-drag-ghost svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ── Connection properties panel ───────────────────────────── */
+
+.visual-notes-conn-props {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  /* set below via .is-above-toolbar when the card toolbar is bottom-docked */
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 3px;
+  padding: 6px 10px;
+  box-shadow: var(--ib-shadow-mid);
+  z-index: 101;
+  white-space: nowrap;
+  max-width: calc(100vw - 40px);
+  overflow-x: auto;
+}
+
+/* Clear the bottom-docked toolbar: 24px inset + 72px toolbar + 16px gap */
+.visual-notes-conn-props.is-above-toolbar {
+  bottom: 112px;
+}
+
+.visual-notes-conn-props-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.visual-notes-conn-props-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--background-modifier-border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.visual-notes-conn-props-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  flex-shrink: 0;
+  transition: transform 80ms ease;
+}
+
+.visual-notes-conn-props-swatch:hover {
+  transform: scale(1.25);
+}
+
+.visual-notes-conn-props-swatch.is-active {
+  border-color: var(--background-primary);
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
+.visual-notes-conn-props-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 80ms ease, color 80ms ease;
+}
+
+.visual-notes-conn-props-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.visual-notes-conn-props-btn.is-active {
+  background: var(--background-modifier-hover);
+  color: var(--interactive-accent);
+}
+
+.visual-notes-conn-props-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.visual-notes-conn-props-delete {
+  color: var(--text-error, #ef4444);
+}
+
+.visual-notes-conn-props .visual-notes-conn-props-delete:hover {
+  background: rgba(239,68,68,0.1);
+  color: var(--text-error, #ef4444);
+}
+
+.visual-notes-conn-props-label-wrap {
+  padding: 4px 8px 0;
+  width: 220px;
+}
+
+.visual-notes-conn-props-label-input {
+  width: 100%;
+  padding: 4px 8px;
+  border-radius: 1px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: 12px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.visual-notes-conn-props-label-input:focus {
+  border-color: var(--interactive-accent);
+}
+
+/* Label text size slider */
+.visual-notes-conn-props-size-group {
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.visual-notes-conn-props-size-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.visual-notes-conn-props-size-slider {
+  width: 80px;
+  cursor: pointer;
+  accent-color: var(--interactive-accent);
+}
+
+.visual-notes-conn-props-size-value {
+  font-size: 11px;
+  color: var(--text-normal);
+  font-variant-numeric: tabular-nums;
+  min-width: 16px;
+  text-align: right;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ── Zoom pill ──────────────────────────────────────────────── */
+
+.visual-notes-zoom-pill {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 2px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: var(--ib-shadow-low);
+  transition: color 80ms ease, border-color 80ms ease;
+  user-select: none;
+}
+
+.visual-notes-zoom-pill:hover {
+  color: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+.visual-notes-snap-toggle-btn {
+  position: absolute;
+  bottom: 24px;
+  right: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 2px;
+  color: var(--text-muted);
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: var(--ib-shadow-low);
+  transition: color 80ms ease, border-color 80ms ease, background 80ms ease;
+}
+
+.visual-notes-snap-toggle-btn:hover {
+  color: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+.visual-notes-snap-toggle-btn.is-active {
+  color: var(--interactive-accent);
+  background: var(--interactive-accent-hover);
+  border-color: var(--interactive-accent);
+}
+
+/* ── Minimap widget ──────────────────────────────────────────── */
+/* Anchored above the zoom pill / snap toggle row so it never overlaps
+   them; the toggle circle is the last flex child so it stays pinned to
+   this fixed bottom edge regardless of whether the panel above it is
+   showing — the container just grows upward when it opens. */
+.visual-notes-minimap {
+  position: absolute;
+  bottom: 64px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 100;
+}
+
+.visual-notes-minimap-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 80ms ease, background 80ms ease, transform 100ms ease, box-shadow 100ms ease;
+}
+
+.visual-notes-minimap-toggle svg { width: 18px; height: 18px; }
+
+.visual-notes-minimap-toggle:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16);
+}
+
+.visual-notes-minimap.is-open .visual-notes-minimap-toggle {
+  color: var(--interactive-accent);
+}
+
+.visual-notes-minimap-panel {
+  display: none;
+  flex-direction: column;
+  width: 220px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  box-shadow: var(--ib-shadow-mid);
+  overflow: hidden;
+}
+
+.visual-notes-minimap.is-open .visual-notes-minimap-panel {
+  display: flex;
+}
+
+.visual-notes-minimap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 6px 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+.visual-notes-minimap-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.visual-notes-minimap-fit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 80ms ease, color 80ms ease;
+}
+
+.visual-notes-minimap-fit-btn svg { width: 13px; height: 13px; }
+
+.visual-notes-minimap-fit-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.visual-notes-minimap-body {
+  position: relative;
+  width: 220px;
+  height: 140px;
+  background: var(--background-primary);
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.visual-notes-minimap-dot {
+  position: absolute;
+  border-radius: 1.5px;
+  background: var(--interactive-accent);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.visual-notes-minimap-viewport {
+  position: absolute;
+  border: 1.5px solid var(--interactive-accent);
+  background: rgba(127, 127, 127, 0.12);
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+/* ── Board search ────────────────────────────────────────────── */
+
+.visual-notes-search {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 100;
+}
+
+.visual-notes-search-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 80ms ease, background 80ms ease, transform 100ms ease, box-shadow 100ms ease;
+}
+
+.visual-notes-search-toggle svg { width: 16px; height: 16px; }
+
+.visual-notes-search-toggle:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16);
+}
+
+.visual-notes-search.is-open .visual-notes-search-toggle {
+  color: var(--interactive-accent);
+}
+
+.visual-notes-search-bar {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 18px;
+  box-shadow: var(--ib-shadow-mid);
+  padding: 4px 8px 4px 12px;
+  order: -1; /* bar expands to the LEFT of the fixed toggle circle */
+}
+
+.visual-notes-search.is-open .visual-notes-search-bar {
+  display: flex;
+}
+
+input.visual-notes-search-input {
+  width: 170px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--text-normal);
+  padding: 4px 0;
+}
+
+.visual-notes-search-count {
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 56px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.visual-notes-search-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 80ms ease, color 80ms ease;
+}
+
+.visual-notes-search-nav-btn svg { width: 14px; height: 14px; }
+
+.visual-notes-search-nav-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+/* Match highlighting: hits get an accent ring, everything else recedes.
+   Transition makes cycling between matches feel smooth rather than flashy. */
+.visual-notes-freeform-card.is-search-match {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.visual-notes-freeform-card.is-search-dim {
+  opacity: 0.3;
+  transition: opacity 150ms ease;
+}
+
+/* ── Board filter widget ─────────────────────────────────────── */
+
+.visual-notes-filter {
+  position: absolute;
+  top: 62px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 100;
+}
+
+.visual-notes-filter-toggle {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  order: 1;
+  transition: color 80ms ease, background 80ms ease, transform 100ms ease, box-shadow 100ms ease;
+}
+
+.visual-notes-filter-toggle svg { width: 15px; height: 15px; }
+
+.visual-notes-filter-toggle:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16);
+}
+
+.visual-notes-filter.is-open .visual-notes-filter-toggle,
+.visual-notes-filter.has-active .visual-notes-filter-toggle {
+  color: var(--interactive-accent);
+}
+
+.visual-notes-filter-count {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent, #fff);
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visual-notes-filter-count:empty { display: none; }
+
+.visual-notes-filter-panel {
+  display: none;
+  flex-direction: column;
+  width: 230px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  box-shadow: var(--ib-shadow-mid);
+  padding: 8px 10px 10px;
+  gap: 6px;
+}
+
+.visual-notes-filter.is-open .visual-notes-filter-panel {
+  display: flex;
+}
+
+.visual-notes-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.visual-notes-filter-clear {
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+.visual-notes-filter-clear:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.visual-notes-filter-group-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+.visual-notes-filter-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.visual-notes-filter-chip {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 80ms ease, color 80ms ease;
+  user-select: none;
+}
+
+.visual-notes-filter-chip:hover { color: var(--text-normal); }
+
+.visual-notes-filter-chip.is-active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent, #fff);
+}
+
+.visual-notes-filter-empty {
+  font-size: 12px;
+  color: var(--text-faint);
+  padding: 4px 0;
+}
+
+.visual-notes-freeform-card.is-filter-dim {
+  opacity: 0.25;
+  transition: opacity 150ms ease;
+}
+
+/* ── Typed table cells ───────────────────────────────────────── */
+
+.visual-notes-table-cell--center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visual-notes-table-checkbox {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1.5px solid var(--text-faint);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 80ms ease, border-color 80ms ease;
+}
+
+.visual-notes-table-checkbox.is-checked {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+.visual-notes-table-checkbox.is-checked::after {
+  content: '';
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg) translateY(-1px);
+}
+
+input.visual-notes-table-date-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  padding: 0;
+  font-size: 11px;
+  font-family: var(--ib-font-body);
+  color: var(--ib-card-text);
+  cursor: pointer;
+}
+
+.visual-notes-table-select-pill {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.visual-notes-table-select-pill.is-empty {
+  background: transparent;
+  color: var(--text-faint);
+}
+
+/* ── Group frame (native-Canvas-style spatial container) ────────── */
+
+.visual-notes-freeform-group-card {
+  border: 2px solid var(--background-modifier-border);
+  border-radius: 12px;
+  box-shadow: none;
+  /* Deliberately no padding/overflow-hidden — this is a spatial frame
+     behind its contents, not a content box; contained cards are separate
+     sibling elements stacked on top via z-index, not DOM children. */
+}
+
+.visual-notes-freeform-group-card.is-lifted {
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.18);
+}
+
+.visual-notes-group-label {
+  position: absolute;
+  top: -13px;
+  left: 14px;
+  max-width: calc(100% - 28px);
+  padding: 3px 11px;
+  border-radius: 6px;
+  font-family: var(--ib-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+  cursor: grab;
+  box-shadow: var(--ib-shadow-low);
+}
+
+.visual-notes-group-label.is-empty {
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.visual-notes-group-label-input {
+  width: 140px;
+  max-width: 100%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+
+/* ── File card (generic attachment) ──────────────────────────── */
+
+.visual-notes-freeform-file-card {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  gap: 0;
+  border-radius: 10px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  overflow: hidden;
+  background: var(--ib-card-bg);
+}
+
+/* PDF variant: header drag handle + live iframe preview (same reasoning
+   as the map card — the iframe swallows pointer events). */
+.visual-notes-file-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  flex-shrink: 0;
+  cursor: grab;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.visual-notes-file-header:active { cursor: grabbing; }
+
+.visual-notes-file-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--interactive-accent);
+  color: white;
+  flex-shrink: 0;
+}
+
+.visual-notes-file-header-icon svg { width: 13px; height: 13px; }
+
+.visual-notes-file-header-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ib-card-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visual-notes-file-body {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.visual-notes-file-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* Non-PDF variant: centered icon tile */
+.visual-notes-file-tile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  text-align: center;
+  min-height: 0;
+}
+
+.visual-notes-file-tile-icon {
+  color: var(--text-muted);
+}
+
+.visual-notes-file-tile-icon svg { width: 40px; height: 40px; }
+
+.visual-notes-file-tile-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ib-card-text);
+  word-break: break-word;
+  max-width: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.visual-notes-file-tile-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.visual-notes-file-ext-pill {
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--background-modifier-hover);
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+/* ── Callout card ────────────────────────────────────────────── */
+
+.visual-notes-freeform-callout-card {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-left-width: 4px; /* accent edge — color set inline from card.color */
+  box-shadow: var(--ib-shadow-low);
+  overflow: hidden;
+}
+
+.visual-notes-callout-icon {
+  font-size: 20px;
+  line-height: 1.3;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.visual-notes-callout-text {
+  flex: 1;
+  min-width: 0;
+  outline: none;
+  font-family: var(--ib-font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-normal);
+  word-break: break-word;
+  align-self: center;
+}
+
+.visual-notes-callout-text:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+/* ── Kanban item: due date + sub-checklist ───────────────────── */
+
+.visual-notes-kanban-subtasks {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.visual-notes-kanban-subtask {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--ib-card-text);
+}
+
+.visual-notes-kanban-subtask.is-done .visual-notes-kanban-subtask-text {
+  text-decoration: line-through;
+  color: var(--text-faint);
+}
+
+.visual-notes-kanban-subtask-cb {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  border-radius: 3.5px;
+  border: 1.5px solid var(--text-faint);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 80ms ease, border-color 80ms ease;
+}
+
+.visual-notes-kanban-subtask-cb.is-checked {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+.visual-notes-kanban-subtask-cb.is-checked::after {
+  content: '';
+  width: 3.5px;
+  height: 7px;
+  border: solid #fff;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg) translateY(-1px);
+}
+
+.visual-notes-kanban-subtask-text {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.visual-notes-kanban-subtask-del {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 80ms ease, color 80ms ease;
+}
+
+.visual-notes-kanban-subtask-del svg { width: 10px; height: 10px; }
+.visual-notes-kanban-subtask:hover .visual-notes-kanban-subtask-del { opacity: 1; }
+.visual-notes-kanban-subtask-del:hover { color: var(--text-error, #ef4444); }
+
+.visual-notes-kanban-item-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.visual-notes-kanban-due-badge,
+.visual-notes-kanban-subtask-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+}
+
+.visual-notes-kanban-due-badge svg,
+.visual-notes-kanban-subtask-pill svg { width: 11px; height: 11px; }
+
+.visual-notes-kanban-due-badge.is-soon {
+  background: rgba(245, 158, 11, 0.18);
+  color: #b45309;
+}
+
+.visual-notes-kanban-due-badge.is-overdue {
+  background: rgba(239, 68, 68, 0.18);
+  color: #dc2626;
+}
+
+.visual-notes-kanban-due-badge.is-done,
+.visual-notes-kanban-subtask-pill.is-complete {
+  background: rgba(34, 197, 94, 0.18);
+  color: #15803d;
+}
+
+.theme-dark .visual-notes-kanban-due-badge.is-soon { color: #fbbf24; }
+.theme-dark .visual-notes-kanban-due-badge.is-overdue { color: #f87171; }
+.theme-dark .visual-notes-kanban-due-badge.is-done,
+.theme-dark .visual-notes-kanban-subtask-pill.is-complete { color: #4ade80; }
+
+/* ── Right-click menu lift-on-hover ──────────────────────────────
+   Scoped to `.visual-notes-ctx-menu` (stamped onto menus this plugin
+   opens via newMenu()) rather than a bare `.menu-item` rule, so it never
+   touches Obsidian's own menus elsewhere in the app (file explorer, tabs,
+   etc.). Smaller than the toolbar's lift — menu rows sit flush against
+   each other with no gap, so the usual -2px would visually clip against
+   the neighbouring row; -1px plus a z-index bump keeps it readable. */
+.visual-notes-ctx-menu .menu-item {
+  transition: transform 100ms ease, box-shadow 100ms ease, background-color 80ms ease;
+}
+
+.visual-notes-ctx-menu .menu-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16);
+  position: relative;
+  z-index: 1;
+}
+
+.visual-notes-ctx-menu .menu-item:active {
+  transform: translateY(0);
+  transition-duration: 40ms;
+}
+
+/* ── Archive browser modal ───────────────────────────────────── */
+
+.visual-notes-archive-empty { color: var(--text-faint); }
+
+.visual-notes-archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.visual-notes-archive-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: var(--background-secondary);
+}
+
+.visual-notes-archive-kind {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
+  background: var(--background-modifier-hover);
+  padding: 2px 7px;
+  border-radius: 4px;
+  min-width: 64px;
+  text-align: center;
+}
+
+.visual-notes-archive-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visual-notes-archive-btns {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.visual-notes-snap-toggle-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Alignment bar ───────────────────────────────────────────── */
+
+.visual-notes-align-bar {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  z-index: 100;
+  box-shadow: var(--ib-shadow-low);
+  white-space: nowrap;
+}
+
+.visual-notes-align-bar.is-visible { display: flex; }
+
+.visual-notes-align-bar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.visual-notes-align-bar-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-faint);
+  padding: 0 2px;
+  letter-spacing: 0.03em;
+  user-select: none;
+}
+
+.visual-notes-align-bar-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+.visual-notes-align-bar-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 80ms, color 80ms;
+}
+
+.visual-notes-align-bar-btn svg { width: 14px; height: 14px; }
+
+.visual-notes-align-bar-btn--rotate svg { transform: rotate(90deg); }
+
+.visual-notes-align-bar-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+/* ── Kanban column card ──────────────────────────────────────── */
+
+.visual-notes-freeform-kanban-card {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  border-radius: 10px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  background: var(--ib-card-bg);
+  overflow: hidden;
+  gap: 0;
+  padding: 0;
+}
+
+.visual-notes-kanban-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 12px 36px 10px;
+  flex-shrink: 0;
+  cursor: grab;
+  border-bottom: 1px solid var(--background-modifier-border);
+  user-select: none;
+  min-height: 52px;
+  position: relative;
+}
+
+.visual-notes-freeform-kanban-card.is-collapsed .visual-notes-kanban-header {
+  border-bottom: none;
+}
+
+.visual-notes-kanban-header:active {
+  cursor: grabbing;
+}
+
+/* ── Shared card-header title style ─────────────────────────── */
+
+.visual-notes-kanban-title,
+.visual-notes-checklist-title,
+.visual-notes-column-title {
+  font-family: var(--ib-font-display);
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+  text-align: center;
+  max-width: 100%;
+}
+
+.visual-notes-kanban-title.visual-notes-kanban-title-empty {
+  opacity: 0.35;
+  font-weight: 700;
+}
+
+.visual-notes-kanban-count-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.visual-notes-kanban-col-count {
+  font-family: var(--ib-font-body);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Collapse toggle button */
+.visual-notes-kanban-collapse-btn {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 80ms, background 80ms, color 80ms;
+}
+.visual-notes-kanban-collapse-btn svg {
+  width: 13px;
+  height: 13px;
+  transition: transform 200ms ease;
+}
+.visual-notes-kanban-header:hover .visual-notes-kanban-collapse-btn,
+.visual-notes-freeform-kanban-card.is-collapsed .visual-notes-kanban-collapse-btn {
+  opacity: 1;
+}
+.visual-notes-kanban-collapse-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.visual-notes-freeform-kanban-card.is-collapsed .visual-notes-kanban-collapse-btn svg {
+  transform: rotate(-90deg);
+}
+
+/* Collapsed state: hide items/add-btn and shrink to header only */
+.visual-notes-freeform-kanban-card.is-collapsed {
+  height: auto;
+}
+.visual-notes-freeform-kanban-card.is-collapsed .visual-notes-kanban-items,
+.visual-notes-freeform-kanban-card.is-collapsed .visual-notes-kanban-add-btn,
+.visual-notes-freeform-kanban-card.is-collapsed .visual-notes-card-resize-handle {
+  display: none;
+}
+
+.visual-notes-kanban-wip-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-error, #ef4444);
+  flex-shrink: 0;
+}
+
+.visual-notes-kanban-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  margin: 0 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 40px;
+  /* Same recessed "tray" look as Column cards — a slot items visually
+     drop into and fill up, rather than sitting flush against the card. */
+  background: var(--background-secondary);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.10), inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+
+.visual-notes-kanban-item {
+  background: var(--ib-card-bg);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: var(--ib-font-body);
+  color: var(--ib-card-text);
+  line-height: 1.5;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.visual-notes-kanban-item:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 30%, transparent);
+}
+
+/* "Larger kanban cards" setting — set directly on the item (not a
+   container ancestor) so the drag ghost, a clone of this exact element,
+   keeps the same sizing once detached from its original parent. */
+.visual-notes-kanban-item.is-large {
+  padding: 13px 15px;
+  font-size: 15px;
+  gap: 10px;
+}
+
+.visual-notes-kanban-item.is-large .visual-notes-kanban-item-cb {
+  width: 19px;
+  height: 19px;
+}
+
+.visual-notes-kanban-item.is-large .visual-notes-kanban-item-icon-badge {
+  width: 28px;
+  height: 28px;
+}
+
+.visual-notes-kanban-item.is-large .visual-notes-kanban-item-note-pill,
+.visual-notes-kanban-item.is-large .visual-notes-kanban-item-tag {
+  font-size: 12.5px;
+}
+
+.visual-notes-kanban-item.is-done {
+  opacity: 0.6;
+  color: var(--text-muted);
+}
+
+.visual-notes-kanban-item.is-done .visual-notes-kanban-item-text {
+  text-decoration: line-through;
+}
+
+.visual-notes-kanban-item-cb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-muted);
+  flex-shrink: 0;
+  margin-top: 1px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.visual-notes-kanban-item-cb.is-checked {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+.visual-notes-kanban-item-cb.is-checked::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  width: 5px;
+  height: 3px;
+  border-left: 1.5px solid white;
+  border-bottom: 1.5px solid white;
+  transform: rotate(-45deg);
+}
+
+.visual-notes-kanban-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.visual-notes-kanban-item-text {
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.visual-notes-kanban-item-text p,
+.visual-notes-kanban-item-text ul,
+.visual-notes-kanban-item-text ol {
+  margin: 0;
+}
+
+.visual-notes-kanban-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.visual-notes-kanban-item-note-pill {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--background-modifier-hover);
+  border-radius: 3px;
+  padding: 1px 7px 1px 5px;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.1s, background 0.1s;
+}
+
+.visual-notes-kanban-item-note-pill:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-border);
+}
+
+.visual-notes-kanban-item-note-pill svg {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+
+/* Kanban item variant of the nested-board chip — accent-tinted so it reads
+   as "go somewhere", unlike the neutral note/link pills beside it. */
+.visual-notes-kanban-item-board-pill {
+  background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+  color: var(--interactive-accent);
+}
+
+.visual-notes-kanban-item-board-pill:hover {
+  background: color-mix(in srgb, var(--interactive-accent) 22%, transparent);
+  color: var(--interactive-accent);
+}
+
+.visual-notes-kanban-item-board-pill .visual-notes-nested-pill-img {
+  width: 12px;
+  height: 12px;
+}
+
+.visual-notes-kanban-item-tag {
+  display: inline-flex;
+  align-items: center;
+  background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+  color: var(--interactive-accent);
+  border-radius: 3px;
+  padding: 1px 7px;
+  font-size: 11px;
+}
+
+.visual-notes-kanban-item.has-image {
+  padding: 0;
+  gap: 0;
+  display: block;
+}
+
+.visual-notes-kanban-item.has-image .visual-notes-kanban-item-cb,
+.visual-notes-kanban-item.has-image .visual-notes-kanban-item-del,
+.visual-notes-kanban-item.has-image .visual-notes-kanban-item-text {
+  display: none;
+}
+
+.visual-notes-kanban-item.has-image .visual-notes-kanban-item-body {
+  display: block;
+  width: 100%;
+}
+
+.visual-notes-kanban-item.has-image .visual-notes-kanban-item-image {
+  display: block;
+  line-height: 0;
+}
+
+/* Media on an item that also has task content (text, subtasks, due date)
+   renders inline under the text instead of taking over the card — the
+   checkbox, text, and delete button stay visible (see appendKanbanItem). */
+.visual-notes-kanban-item.has-inline-media .visual-notes-kanban-item-image {
+  margin-top: 4px;
+  border-radius: 6px;
+}
+
+.visual-notes-kanban-item-image {
+  overflow: hidden;
+}
+
+.visual-notes-kanban-item-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  pointer-events: none;
+}
+
+.visual-notes-kanban-item-audio { margin-top: 4px; }
+
+.visual-notes-kanban-audio-player {
+  width: 100%;
+  height: 32px;
+}
+
+.visual-notes-kanban-audio-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.visual-notes-kanban-items.is-drag-over {
+  outline: 2px dashed var(--interactive-accent);
+  outline-offset: -2px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--interactive-accent) 8%, transparent);
+}
+
+.visual-notes-kanban-item-del {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.1s, color 0.1s;
+  margin-top: 1px;
+}
+
+.visual-notes-kanban-item-del svg {
+  width: 12px;
+  height: 12px;
+}
+
+.visual-notes-kanban-item:hover .visual-notes-kanban-item-del {
+  opacity: 1;
+}
+
+.visual-notes-kanban-item-del:hover {
+  color: var(--text-error, #ef4444);
+}
+
+.visual-notes-kanban-item.is-dragging {
+  opacity: 0.3;
+}
+
+.visual-notes-kanban-item.is-editing .visual-notes-kanban-item-del {
+  display: none;
+}
+
+.visual-notes-kanban-item-editor {
+  width: 100%;
+  outline: none;
+  font: inherit;
+  color: inherit;
+  line-height: 1.4;
+  min-height: 1em;
+  word-break: break-word;
+}
+
+/* A real clone of the item's own DOM (see startItemDrag) rather than a
+   plain text bubble — .visual-notes-kanban-item already supplies the actual
+   card look (background, border, padding, colors, icon badge, etc.); this
+   class only needs to reposition it and add the "lifted" shadow on top. */
+.visual-notes-kanban-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  margin: 0;
+  cursor: grabbing;
+  box-shadow: var(--ib-shadow-mid);
+}
+
+.visual-notes-kanban-drag-ghost.is-tilting {
+  box-shadow: var(--ib-shadow-high);
+  will-change: transform;
+}
+
+.visual-notes-kanban-item.is-item-settling {
+  animation: ib-kanban-item-settle 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes ib-kanban-item-settle {
+  0%   { transform: scale(1.035); }
+  60%  { transform: scale(0.99); }
+  100% { transform: scale(1); }
+}
+
+.visual-notes-kanban-drop-indicator {
+  height: 2px;
+  background: var(--interactive-accent);
+  border-radius: 1px;
+  margin: 1px 0;
+  flex-shrink: 0;
+}
+
+.visual-notes-freeform-kanban-card.is-kanban-drop-target {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}
+
+/* Media source picker modal */
+.visual-notes-media-source-title {
+  margin-bottom: 12px;
+}
+.visual-notes-media-source-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+}
+.visual-notes-media-source-sep {
+  height: 1px;
+  background: var(--background-modifier-border);
+  margin: 8px 0;
+}
+
+.visual-notes-kanban-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px 12px;
+  color: var(--text-faint);
+  font-family: var(--ib-font-body);
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+  transition: color 0.15s;
+}
+
+.visual-notes-kanban-add-btn:hover {
+  color: var(--text-normal);
+}
+
+.visual-notes-kanban-add-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.visual-notes-kanban-title-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font: inherit;
+  color: var(--text-normal);
+  padding: 0;
+  margin: 0;
+}
+
+/* ── Connection handles & connect mode ──────────────────────── */
+
+.visual-notes-connection-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--interactive-accent);
+  border: 2px solid var(--background-primary);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  cursor: crosshair;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.visual-notes-connection-handle-n {
+  top: -5px;
+  left: calc(50% - 5px);
+}
+.visual-notes-connection-handle-s {
+  bottom: -5px;
+  left: calc(50% - 5px);
+}
+.visual-notes-connection-handle-e {
+  right: -5px;
+  top: calc(50% - 5px);
+}
+.visual-notes-connection-handle-w {
+  left: -5px;
+  top: calc(50% - 5px);
+}
+
+.visual-notes-freeform-card:hover .visual-notes-connection-handle,
+.visual-notes-canvas-outer.is-connect-mode .visual-notes-connection-handle {
+  opacity: 1;
+}
+
+.visual-notes-freeform-card.is-connect-source {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}
+
+.visual-notes-freeform-card.is-connect-target {
+  outline: 2px solid var(--color-green, #4caf50);
+  outline-offset: 2px;
+}
+
+.visual-notes-canvas-outer.is-connect-mode {
+  cursor: crosshair;
+}
+
+/* ── Sticky card ────────────────────────────────────────────── */
+
+.visual-notes-freeform-sticky-card {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  border-radius: 3px;
+  box-shadow: var(--ib-shadow-low);
+  gap: 0;
+  overflow: hidden;
+}
+
+.visual-notes-sticky-inner {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 44px;
+}
+
+.visual-notes-sticky-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ib-card-text);
+  word-break: break-word;
+  cursor: text;
+  /* let clicks through to the card div for dragging */
+}
+
+.visual-notes-sticky-text p { margin: 0 0 4px; }
+.visual-notes-sticky-text p:last-child { margin-bottom: 0; }
+.visual-notes-sticky-text strong { font-weight: 700; }
+.visual-notes-sticky-text em { font-style: italic; }
+.visual-notes-sticky-text del { text-decoration: line-through; }
+
+.visual-notes-sticky-editor {
+  width: 100%;
+  min-height: 20px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  line-height: 1.5;
+  font-family: var(--font-text);
+  color: var(--ib-card-text);
+  padding: 0;
+  word-break: break-word;
+  cursor: text;
+}
+
+.visual-notes-sticky-editor:empty::before {
+  content: 'Start typing…';
+  color: var(--ib-card-text);
+  opacity: 0.4;
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* ── Format bars (used by image caption editor) ─────────────── */
+
+.visual-notes-align-bar .visual-notes-align-btn {
+  font-family: var(--font-monospace);
+  font-size: 10px;
+  font-weight: 400;
+  text-decoration: none;
+  font-style: normal;
+}
+
+/* ── Text formatting toolbar (floating selection popover) ─────── */
+
+.visual-notes-text-fmt-toolbar {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  box-shadow: var(--ib-shadow-high);
+  z-index: 300;
+  user-select: none;
+}
+
+.visual-notes-text-fmt-divider {
+  height: 1px;
+  background: var(--background-modifier-border);
+  margin: 0 -2px;
+}
+
+.visual-notes-text-fmt-inline-row {
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+}
+
+.visual-notes-text-fmt-inline-btn {
+  flex: 1;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-text);
+  color: var(--text-muted);
+  background: var(--background-modifier-hover);
+  transition: background 80ms, color 80ms;
+  user-select: none;
+}
+
+.visual-notes-text-fmt-inline-btn:hover {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+/* button label styles are applied inline by buildFormatRow */
+
+.visual-notes-text-fmt-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.visual-notes-text-fmt-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.visual-notes-text-fmt-swatches {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  align-items: center;
+}
+
+.visual-notes-text-fmt-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1.5px solid var(--background-modifier-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 80ms;
+  position: relative;
+  overflow: hidden;
+}
+
+.visual-notes-text-fmt-swatch:hover {
+  border-color: var(--interactive-accent);
+}
+
+.visual-notes-text-fmt-swatch.is-custom {
+  background: var(--background-secondary);
+  color: var(--text-muted);
+}
+
+.visual-notes-text-fmt-swatch.is-custom svg {
+  width: 14px;
+  height: 14px;
+}
+
+.visual-notes-text-fmt-swatch.is-default,
+.visual-notes-text-fmt-swatch.is-none {
+  background: transparent;
+}
+
+.visual-notes-text-fmt-null-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.visual-notes-text-fmt-black-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.visual-notes-text-fmt-custom-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Text scale utilities ────────────────────────────────────── */
+
+.visual-notes-container .text-scale-sm { font-size: 11px; }
+.visual-notes-container .text-scale-sm p, .visual-notes-container .text-scale-sm li { font-size: 11px; }
+
+.visual-notes-container .text-scale-md { font-size: 14px; }
+
+.visual-notes-container .text-scale-lg { font-size: 18px; }
+.visual-notes-container .text-scale-lg p, .visual-notes-container .text-scale-lg li { font-size: 18px; }
+
+/* ── Checklist card ─────────────────────────────────────────── */
+
+.visual-notes-freeform-checklist-card {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  gap: 0;
+  overflow: hidden;
+  background: var(--ib-card-bg);
+}
+
+.visual-notes-freeform-checklist-card.is-selected {
+  box-shadow: var(--ib-shadow-mid);
+}
+
+/* 4px accent bar at top — shared by checklist, sticky, and kanban */
+.ib-card-top-strip,
+.visual-notes-checklist-accent {
+  width: 100%;
+  height: 5px;
+  flex-shrink: 0;
+}
+
+input.visual-notes-checklist-title {
+  width: 100%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  padding: 10px 12px 6px;
+  box-sizing: border-box;
+  /* Input elements ignore inherited font rules — force them explicitly */
+  font-family: var(--ib-font-display);
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.visual-notes-checklist-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  margin: 0 10px 10px;
+  min-height: 40px;
+  /* Same recessed "tray" look as Column and Kanban cards. */
+  background: var(--background-secondary);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.10), inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+
+/* With no title input above it, the tray otherwise sits flush against the
+   card's own top edge/border — the title's top+bottom padding was the only
+   thing giving it breathing room, so restore an equivalent gap here. */
+.visual-notes-freeform-checklist-card.is-title-hidden .visual-notes-checklist-list {
+  margin-top: 10px;
+}
+
+.visual-notes-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 0;
+}
+
+.visual-notes-checklist-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 12px;
+  height: 14px;
+  color: var(--text-faint);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.visual-notes-checklist-drag-handle svg {
+  width: 12px;
+  height: 12px;
+}
+
+.visual-notes-checklist-item:hover .visual-notes-checklist-drag-handle {
+  opacity: 1;
+}
+
+.visual-notes-checklist-item.is-dragging {
+  opacity: 0.3;
+}
+
+/* A real clone of the item row's own DOM (see startChecklistItemDrag), same
+   approach as the kanban item drag ghost. */
+.visual-notes-checklist-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  margin: 0;
+  cursor: grabbing;
+  background: var(--background-secondary);
+  border-radius: 4px;
+  box-shadow: var(--ib-shadow-mid);
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.visual-notes-checklist-drag-ghost .visual-notes-checklist-drag-handle {
+  opacity: 1;
+}
+
+.visual-notes-checklist-drop-indicator {
+  height: 2px;
+  background: var(--interactive-accent);
+  border-radius: 1px;
+  margin: 1px 0;
+  flex-shrink: 0;
+}
+
+/* Section header rows */
+.visual-notes-checklist-item.is-header {
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+
+/* Child items — 20px indent */
+.visual-notes-checklist-item.is-child {
+  padding-left: 20px;
+}
+
+input.visual-notes-checklist-cb {
+  appearance: checkbox;
+  -webkit-appearance: checkbox;
+  display: block;
+  opacity: 1;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  accent-color: var(--interactive-accent);
+  border-radius: 3px;
+  background: revert;
+}
+
+.visual-notes-checklist-item-input {
+  flex: 1;
+  outline: none;
+  font-size: 12px;
+  color: var(--ib-card-text);
+  min-width: 0;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.visual-notes-checklist-item-input:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.visual-notes-checklist-item.is-header .visual-notes-checklist-item-input {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.visual-notes-checklist-item.is-done .visual-notes-checklist-item-input {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.visual-notes-checklist-add {
+  margin: 4px 0 8px;
+  font-size: 12px;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 3px 0;
+  transition: color 80ms ease;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.visual-notes-freeform-checklist-card:hover .visual-notes-checklist-add,
+.visual-notes-freeform-checklist-card:focus-within .visual-notes-checklist-add {
+  opacity: 1;
+}
+
+.visual-notes-checklist-add:hover { color: var(--interactive-accent); }
+
+/* ── Comment card ───────────────────────────────────────────── */
+
+.visual-notes-freeform-comment-card {
+  --ib-comment-accent: #eab308;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  border-radius: 5px;
+  border: 1px solid var(--background-modifier-border);
+  border-left: 2px solid var(--ib-comment-accent);
+  box-shadow: var(--ib-shadow-low);
+  gap: 0;
+  overflow: hidden;
+  background: var(--ib-card-bg);
+}
+
+.visual-notes-freeform-comment-card.is-selected {
+  box-shadow: var(--ib-shadow-mid);
+}
+
+.visual-notes-freeform-comment-card.is-resolved {
+  opacity: 0.6;
+}
+
+/* Compact, discrete header: avatar + author + timestamp all on one thin
+   row instead of a tall two-line block — same metadata, far less weight. */
+.visual-notes-comment-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 4px;
+  flex-shrink: 0;
+}
+
+.visual-notes-comment-avatar {
+  width: 15px;
+  height: 15px;
+  min-width: 15px;
+  border-radius: 50%;
+  background: var(--ib-comment-accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.visual-notes-comment-head-meta {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.visual-notes-comment-author {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ib-card-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+}
+
+.visual-notes-comment-time-sep {
+  font-size: 10px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.visual-notes-comment-time {
+  font-size: 10px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.visual-notes-comment-resolved-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-success, #22c55e);
+  flex-shrink: 0;
+}
+
+.visual-notes-comment-resolved-badge svg { width: 11px; height: 11px; }
+
+.visual-notes-comment-body {
+  padding: 0 10px 6px;
+  flex-shrink: 0;
+}
+
+.visual-notes-comment-text {
+  outline: none;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ib-card-text);
+  word-break: break-word;
+}
+
+.visual-notes-comment-text:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.visual-notes-comment-replies {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  margin: 0 10px 10px;
+  min-height: 30px;
+  gap: 6px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.10), inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+
+.visual-notes-comment-reply {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.visual-notes-comment-reply:last-child { border-bottom: none; }
+
+.visual-notes-comment-reply-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.visual-notes-comment-reply-author {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ib-card-text);
+}
+
+.visual-notes-comment-reply-time {
+  font-size: 9px;
+  color: var(--text-faint);
+  flex: 1;
+}
+
+.visual-notes-comment-reply-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 80ms ease, color 80ms ease;
+}
+
+.visual-notes-comment-reply-delete svg { width: 11px; height: 11px; }
+
+.visual-notes-comment-reply:hover .visual-notes-comment-reply-delete { opacity: 1; }
+.visual-notes-comment-reply-delete:hover { color: var(--text-error, #ef4444); }
+
+.visual-notes-comment-reply-text {
+  outline: none;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ib-card-text);
+  word-break: break-word;
+}
+
+input.visual-notes-comment-reply-ghost-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  padding: 3px 0;
+  font-size: 11px;
+  color: var(--ib-card-text);
+}
+
+input.visual-notes-comment-reply-ghost-input::placeholder {
+  color: var(--text-faint);
+}
+
+/* ── Table card ─────────────────────────────────────────────── */
+
+.visual-notes-freeform-table-card {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-mid);
+  gap: 0;
+  overflow: hidden;
+  background: var(--ib-card-bg);
+}
+
+.visual-notes-freeform-table-card.is-selected {
+  box-shadow: var(--ib-shadow-high);
+}
+
+input.visual-notes-table-title {
+  width: 100%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  padding: 10px 12px 6px;
+  box-sizing: border-box;
+  font-family: var(--ib-font-display);
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.visual-notes-table-grid {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  margin: 10px 10px 0;
+  min-height: 40px;
+  /* Same recessed "tray" look as Column and Checklist cards. */
+  background: var(--background-secondary);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.10), inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+
+/* Inner layer that carries the per-table zoom. Its width is pinned (in px,
+   via JS) to the scroll container's client width so rows lay out identically
+   at every zoom level and scale uniformly instead of re-flowing. */
+.visual-notes-table-zoom-layer {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.visual-notes-table-row {
+  display: flex;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* Big pasted tables can run to thousands of cells; let the browser skip
+   layout/paint for rows scrolled out of the grid's viewport (free row
+   virtualization). The header row is excluded — it's sticky, so it must
+   always render. Focused cells auto-render: focus makes a skipped row
+   "relevant to the user" per spec, so Tab/Enter navigation still works. */
+.visual-notes-table-row:not(.visual-notes-table-header-row) {
+  content-visibility: auto;
+  contain-intrinsic-height: auto 24px;
+}
+
+.visual-notes-table-header-row {
+  background: var(--ib-card-bg);
+  border-radius: 8px 8px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.visual-notes-table-gutter-cell {
+  width: 16px;
+  min-width: 16px;
+  flex-shrink: 0;
+  position: relative;
+  border-right: 1px solid var(--background-modifier-border);
+}
+
+.visual-notes-table-cell {
+  flex: 1;
+  min-width: 60px;
+  border-right: 1px solid var(--background-modifier-border);
+  padding: 4px 6px;
+  position: relative;
+  cursor: cell;
+}
+
+.visual-notes-table-header-cell { cursor: default; }
+
+.visual-notes-table-cell:last-child { border-right: none; }
+
+.visual-notes-table-header-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 20px;
+}
+
+.visual-notes-table-header-label,
+.visual-notes-table-cell-text {
+  outline: none;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ib-card-text);
+  word-break: break-word;
+  min-height: 15px;
+  /* Sheets model: click/drag selects cells, so static text must not be
+     natively selectable — only the cell currently in edit mode is. */
+  cursor: cell;
+  user-select: none;
+}
+
+.visual-notes-table-header-label[contenteditable="true"],
+.visual-notes-table-cell-text[contenteditable="true"] {
+  cursor: text;
+  user-select: text;
+}
+
+/* Selected-range overlay — sits above the cell's own background color */
+.visual-notes-table-cell.is-cell-selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--interactive-accent);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.visual-notes-table-header-label { font-weight: 700; color: var(--text-normal); flex: 1; min-width: 0; }
+
+.visual-notes-table-sort-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 80ms ease, color 80ms ease;
+}
+
+.visual-notes-table-sort-btn svg { width: 11px; height: 11px; }
+
+.visual-notes-table-header-cell:hover .visual-notes-table-sort-btn,
+.visual-notes-table-sort-btn.is-active {
+  opacity: 1;
+}
+
+.visual-notes-table-sort-btn:hover,
+.visual-notes-table-sort-btn.is-active {
+  color: var(--interactive-accent);
+}
+
+.visual-notes-table-header-label:empty::before,
+.visual-notes-table-cell-text:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.visual-notes-table-col-delete {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 80ms ease, color 80ms ease;
+}
+
+.visual-notes-table-col-delete svg { width: 10px; height: 10px; }
+
+.visual-notes-table-header-cell:hover .visual-notes-table-col-delete { opacity: 1; }
+.visual-notes-table-col-delete:hover { color: var(--text-error, #ef4444); }
+
+.visual-notes-table-row-delete {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 80ms ease, color 80ms ease;
+}
+
+.visual-notes-table-row-delete svg { width: 9px; height: 9px; }
+
+.visual-notes-table-row:hover .visual-notes-table-row-delete { opacity: 1; }
+.visual-notes-table-row-delete:hover { color: var(--text-error, #ef4444); }
+
+.visual-notes-table-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  flex-shrink: 0;
+}
+
+/* Zoom slider — pinned to the footer's right edge */
+.visual-notes-table-zoom {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.visual-notes-table-zoom-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-faint);
+}
+
+.visual-notes-table-zoom-icon svg { width: 12px; height: 12px; }
+
+input.visual-notes-table-zoom-slider {
+  width: 72px;
+  height: 4px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--interactive-accent);
+}
+
+.visual-notes-table-zoom-label {
+  font-size: 10px;
+  color: var(--text-faint);
+  min-width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  user-select: none;
+}
+
+.visual-notes-table-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 4px;
+  transition: color 80ms ease, background 80ms ease;
+}
+
+.visual-notes-table-add-btn svg { width: 11px; height: 11px; }
+
+.visual-notes-table-add-btn:hover {
+  color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+}
+
+/* ── Accent colour popover ──────────────────────────────────── */
+
+.visual-notes-accent-pop {
+  position: absolute;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: var(--ib-shadow-high);
+  z-index: 200;
+}
+
+.visual-notes-accent-pop-palette {
+  display: grid;
+  grid-template-columns: repeat(6, 22px);
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.visual-notes-accent-pop-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+
+.visual-notes-accent-pop-swatch:hover { transform: scale(1.15); }
+.visual-notes-accent-pop-swatch.is-selected { box-shadow: 0 0 0 2px var(--interactive-accent); }
+.visual-notes-accent-pop-swatch.has-border { box-shadow: inset 0 0 0 1px var(--background-modifier-border); }
+.visual-notes-accent-pop-swatch.has-border.is-selected {
+  box-shadow: 0 0 0 2px var(--interactive-accent), inset 0 0 0 1px var(--background-modifier-border);
+}
+
+.visual-notes-accent-pop-hex-row { display: flex; gap: 6px; }
+
+input.visual-notes-accent-pop-hex {
+  width: 100%;
+  font-size: 12px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  outline: none;
+  color: var(--text-normal);
+}
+
+/* ── NoteLink card ──────────────────────────────────────────── */
+
+.visual-notes-freeform-notelink-card {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  border-radius: 3px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  gap: 0;
+  overflow: hidden;
+  background: var(--ib-card-bg);
+}
+
+.visual-notes-notelink-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+  background: var(--ib-card-bg);
+  cursor: grab;
+}
+
+.visual-notes-notelink-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visual-notes-notelink-icon svg { width: 14px; height: 14px; }
+
+.visual-notes-notelink-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ib-card-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.visual-notes-notelink-mode-btn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 1px;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+  transition: background 80ms ease, color 80ms ease;
+  box-shadow: none;
+}
+
+.visual-notes-notelink-mode-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--interactive-accent);
+}
+
+.visual-notes-notelink-mode-btn svg { width: 14px; height: 14px; }
+
+.visual-notes-notelink-preview {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 0;
+  background: var(--ib-card-bg);
+}
+
+.visual-notes-notelink-preview > * { pointer-events: none; }
+
+/* ── Image card ─────────────────────────────────────────────── */
+
+.visual-notes-freeform-image-card {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  border-radius: 3px;
+  overflow: visible;
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  gap: 0;
+}
+
+.visual-notes-image-wrap {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-modifier-form-field);
+  border-radius: 3px;
+}
+
+/* Once the image has actually loaded, drop the placeholder background so a
+   PNG's transparent (alpha) areas show whatever's behind the card instead
+   of a solid fill. The placeholder stays for the loading/missing states,
+   which don't get this class. */
+.visual-notes-image-wrap.is-loaded {
+  background: transparent;
+}
+
+.visual-notes-image-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.visual-notes-image-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-faint);
+  font-size: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.visual-notes-image-missing svg {
+  width: 28px;
+  height: 28px;
+  opacity: 0.4;
+}
+
+.visual-notes-image-caption-wrap {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: -1px;
+  right: -1px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.visual-notes-image-caption-wrap.is-hidden { display: none; }
+
+.visual-notes-image-caption-view {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 5px 8px;
+  line-height: 1.4;
+  cursor: text;
+  min-height: 24px;
+  word-break: break-word;
+}
+
+.visual-notes-image-caption-view p { margin: 0; }
+.visual-notes-image-caption-view strong { font-weight: 700; }
+.visual-notes-image-caption-view em { font-style: italic; }
+.visual-notes-image-caption-view del { text-decoration: line-through; }
+
+.visual-notes-caption-placeholder {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.visual-notes-image-caption-editor {
+  width: 100%;
+  outline: none;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 5px 8px;
+  box-sizing: border-box;
+  font-family: var(--font-text);
+  line-height: 1.4;
+  min-height: 1.4em;
+  word-break: break-word;
+}
+
+/* ── Audio card ─────────────────────────────────────────────── */
+
+.visual-notes-freeform-audio-card {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  background: var(--ib-card-bg);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 3px;
+  overflow: hidden;
+  gap: 0;
+}
+
+.visual-notes-audio-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 8px;
+}
+
+.visual-notes-audio-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--interactive-accent);
+  color: white;
+  flex-shrink: 0;
+}
+
+.visual-notes-audio-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.visual-notes-audio-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ib-card-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visual-notes-audio-player {
+  width: 100%;
+  padding: 0 10px 10px;
+  box-sizing: border-box;
+}
+
+.visual-notes-audio-missing {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* ── Bookmark card ──────────────────────────────────────────── */
+
+.visual-notes-freeform-bookmark-card {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  border-radius: 3px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  overflow: hidden;
+  background: var(--ib-card-bg);
+  gap: 0;
+  cursor: pointer;
+}
+
+.visual-notes-bookmark-image-wrap {
+  width: 100%;
+  height: 55%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--background-modifier-form-field);
+}
+
+.visual-notes-bookmark-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.visual-notes-bookmark-content {
+  flex: 1;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.visual-notes-bookmark-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ib-card-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.visual-notes-bookmark-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  flex: 1;
+  min-height: 0;
+  word-break: break-word;
+}
+
+.visual-notes-bookmark-footer {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+  background: var(--background-primary);
+}
+
+.visual-notes-bookmark-favicon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.visual-notes-bookmark-domain {
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.visual-notes-bookmark-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 16px;
+}
+
+.visual-notes-bookmark-fail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+}
+
+.visual-notes-bookmark-fail-url {
+  font-size: 12px;
+  color: var(--text-muted);
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.visual-notes-bookmark-retry {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 80ms ease, color 80ms ease;
+  box-shadow: none;
+}
+
+.visual-notes-bookmark-retry:hover {
+  background: var(--background-modifier-hover);
+  color: var(--interactive-accent);
+}
+
+/* ── "Add tile" button ──────────────────────────────────────── */
+.visual-notes-add-tile {
+  width: 112px;
+  height: 112px;
+  border-radius: 6px;
+  border: 2px dashed var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  align-self: start;
+}
+
+.visual-notes-add-tile:hover,
+.visual-notes-add-tile:focus-visible {
+  border-color: var(--interactive-accent);
+  color: var(--interactive-accent);
+  outline: none;
+}
+
+.visual-notes-add-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50%;
+  height: 50%;
+}
+
+.visual-notes-add-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Drag states ────────────────────────────────────────────── */
+
+/* The tile being dragged */
+.visual-notes-tile-chosen {
+  opacity: 0.5;
+}
+
+/* The ghost placeholder shown at the drop target */
+.visual-notes-tile-ghost .visual-notes-tile {
+  outline: 2px dashed var(--interactive-accent);
+  outline-offset: 2px;
+  --ib-tile-color: transparent;
+}
+
+.visual-notes-tile-ghost .visual-notes-tile-icon,
+.visual-notes-tile-ghost .visual-notes-tile-board-indicator {
+  display: none;
+}
+
+/* ── Tile modal ─────────────────────────────────────────────── */
+.visual-notes-tile-modal .visual-notes-modal-icon-preview {
+  width: 48px;
+  height: 48px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 10px;
+}
+
+.visual-notes-tile-modal .visual-notes-modal-icon-el {
+  width: 60%;
+  height: 60%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visual-notes-tile-modal .visual-notes-modal-icon-el svg {
+  width: 100%;
+  height: 100%;
+}
+
+.visual-notes-tile-modal .visual-notes-modal-emoji {
+  font-size: 22px;
+  line-height: 1;
+  width: auto;
+  height: auto;
+}
+
+.visual-notes-modal-custom-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.visual-notes-modal-palette,
+.visual-notes-settings-sticky-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.visual-notes-modal-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: transform 100ms ease, box-shadow 100ms ease;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+}
+
+.visual-notes-modal-swatch.has-border {
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);
+}
+
+.visual-notes-modal-swatch:hover {
+  transform: scale(1.15);
+}
+
+.visual-notes-modal-swatch.is-selected {
+  box-shadow: 0 0 0 3px var(--interactive-accent);
+}
+
+.visual-notes-modal-hex-input {
+  width: 90px;
+  font-family: var(--font-monospace);
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 1px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.visual-notes-modal-color-wheel {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: none;
+  flex-shrink: 0;
+}
+
+.visual-notes-modal-path-display {
+  font-size: 13px;
+  color: var(--text-normal);
+  margin-right: 10px;
+  word-break: break-all;
+}
+
+.visual-notes-modal-path-display.is-empty {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.visual-notes-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+/* ── Crop image modal ──────────────────────────────────────── */
+
+.visual-notes-crop-modal .visual-notes-crop-status {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.visual-notes-crop-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.visual-notes-crop-stage {
+  position: relative;
+  /* Extra margin (not padding — the image itself is sized exactly to the
+     stage, so padding would leave a gap) reserves room for resize handles
+     that sit right on the image's edge, which would otherwise need
+     `overflow: hidden` here to bound the checkerboard background — but that
+     also clips the handles themselves. The background is bounded by the
+     stage's own box regardless, so no overflow rule is needed at all. */
+  margin: 8px auto;
+  background: repeating-conic-gradient(var(--background-modifier-border) 0% 25%, var(--background-primary) 0% 50%) 50% / 16px 16px;
+}
+
+.visual-notes-crop-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.visual-notes-crop-dim {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.visual-notes-crop-rect {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--interactive-accent);
+  cursor: move;
+  touch-action: none;
+}
+
+.visual-notes-crop-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--interactive-accent);
+  border: 1px solid var(--background-primary);
+  border-radius: 50%;
+  touch-action: none;
+}
+
+.visual-notes-crop-handle-nw { top: -6px;  left: -6px;  cursor: nwse-resize; }
+.visual-notes-crop-handle-n  { top: -6px;  left: 50%; margin-left: -6px; cursor: ns-resize; }
+.visual-notes-crop-handle-ne { top: -6px;  right: -6px; cursor: nesw-resize; }
+.visual-notes-crop-handle-w  { top: 50%; margin-top: -6px; left: -6px;  cursor: ew-resize; }
+.visual-notes-crop-handle-e  { top: 50%; margin-top: -6px; right: -6px; cursor: ew-resize; }
+.visual-notes-crop-handle-sw { bottom: -6px; left: -6px;  cursor: nesw-resize; }
+.visual-notes-crop-handle-s  { bottom: -6px; left: 50%; margin-left: -6px; cursor: ns-resize; }
+.visual-notes-crop-handle-se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
+.visual-notes-reaction-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.visual-notes-reaction-option {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--background-secondary);
+  transition: background 80ms ease, transform 80ms ease;
+}
+
+.visual-notes-reaction-option:hover {
+  background: var(--background-modifier-hover);
+  transform: scale(1.08);
+}
+
+.visual-notes-reaction-option.is-active {
+  background: var(--interactive-accent);
+}
+
+.visual-notes-board-name-input {
+  width: 100%;
+  margin: 8px 0 16px;
+}
+
+/* ── Icon picker modal ──────────────────────────────────────── */
+.visual-notes-icon-picker-modal {
+  width: min(560px, 92vw);
+}
+
+.visual-notes-icon-picker-modal .modal-content {
+  padding: 20px;
+}
+
+.icon-picker-toggle-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.icon-picker-toggle-btn {
+  padding: 4px 14px;
+  border-radius: 2px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.icon-picker-toggle-btn.is-active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+.icon-picker-search {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 2px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 14px;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.icon-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+  gap: 4px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.icon-picker-item {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--text-normal);
+  transition: background 80ms ease;
+}
+
+.icon-picker-item:hover {
+  background: var(--background-modifier-hover);
+  color: var(--interactive-accent);
+}
+
+.icon-picker-item svg {
+  width: 18px;
+  height: 18px;
+}
+
+.icon-picker-custom-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.icon-picker-color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.icon-picker-color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+
+.icon-picker-color-swatch.is-selected {
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+  transform: scale(1.1);
+}
+
+.icon-picker-empty {
+  color: var(--text-faint);
+  font-size: 13px;
+  padding: 16px;
+  text-align: center;
+}
+
+/* ── Settings tab ───────────────────────────────────────────── */
+.visual-notes-settings-section {
+  margin-top: 24px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.visual-notes-settings-import-area {
+  width: 100%;
+  min-height: 120px;
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  padding: 10px;
+  border-radius: 2px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  resize: vertical;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* ── Empty state ────────────────────────────────────────────── */
+.visual-notes-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.visual-notes-empty-hint {
+  font-size: 13px;
+  color: var(--text-faint);
+  max-width: 320px;
+}
+
+/* ── Freeform stub ──────────────────────────────────────────── */
+.visual-notes-freeform-stub {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted);
+  gap: 12px;
+}
+
+.visual-notes-freeform-stub-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.visual-notes-freeform-stub-path {
+  font-size: 12px;
+  font-family: var(--font-monospace);
+  color: var(--text-faint);
+}
+
+/* ── Create board modal ─────────────────────────────────────── */
+.visual-notes-create-modal {
+  width: min(560px, 92vw);
+}
+
+.visual-notes-create-hint {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.visual-notes-layout-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.visual-notes-layout-card {
+  border: 2px solid var(--background-modifier-border);
+  border-radius: 3px;
+  padding: 14px;
+  cursor: pointer;
+  transition: border-color 100ms ease, background 100ms ease;
+  background: var(--background-secondary);
+}
+
+.visual-notes-layout-card:hover {
+  border-color: var(--interactive-accent);
+}
+
+.visual-notes-layout-card.is-selected {
+  border-color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+}
+
+.visual-notes-layout-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.visual-notes-layout-card-icon {
+  font-size: 20px;
+}
+
+.visual-notes-layout-card-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── Mobile sizing ──────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .visual-notes-tile {
+    width: 88px;
+    height: 88px;
+    border-radius: 5px;
+  }
+
+  .visual-notes-add-tile {
+    width: 88px;
+    height: 88px;
+    border-radius: 5px;
+  }
+
+  .visual-notes-tile-emoji {
+    font-size: 30px;
+  }
+
+  .visual-notes-grid {
+    gap: 24px 16px;
+    padding: 24px 16px;
+  }
+
+  .visual-notes-breadcrumb {
+    padding: 12px 16px 0;
+  }
+}
+
+/* ── Validator fixes ────────────────────────────────────────── */
+
+/* settings.ts: bookmark days input width */
+.ib-bookmark-days-input { width: 70px; }
+
+/* context-bar.ts: swatch border for light colours */
+.ib-swatch-border-light { box-shadow: inset 0 0 0 1px rgba(0,0,0,0.13); }
+
+/* text-format-toolbar.ts: format button styles */
+.ib-fmt-bold { font-weight: 700; }
+.ib-fmt-italic { font-style: italic; }
+.ib-fmt-strike { text-decoration: line-through; }
+.ib-fmt-underline { text-decoration: underline; }
+
+/* text-format-toolbar.ts: hidden popover state */
+.ib-invisible { visibility: hidden; }
+
+/* freeform-view.ts: container host */
+.ib-freeform-host { overflow: hidden; position: relative; }
+
+/* freeform-view.ts: cursor classes */
+.ib-cursor-grab { cursor: grab; }
+.ib-cursor-grabbing { cursor: grabbing; }
+.ib-cursor-crosshair { cursor: crosshair; }
+
+/* freeform-view.ts: kanban drag ghost no pointer events */
+.ib-no-pointer { pointer-events: none; }
+
+/* freeform-view.ts: SVG connection layers */
+.visual-notes-connections-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 1px; height: 1px;
+  overflow: visible;
+  pointer-events: none;
+}
+.visual-notes-connections-hit-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 1px; height: 1px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* freeform-view.ts: color probe for resolving CSS variables */
+.ib-color-probe { position: absolute; visibility: hidden; color: var(--text-muted); }
+
+/* freeform-view.ts: modal inputs */
+.ib-modal-text-input {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  box-sizing: border-box;
+}
+.ib-modal-btn-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ── Tile thumbnail image (Milanote-style cover, replaces icon) ── */
+
+.visual-notes-tile {
+  overflow: hidden;
+}
+
+.visual-notes-freeform-tile-square {
+  overflow: hidden;
+}
+
+.visual-notes-tile-thumbnail-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* ── Thumbnail picker preview (tile modal) ───────────────────── */
+
+.visual-notes-modal-thumbnail-preview {
+  width: 72px;
+  height: 72px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--background-modifier-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.visual-notes-modal-thumbnail-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.visual-notes-modal-thumbnail-preview.is-empty {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+/* ── Tile modal: icon section dimmed when a thumbnail is set ──── */
+
+.visual-notes-modal-setting-disabled {
+  opacity: 0.5;
+}
+
+.visual-notes-modal-setting-disabled .visual-notes-modal-icon-preview,
+.visual-notes-modal-setting-disabled button {
+  pointer-events: none;
+}
+
+/* ── Kanban item icon badge (optional tile-like identity) ─────── */
+
+.visual-notes-kanban-item-icon-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.visual-notes-kanban-item-icon-inner {
+  width: 60%;
+  height: 60%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visual-notes-kanban-item-icon-inner svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Kanban item thumbnail badge (icon/thumbnail are either/or) ─ */
+
+.visual-notes-kanban-item-icon-badge {
+  overflow: hidden;
+}
+
+.visual-notes-kanban-item-thumb-badge img {
+  display: block;
+}
+
+/* ── Kanban item YouTube video preview ──────────────────────── */
+
+.visual-notes-kanban-item-video {
+  position: relative;
+  cursor: pointer;
+}
+
+.visual-notes-kanban-video-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.visual-notes-kanban-video-play svg {
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+}
+
+/* ── Kanban item color modal: "default/none" swatch ──────────── */
+
+.visual-notes-modal-swatch--none {
+  background: var(--ib-card-bg, #ffffff);
+  border: 1px dashed var(--background-modifier-border);
+  position: relative;
+}
+
+.visual-notes-modal-swatch--none::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: var(--text-faint);
+  transform: rotate(-45deg);
+}
+
+/* ── Multi-column kanban board ──────────────────────────────── */
+
+.visual-notes-kanban-board-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 40px;
+  padding: 8px 40px;
+  cursor: grab;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+  user-select: none;
+}
+.visual-notes-kanban-board-titlebar:active { cursor: grabbing; }
+
+.visual-notes-kanban-board-title {
+  font-family: var(--ib-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.visual-notes-kanban-board-title.visual-notes-kanban-title-empty { opacity: 0.35; }
+
+.visual-notes-kanban-board-add-col-btn {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.visual-notes-kanban-board-add-col-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.visual-notes-kanban-board-add-col-btn svg { width: 14px; height: 14px; }
+
+.visual-notes-kanban-board-columns {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-height: 0;
+}
+
+.visual-notes-kanban-board-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 0;
+  min-width: 160px;
+  background: var(--ib-card-bg);
+  position: relative;
+}
+.visual-notes-kanban-board-column + .visual-notes-kanban-board-column {
+  border-left: 1px solid var(--background-modifier-border);
+}
+
+/* Divider drag handle on each column's left edge (except the first):
+   straddles the border-left line and trades width with the previous
+   column (see bindColumnResizers in freeform-view.ts). */
+.visual-notes-kanban-col-resizer {
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  z-index: 5;
+}
+
+.visual-notes-kanban-col-resizer:hover,
+.visual-notes-kanban-col-resizer.is-resizing {
+  background: color-mix(in srgb, var(--interactive-accent) 25%, transparent);
+}
+
+/* Column headers inside a board never drag the board — only the board's
+   own titlebar does (see the JS drag-handle logic) — so no grab cursor. */
+.visual-notes-kanban-board-column .visual-notes-kanban-header {
+  cursor: default;
+  padding: 10px 56px 8px 12px;
+  min-height: 44px;
+}
+.visual-notes-kanban-board-column .visual-notes-kanban-header:active { cursor: default; }
+.visual-notes-kanban-board-column .visual-notes-kanban-title { text-align: left; font-size: 13px; }
+.visual-notes-kanban-board-column .visual-notes-kanban-count-row { justify-content: flex-start; }
+
+/* Collapse + "..." menu buttons sit side by side, not stacked */
+.visual-notes-kanban-header .visual-notes-kanban-column-menu-btn { right: 34px; }
+
+.visual-notes-kanban-board-column.is-collapsed .visual-notes-kanban-items,
+.visual-notes-kanban-board-column.is-collapsed .visual-notes-kanban-add-btn {
+  display: none;
+}
+
+/* ── Kanban board titlebar: plus/minus column buttons side by side ── */
+
+.visual-notes-kanban-board-remove-col-btn {
+  right: 34px;
+}
+
+/* ── Container padlock ───────────────────────────────────────── */
+/* Sits beside the collapse chevron in kanban/column headers… */
+.visual-notes-lock-btn { right: 34px; }
+/* …and after the +/− column buttons in a board's title bar. */
+.visual-notes-kanban-board-titlebar .visual-notes-lock-btn { right: 58px; }
+
+/* Reveal on hover wherever the header's own hover rule doesn't already
+   cover it; a locked padlock is always visible as the state signal. */
+.visual-notes-kanban-board-titlebar:hover .visual-notes-lock-btn,
+.visual-notes-column-header:hover .visual-notes-lock-btn {
+  opacity: 1;
+}
+.visual-notes-lock-btn.is-locked {
+  opacity: 1;
+  color: var(--interactive-accent);
+}
+
+.visual-notes-kanban-board-remove-col-btn.is-disabled {
+  opacity: 0.3;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ── Card shapes (blank cards only) ─────────────────────────── */
+
+.visual-notes-sticky-shape-fill {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.visual-notes-sticky-shape-fill.is-shape-round {
+  border-radius: 50%;
+}
+
+.visual-notes-sticky-shape-fill.is-shape-triangle {
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.visual-notes-freeform-sticky-card.is-shape-triangle,
+.visual-notes-freeform-sticky-card.is-shape-round {
+  box-shadow: none;
+}
+
+.visual-notes-sticky-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* Bias text toward the wider base of the triangle, away from the point,
+   and center it so short labels read naturally within the visible fill. */
+.visual-notes-freeform-sticky-card.is-shape-triangle .visual-notes-sticky-inner {
+  justify-content: flex-end;
+  align-items: center;
+  text-align: center;
+  padding: 0 14px 14px;
+}
+.visual-notes-freeform-sticky-card.is-shape-triangle .visual-notes-sticky-text,
+.visual-notes-freeform-sticky-card.is-shape-triangle .visual-notes-sticky-editor {
+  text-align: center;
+}
+
+/* Round cards center their text rather than left-aligning from the top. */
+.visual-notes-freeform-sticky-card.is-shape-round .visual-notes-sticky-inner {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.visual-notes-freeform-sticky-card.is-shape-round .visual-notes-sticky-text,
+.visual-notes-freeform-sticky-card.is-shape-round .visual-notes-sticky-editor {
+  text-align: center;
+}
+
+/* ── YouTube bookmark: always-live embed using YouTube's own UI ────── */
+
+.visual-notes-bookmark-youtube-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+.visual-notes-bookmark-youtube-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--interactive-accent);
+  color: white;
+  flex-shrink: 0;
+}
+
+.visual-notes-bookmark-youtube-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.visual-notes-bookmark-youtube-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ib-card-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visual-notes-bookmark-youtube-body {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.visual-notes-bookmark-youtube-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* Sits on top of the iframe so pointerdown bubbles to the card's own drag
+   handler instead of being swallowed by the iframe's separate browsing
+   context — this is what makes the card body draggable. Double-clicking it
+   (see renderBookmarkContent) flips on .is-embed-interactive, which turns
+   this transparent so clicks reach the video underneath. */
+.visual-notes-bookmark-youtube-overlay {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+  pointer-events: auto;
+  background: transparent;
+}
+
+.visual-notes-freeform-card.is-embed-interactive .visual-notes-bookmark-youtube-overlay {
+  pointer-events: none;
+}
+
+/* Rounder corners on the YouTube embed specifically — the live iframe's
+   square edges otherwise read as much sharper than every other card kind. */
+.visual-notes-freeform-bookmark-card.is-youtube-embed {
+  border-radius: 12px;
+}
+
+/* ── Map card (Google Maps embed) ────────────────────────────── */
+
+.visual-notes-freeform-map-card {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  gap: 0;
+  border-radius: 12px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  overflow: hidden;
+  background: var(--ib-card-bg);
+}
+
+/* Permanent drag handle — the map itself is fully live (scroll-zoom,
+   drag-pan, marker clicks all go straight to the iframe with no
+   punch-through step), so unlike every other embed card there's no overlay
+   over the map to grab the card by. This header is the grab surface. */
+.visual-notes-map-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  flex-shrink: 0;
+  cursor: grab;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.visual-notes-map-header:active { cursor: grabbing; }
+
+.visual-notes-map-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--interactive-accent);
+  color: white;
+  flex-shrink: 0;
+}
+
+.visual-notes-map-header-icon svg { width: 12px; height: 12px; }
+
+.visual-notes-map-header-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ib-card-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visual-notes-map-body {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.visual-notes-map-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.visual-notes-map-loading,
+.visual-notes-map-fail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  padding: 16px;
+  text-align: center;
+}
+
+.visual-notes-map-fail-icon {
+  color: var(--text-faint);
+}
+
+.visual-notes-map-fail-icon svg { width: 24px; height: 24px; }
+
+/* ── Swatch card ─────────────────────────────────────────────── */
+
+.visual-notes-freeform-swatch-card {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  gap: 0;
+  border-radius: 10px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  overflow: hidden;
+  background: var(--ib-card-bg);
+}
+
+.visual-notes-swatch-color-area {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.visual-notes-swatch-hex {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  font-family: var(--ib-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  word-break: break-all;
+}
+
+/* The browser anchors its native color popup to this element's on-screen
+   position. Parked at the color area's right edge (rather than the
+   default top-left, under the hex label) so the popup opens further to
+   the right, clear of the name bar below — letting the live name update
+   stay visible while the picker's open, per the whole point of this. */
+.visual-notes-swatch-color-input {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.visual-notes-swatch-edit-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 100ms ease, transform 100ms ease;
+}
+
+.visual-notes-swatch-edit-btn svg { width: 13px; height: 13px; }
+
+.visual-notes-freeform-swatch-card:hover .visual-notes-swatch-edit-btn {
+  opacity: 1;
+}
+
+.visual-notes-swatch-edit-btn:hover {
+  transform: scale(1.1);
+}
+
+.visual-notes-swatch-name-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 8px 8px 8px 12px;
+  background: var(--ib-card-bg);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.visual-notes-swatch-name {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--ib-font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ib-card-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visual-notes-swatch-random-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--text-faint);
+  transition: background 80ms ease, color 80ms ease;
+}
+
+.visual-notes-swatch-random-btn svg { width: 13px; height: 13px; }
+
+.visual-notes-swatch-random-btn:hover,
+.visual-notes-swatch-random-btn:focus-visible {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  outline: none;
+}
+
+/* ── Checkers card ───────────────────────────────────────────── */
+
+.visual-notes-freeform-checkers-card {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  gap: 0;
+  border-radius: 10px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  overflow: hidden;
+  background: var(--ib-card-bg);
+}
+
+.visual-notes-checkers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 8px 8px 8px 12px;
+  cursor: grab;
+  user-select: none;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.visual-notes-checkers-header:active { cursor: grabbing; }
+
+.visual-notes-checkers-status {
+  font-family: var(--ib-font-display);
+  font-size: 13px;
+  font-weight: 700;
+}
+.visual-notes-checkers-status.is-red   { color: #dc2626; }
+.visual-notes-checkers-status.is-black { color: var(--ib-card-text); }
+
+.visual-notes-checkers-reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--text-faint);
+  transition: background 80ms ease, color 80ms ease;
+}
+.visual-notes-checkers-reset svg { width: 13px; height: 13px; }
+.visual-notes-checkers-reset:hover,
+.visual-notes-checkers-reset:focus-visible {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  outline: none;
+}
+
+.visual-notes-checkers-board-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.visual-notes-checkers-board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+.visual-notes-checkers-square {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.visual-notes-checkers-square.is-light { background: #f0dfc4; }
+.visual-notes-checkers-square.is-dark  { background: #a9744f; cursor: pointer; }
+.visual-notes-checkers-square.is-dark.is-selected {
+  box-shadow: inset 0 0 0 3px #fbbf24;
+}
+.visual-notes-checkers-square.is-dark.is-legal-target::after {
+  content: '';
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.6);
+}
+
+.visual-notes-checkers-piece {
+  width: 78%;
+  height: 78%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.25);
+}
+.visual-notes-checkers-piece.is-red {
+  background: radial-gradient(circle at 35% 28%, #f87171, #b91c1c);
+  border: 1px solid #7f1d1d;
+}
+.visual-notes-checkers-piece.is-black {
+  background: radial-gradient(circle at 35% 28%, #52525b, #18181b);
+  border: 1px solid #000;
+}
+.visual-notes-checkers-crown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fde047;
+}
+.visual-notes-checkers-crown svg { width: 14px; height: 14px; }
+
+/* ── Connection bend handle ─────────────────────────────────── */
+
+.visual-notes-connection-bend-handle {
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.visual-notes-connection-bend-handle:active {
+  cursor: grabbing;
+}
+
+/* ── Generic Column container (Milanote-style, holds full cards) ─── */
+
+.visual-notes-freeform-column-card {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  border-radius: 10px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  background: var(--ib-card-bg);
+  overflow: hidden;
+  gap: 0;
+  padding: 0;
+}
+
+.visual-notes-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 36px 8px;
+  flex-shrink: 0;
+  cursor: grab;
+  border-bottom: 1px solid var(--background-modifier-border);
+  user-select: none;
+  min-height: 40px;
+  position: relative;
+}
+.visual-notes-column-header:active { cursor: grabbing; }
+.visual-notes-freeform-column-card.is-collapsed .visual-notes-column-header { border-bottom: none; }
+
+.visual-notes-column-count {
+  font-family: var(--ib-font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.visual-notes-freeform-column-card.is-collapsed { height: auto; }
+.visual-notes-freeform-column-card.is-collapsed .visual-notes-column-stack,
+.visual-notes-freeform-column-card.is-collapsed .visual-notes-card-resize-handle {
+  display: none;
+}
+
+.visual-notes-column-stack {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+  margin: 0 10px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-height: 60px;
+  /* The "tray" look — a recessed slot cards visually drop into and fill up,
+     rather than sitting flush against the card's own background. */
+  background: var(--background-secondary);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.10), inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+
+.visual-notes-column-child {
+  /* Every child kind's own content CSS (.visual-notes-freeform-image-card's
+     `flex: 1` wrap, align-items: stretch, etc.) was written assuming the
+     base .visual-notes-freeform-card flex layout that top-level cards get —
+     but children never receive that class (it also carries position:
+     absolute, which would break the stack). Without display: flex here,
+     an image's wrap has no definite height to give `flex: 1`, so its <img>
+     falls back to auto-sizing at the photo's real aspect ratio — usually
+     taller than the box — and spills over onto the next child below it.
+     Tiles override this to display: grid just below for their own layout. */
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  max-width: 100%;
+  border-radius: 8px;
+  cursor: grab;
+}
+.visual-notes-column-child:active { cursor: grabbing; }
+.visual-notes-column-child.is-dragging { opacity: 0.35; }
+
+/* Every other child kind paints its own card background (checklist,
+   sticky, image frame, etc.) — a bare Tile normally doesn't, since on the
+   open canvas it's meant to float over the dotted background with just an
+   icon + label. Inside a Column's tray that transparency reads as a blank
+   hole, so give tile children the same card-style backdrop everything
+   else in the tray already gets. */
+.visual-notes-column-child.visual-notes-freeform-tile-card {
+  background: var(--ib-card-bg);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  padding: 10px;
+  /* Icon-left, name-right row instead of the standalone canvas layout
+     (icon above, name centered below) — a grid rather than a flex row so
+     the (usually absent) subtitle still stacks under the label instead of
+     sitting beside it. */
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  /* Center the label/subtitle block as a whole against the icon's height,
+     rather than stretching the label and subtitle rows to split it evenly
+     (which pins a subtitle-less label toward the top). */
+  align-content: center;
+  column-gap: 10px;
+  row-gap: 0;
+}
+
+.visual-notes-column-child.visual-notes-freeform-tile-card .visual-notes-freeform-tile-square {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.visual-notes-column-child.visual-notes-freeform-tile-card .visual-notes-tile-label {
+  grid-column: 2;
+  grid-row: 1;
+  text-align: center;
+  max-width: none;
+  font-size: 26px;
+  -webkit-line-clamp: 1;
+  line-clamp: 2;
+  /* The line-clamp box's leading sits slightly high — nudge down to sit
+     visually centered against the icon rather than a touch above it.
+     (position+top rather than transform, since transform was a no-op here.) */
+  position: relative;
+  top: 6px;
+}
+
+.visual-notes-column-child.visual-notes-freeform-tile-card .visual-notes-tile-subtitle {
+  grid-column: 2;
+  grid-row: 2;
+  text-align: center;
+  max-width: none;
+  font-size: 13px;
+  position: relative;
+  top: 6px;
+}
+
+/* Children reuse the exact same per-kind render functions as top-level
+   cards, which append their own resize handles — hidden here since a
+   column child auto-fits the stack rather than being manually resized. */
+.visual-notes-column-child .visual-notes-card-resize-handle { display: none; }
+
+/* A real clone of the child's own DOM (see startColumnChildDrag) rather
+   than a flat placeholder box — .visual-notes-column-child already supplies
+   the actual card look; this class only repositions it and adds the
+   "lifted" shadow/tilt on top, same treatment as the kanban item ghost. */
+.visual-notes-column-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  margin: 0;
+  cursor: grabbing;
+  box-shadow: var(--ib-shadow-mid);
+}
+
+.visual-notes-column-drag-ghost.is-tilting {
+  box-shadow: var(--ib-shadow-high);
+  will-change: transform;
+}
+
+.visual-notes-column-child.is-child-settling {
+  animation: ib-column-child-settle 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes ib-column-child-settle {
+  0%   { transform: scale(1.035); }
+  60%  { transform: scale(0.99); }
+  100% { transform: scale(1); }
+}
+
+.visual-notes-column-drop-indicator {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--interactive-accent);
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.visual-notes-freeform-column-card.is-kanban-drop-target {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}
+
+/* ── Free-floating pen ink ──────────────────────────────────── */
+
+.visual-notes-ink-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 1px; height: 1px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+.visual-notes-canvas-outer.is-pen-mode {
+  cursor: crosshair;
+}
+
+.visual-notes-pen-banner {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 12px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-radius: 20px;
+  box-shadow: var(--ib-shadow-mid);
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.visual-notes-pen-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visual-notes-pen-banner-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.visual-notes-pen-banner-done {
+  pointer-events: auto;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.22);
+  white-space: nowrap;
+}
+
+.visual-notes-pen-banner-done:hover {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.visual-notes-pen-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  margin-top: 4px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.visual-notes-pen-picker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+
+.visual-notes-pen-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px var(--background-modifier-border);
+}
+.visual-notes-pen-swatch.is-selected {
+  border-color: var(--interactive-accent);
+}
+
+.visual-notes-pen-width-btn {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: var(--background-modifier-hover);
+}
+.visual-notes-pen-width-btn.is-selected {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+/* Instrument buttons (pen / highlighter / eraser) in the pen picker */
+.visual-notes-pen-tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: var(--background-modifier-hover);
+}
+.visual-notes-pen-tool-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.visual-notes-pen-tool-btn.is-selected {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+/* While the eraser instrument is active, swap the pen crosshair for a cell
+   cursor so it's obvious clicks will remove ink rather than lay it down. */
+.visual-notes-canvas-outer.is-pen-mode.is-eraser-mode {
+  cursor: cell;
+}
+
+/* Highlighter ink darkens whatever sits underneath it (text stays readable
+   through fluoro yellow) instead of washing it out — how a real marker
+   layers. Where the browser can't blend across the SVG boundary the
+   fill-opacity set on the path still gives a translucent marker look. */
+path.ib-highlight-stroke {
+  mix-blend-mode: multiply;
+}
+
+/* ── Trash drop zone ─────────────────────────────────────────── */
+/* Quiet bottom-left target; drags (cards, kanban items, column children,
+   sketches) hit-test against it themselves — see renderTrashZone. */
+.visual-notes-trash-zone {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  width: var(--ib-trash-zone-size, 56px);
+  height: var(--ib-trash-zone-size, 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  color: var(--text-faint);
+  z-index: 10002;
+  transition: transform 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+.visual-notes-trash-zone svg {
+  width: 45%;
+  height: 45%;
+}
+
+.visual-notes-trash-zone.is-drag-over {
+  background: var(--background-modifier-error, #e93147);
+  color: #fff;
+  border-color: transparent;
+  transform: scale(1.25);
+}
+
+/* ── Drawing selection box + resize handles ────────────────────── */
+
+.visual-notes-drawing-select-box {
+  position: absolute;
+  border: 1.5px dashed var(--interactive-accent);
+  border-radius: 2px;
+  pointer-events: none;
+  box-sizing: border-box;
+  z-index: 10001;
+}
+
+.visual-notes-drawing-resize-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  pointer-events: auto;
+}
+
+.visual-notes-drawing-resize-handle::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: var(--interactive-accent);
+  border-radius: 2px;
+}
+
+.visual-notes-drawing-resize-handle--nw { top: -7px;    left: -7px;  cursor: nw-resize; }
+.visual-notes-drawing-resize-handle--ne { top: -7px;    right: -7px; cursor: ne-resize; }
+.visual-notes-drawing-resize-handle--sw { bottom: -7px; left: -7px;  cursor: sw-resize; }
+.visual-notes-drawing-resize-handle--se { bottom: -7px; right: -7px; cursor: se-resize; }
+
+/* ── Card drag lift / settle animation ─────────────────────────── */
+
+.visual-notes-freeform-card.is-lifted {
+  /* Lifted off the board: bigger, softer shadow beneath, on top of
+     everything, and no pointer interception mid-flight. transform itself
+     (scale + tilt) is driven per-frame from JS. */
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22), 0 4px 10px rgba(0, 0, 0, 0.12);
+  z-index: 9998 !important;
+  cursor: grabbing;
+  will-change: transform;
+  transition: box-shadow 150ms ease;
+}
+
+.visual-notes-freeform-card.is-settling {
+  animation: ib-card-settle 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes ib-card-settle {
+  0%   { transform: scale(1.03); box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22); }
+  60%  { transform: scale(0.985); }
+  100% { transform: scale(1); box-shadow: none; }
+}
+
+/* ── Data views: timeline, calendar, table database views ─────── */
+/* Shared building blocks for the cards/views that render the board's
+   dated items (see dated-items.ts). */
+
+.visual-notes-dataview-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.visual-notes-dataview-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.visual-notes-dataview-btn.is-active {
+  background: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
+  color: var(--interactive-accent);
+}
+
+.visual-notes-dataview-btn svg { width: 14px; height: 14px; }
+
+.visual-notes-dataview-btn-text {
+  width: auto;
+  padding: 0 7px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.visual-notes-dataview-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.visual-notes-dataview-title {
+  font-family: var(--ib-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+}
+
+.visual-notes-dataview-title.is-untitled { opacity: 0.4; }
+
+input.visual-notes-dataview-title-input {
+  font-size: 13px;
+  padding: 2px 6px;
+  border: 1px solid var(--interactive-accent);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  outline: none;
+  min-width: 0;
+  width: 140px;
+}
+
+.visual-notes-dataview-empty {
+  padding: 18px 16px;
+  font-size: 12px;
+  color: var(--text-faint);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ── Calendar card ──────────────────────────────────────────── */
+
+.visual-notes-freeform-calendar-card {
+  flex-direction: column;
+  align-items: stretch;
+  border-radius: 10px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  background: var(--ib-card-bg);
+  overflow: hidden;
+  gap: 0;
+  padding: 0;
+}
+
+.visual-notes-calendar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  min-height: 38px;
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+.visual-notes-calendar-header:active { cursor: grabbing; }
+
+.visual-notes-calendar-month-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-normal);
+  white-space: nowrap;
+}
+
+.visual-notes-calendar-header .visual-notes-dataview-nav { margin-left: auto; }
+
+.visual-notes-calendar-mode {
+  display: flex;
+  gap: 2px;
+  border-left: 1px solid var(--background-modifier-border);
+  padding-left: 6px;
+}
+
+.visual-notes-calendar-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 4px;
+}
+
+.visual-notes-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  flex-shrink: 0;
+}
+
+.visual-notes-cal-weekday {
+  text-align: center;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
+  padding: 2px 0;
+}
+
+.visual-notes-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
+  flex: 1;
+  min-height: 0;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.visual-notes-cal-cell {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 2px 3px;
+  min-height: 40px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+
+.visual-notes-cal-cell:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ib-shadow-low);
+  z-index: 2;
+}
+
+/* Hover-reveal "+" — quick-add a note on this day (Calendar card only;
+   the table's calendar view never passes onDayAdd, so this never renders
+   there). */
+.visual-notes-cal-day-add {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  background: var(--background-primary);
+  opacity: 0;
+  transition: opacity 100ms ease;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.visual-notes-cal-day-add svg { width: 10px; height: 10px; }
+
+.visual-notes-cal-cell:hover .visual-notes-cal-day-add { opacity: 1; }
+
+.visual-notes-cal-day-add:hover {
+  background: var(--interactive-accent);
+  color: #fff;
+}
+
+/* Day-cell decoration — set via right-click "day" menu (Calendar card
+   only), independent of any note on that day. */
+.visual-notes-cal-cell.has-day-color {
+  background: color-mix(in srgb, var(--vn-day-color) 16%, var(--background-primary));
+}
+
+.visual-notes-cal-cell.is-day-importance-low { border-left: 3px solid #60a5fa; }
+.visual-notes-cal-cell.is-day-importance-medium { border-left: 3px solid #f59e0b; }
+.visual-notes-cal-cell.is-day-importance-high { border-left: 3px solid #ef4444; }
+
+/* A day image (no icon set) fills the whole cell instead of a corner badge
+   — background-image (not <img>) so the day number, chips, and the
+   nested-board badge stay in front as ordinary content. The gradient
+   baked into the same background-image value keeps the day number legible
+   without a separate overlay element fighting for stacking order. */
+.visual-notes-cal-cell.has-day-image {
+  background-size: cover;
+  background-position: center;
+}
+
+.visual-notes-cal-cell.has-day-image .visual-notes-cal-daynum {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.visual-notes-cal-cell.has-day-image .visual-notes-cal-more {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.visual-notes-cal-day-badge {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.visual-notes-cal-day-badge svg { width: 10px; height: 10px; }
+.visual-notes-cal-day-badge-img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+
+.visual-notes-cal-day-badge.is-clickable {
+  cursor: pointer;
+  background: var(--background-modifier-hover);
+}
+
+.visual-notes-cal-day-badge.is-clickable:hover { background: var(--interactive-accent); color: #fff; }
+
+/* Floating over a day photo instead of the plain cell background — needs
+   its own solid backdrop for contrast rather than the subtle hover tint. */
+.visual-notes-cal-day-badge.is-over-image {
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+}
+
+.visual-notes-cal-day-badge.is-over-image:hover { background: var(--interactive-accent); }
+
+.visual-notes-cal-grid.is-week .visual-notes-cal-cell { min-height: 120px; }
+
+.visual-notes-cal-cell.is-out-month { opacity: 0.45; }
+
+.visual-notes-cal-cell.is-today {
+  border-color: var(--interactive-accent);
+  box-shadow: inset 0 0 0 1px var(--interactive-accent);
+}
+
+.visual-notes-cal-cell.is-drop-target {
+  background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+  border-color: var(--interactive-accent);
+}
+
+.visual-notes-cal-daynum {
+  font-size: 9px;
+  color: var(--text-faint);
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.visual-notes-cal-cell.is-today .visual-notes-cal-daynum {
+  color: var(--interactive-accent);
+  font-weight: 700;
+}
+
+.visual-notes-cal-chip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  line-height: 1.3;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--vn-chip-color, var(--interactive-accent)) 20%, var(--ib-card-bg));
+  border-left: 2px solid var(--vn-chip-color, var(--interactive-accent));
+  color: var(--ib-card-text);
+  cursor: grab;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.visual-notes-cal-chip.is-done { opacity: 0.55; }
+.visual-notes-cal-chip.is-done .visual-notes-cal-chip-label { text-decoration: line-through; }
+.visual-notes-cal-chip.is-drag-source { opacity: 0.35; }
+
+/* Importance dot — a plain colored circle ahead of the icon/label, driven
+   entirely by the class so no extra chip markup is needed for it. */
+.visual-notes-cal-chip.is-importance-low::before,
+.visual-notes-cal-chip.is-importance-medium::before,
+.visual-notes-cal-chip.is-importance-high::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.visual-notes-cal-chip.is-importance-low::before { background: #60a5fa; }
+.visual-notes-cal-chip.is-importance-medium::before { background: #f59e0b; }
+.visual-notes-cal-chip.is-importance-high::before { background: #ef4444; }
+
+.visual-notes-cal-chip-icon {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  color: var(--vn-chip-color, var(--interactive-accent));
+}
+
+.visual-notes-cal-chip-icon svg { width: 9px; height: 9px; }
+.visual-notes-cal-chip-icon-img { width: 100%; height: 100%; object-fit: cover; }
+
+.visual-notes-cal-chip-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.visual-notes-cal-chip-ghost {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0.9;
+  box-shadow: var(--ib-shadow-mid);
+}
+
+.visual-notes-cal-more {
+  font-size: 9px;
+  color: var(--text-faint);
+  padding-left: 4px;
+}
+
+/* ── Table database views ───────────────────────────────────── */
+
+.visual-notes-table-view-switcher {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+  padding-left: 6px;
+  border-left: 1px solid var(--background-modifier-border);
+}
+
+.visual-notes-freeform-table-card.visual-notes-table-alt {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.visual-notes-table-alt-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+.visual-notes-table-alt-header:active { cursor: grabbing; }
+
+.visual-notes-table-alt-header .visual-notes-table-view-switcher {
+  margin-left: auto;
+  border-left: none;
+}
+
+.visual-notes-table-alt-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.visual-notes-table-alt-cb {
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--text-faint);
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.visual-notes-table-alt-cb.is-checked {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+.visual-notes-table-alt-cb.is-checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 0.5px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.visual-notes-table-alt-date {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.visual-notes-table-alt-select {
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--vn-chip-color, var(--text-faint)) 25%, var(--ib-card-bg));
+  color: var(--ib-card-text);
+  white-space: nowrap;
+}
+
+.visual-notes-table-alt-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+/* List view */
+
+.visual-notes-table-list { padding: 6px 8px; }
+
+.visual-notes-table-list-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.visual-notes-table-list-row:last-child { border-bottom: none; }
+
+.visual-notes-table-list-label {
+  font-size: 12px;
+  color: var(--ib-card-text);
+  flex-shrink: 0;
+}
+
+.visual-notes-table-list-label.is-done { text-decoration: line-through; opacity: 0.55; }
+
+.visual-notes-table-list-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* Gallery view */
+
+.visual-notes-table-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  padding: 8px;
+}
+
+.visual-notes-table-gallery-card {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--ib-card-bg);
+  box-shadow: var(--ib-shadow-low);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.visual-notes-table-gallery-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.visual-notes-table-gallery-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ib-card-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.visual-notes-table-gallery-title.is-done { text-decoration: line-through; opacity: 0.55; }
+
+.visual-notes-table-gallery-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.visual-notes-table-gallery-collabel {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+/* Board view */
+
+.visual-notes-table-board {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-x: auto;
+}
+
+.visual-notes-table-board-lane {
+  flex: 1 0 0;
+  min-width: 130px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.visual-notes-table-board-lane + .visual-notes-table-board-lane {
+  border-left: 1px solid var(--background-modifier-border);
+}
+
+.visual-notes-table-board-lane.is-drop-target {
+  background: color-mix(in srgb, var(--interactive-accent) 8%, transparent);
+}
+
+.visual-notes-table-board-lane-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 10px 4px;
+  flex-shrink: 0;
+}
+
+.visual-notes-table-board-lane-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.visual-notes-table-board-lane-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visual-notes-table-board-lane-count {
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-left: auto;
+}
+
+.visual-notes-table-board-lane-stack {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.visual-notes-table-board-rowcard {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--ib-card-bg);
+  box-shadow: var(--ib-shadow-low);
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: grab;
+}
+
+.visual-notes-table-board-rowcard.is-drag-source { opacity: 0.35; }
+
+.visual-notes-table-board-rowlabel {
+  font-size: 11px;
+  color: var(--ib-card-text);
+}
+
+.visual-notes-table-board-rowlabel.is-done { text-decoration: line-through; opacity: 0.55; }
+
+.visual-notes-table-board-rowmeta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.visual-notes-table-board-rowmeta:empty { display: none; }
+
+.visual-notes-table-board-drag-ghost {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0.9;
+  box-shadow: var(--ib-shadow-mid);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--ib-card-bg);
+  padding: 6px 8px;
+  font-size: 11px;
+  color: var(--ib-card-text);
+}
+
+/* Table calendar view */
+
+.visual-notes-table-cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 0;
+  flex-shrink: 0;
+}

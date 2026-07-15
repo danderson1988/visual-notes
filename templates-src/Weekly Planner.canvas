@@ -1,0 +1,53 @@
+{
+  "nodes": [
+    { "id": "wp-callout", "x": -500, "y": -380, "width": 860, "height": 80, "type": "text",
+      "text": "> [!note] 🗓️\n> One week at a glance — pick your top three, spread the work across the days, and bank the wins on Friday.",
+      "color": "#3B82F6",
+      "ib": { "kind": "callout", "id": "wp-callout", "text": "One week at a glance — pick your top three, spread the work across the days, and bank the wins on Friday.", "icon": "🗓️", "color": "#3B82F6" } },
+    { "id": "wp-top3", "x": -500, "y": -260, "width": 280, "height": 200, "type": "text",
+      "text": "⭐ TOP 3 THIS WEEK\n\n1.\n2.\n3.",
+      "color": "#FEF3C7",
+      "ib": { "kind": "sticky", "id": "wp-top3", "text": "⭐ TOP 3 THIS WEEK\n\n1.\n2.\n3.", "color": "#FEF3C7" } },
+    { "id": "wp-habits", "x": -180, "y": -260, "width": 280, "height": 320, "type": "text",
+      "text": "### Habits\n\n- [ ] **Morning**\n  - [ ] Water first\n  - [ ] Stretch 10 min\n- [ ] **Evening**\n  - [ ] Read 20 min\n  - [ ] Plan tomorrow",
+      "color": "#FFFFFF",
+      "ib": { "kind": "checklist", "id": "wp-habits", "title": "Habits", "color": "#FFFFFF", "accentColor": "#3B82F6", "items": [
+        { "id": "wh-h1", "text": "Morning", "done": false, "isHeader": true },
+        { "id": "wh-1", "text": "Water first", "done": false, "parentId": "wh-h1" },
+        { "id": "wh-2", "text": "Stretch 10 min", "done": false, "parentId": "wh-h1" },
+        { "id": "wh-h2", "text": "Evening", "done": false, "isHeader": true },
+        { "id": "wh-3", "text": "Read 20 min", "done": false, "parentId": "wh-h2" },
+        { "id": "wh-4", "text": "Plan tomorrow", "done": false, "parentId": "wh-h2" }
+      ] } },
+    { "id": "wp-wins", "x": 140, "y": -260, "width": 280, "height": 200, "type": "text",
+      "text": "🏆 WINS THIS WEEK\n\nWrite them down on Friday — momentum is built from evidence.",
+      "color": "#D1FAE5",
+      "ib": { "kind": "sticky", "id": "wp-wins", "text": "🏆 WINS THIS WEEK\n\nWrite them down on Friday — momentum is built from evidence.", "color": "#D1FAE5" } },
+    { "id": "wp-week", "x": -500, "y": 120, "width": 960, "height": 380, "type": "group", "label": "This Week",
+      "ib": { "kind": "kanban-board", "id": "wp-week", "title": "This Week", "columns": [
+        { "id": "wd-mon", "title": "Monday", "color": "#3B82F6", "items": [
+          { "id": "wi-1", "text": "Gym 7am", "done": false },
+          { "id": "wi-2", "text": "Report draft", "done": false } ] },
+        { "id": "wd-tue", "title": "Tuesday", "color": "#0EA5E9", "items": [] },
+        { "id": "wd-wed", "title": "Wednesday", "color": "#F59E0B", "items": [
+          { "id": "wi-3", "text": "Team sync 10:00", "done": false } ] },
+        { "id": "wd-thu", "title": "Thursday", "color": "#8B5CF6", "items": [] },
+        { "id": "wd-fri", "title": "Friday", "color": "#10B981", "items": [
+          { "id": "wi-4", "text": "Ship weekly update", "done": false } ] }
+      ] } },
+    { "id": "wp-week::kbhdr::wd-mon", "x": -488, "y": 156, "width": 177.6, "height": 28, "type": "text", "text": "**Monday** (2)", "color": "#3B82F6" },
+    { "id": "wp-week::kbitem::wd-mon::wi-1", "x": -488, "y": 192, "width": 177.6, "height": 44, "type": "text", "text": "- [ ] Gym 7am", "ib": { "id": "wi-1", "text": "Gym 7am", "done": false } },
+    { "id": "wp-week::kbitem::wd-mon::wi-2", "x": -488, "y": 244, "width": 177.6, "height": 44, "type": "text", "text": "- [ ] Report draft", "ib": { "id": "wi-2", "text": "Report draft", "done": false } },
+    { "id": "wp-week::kbhdr::wd-tue", "x": -298.4, "y": 156, "width": 177.6, "height": 28, "type": "text", "text": "**Tuesday** (0)", "color": "#0EA5E9" },
+    { "id": "wp-week::kbhdr::wd-wed", "x": -108.8, "y": 156, "width": 177.6, "height": 28, "type": "text", "text": "**Wednesday** (1)", "color": "#F59E0B" },
+    { "id": "wp-week::kbitem::wd-wed::wi-3", "x": -108.8, "y": 192, "width": 177.6, "height": 44, "type": "text", "text": "- [ ] Team sync 10:00", "ib": { "id": "wi-3", "text": "Team sync 10:00", "done": false } },
+    { "id": "wp-week::kbhdr::wd-thu", "x": 80.8, "y": 156, "width": 177.6, "height": 28, "type": "text", "text": "**Thursday** (0)", "color": "#8B5CF6" },
+    { "id": "wp-week::kbhdr::wd-fri", "x": 270.4, "y": 156, "width": 177.6, "height": 28, "type": "text", "text": "**Friday** (1)", "color": "#10B981" },
+    { "id": "wp-week::kbitem::wd-fri::wi-4", "x": 270.4, "y": 192, "width": 177.6, "height": 44, "type": "text", "text": "- [ ] Ship weekly update", "ib": { "id": "wi-4", "text": "Ship weekly update", "done": false } }
+  ],
+  "edges": [
+    { "id": "we-1", "fromNode": "wp-top3", "toNode": "wp-week", "color": "#3B82F6", "label": "schedule it",
+      "ib": { "routing": "elbow", "elbowOrientation": "auto", "style": "dashed", "arrowhead": "end", "thickness": 2 } }
+  ],
+  "ib": { "version": 1, "layout": "freeform", "viewport": { "x": 540, "y": 440, "zoom": 1 } }
+}

@@ -1,0 +1,313 @@
+{
+  "nodes": [
+    {
+      "id": "deep-title",
+      "x": -520,
+      "y": -390,
+      "width": 1060,
+      "height": 90,
+      "type": "text",
+      "text": "> [!note] 🔎\n> This linked board is a focused working area. Use it to expand an idea from the Masterclass board without losing your place.",
+      "color": "#2563EB",
+      "ib": {
+        "kind": "callout",
+        "id": "deep-title",
+        "text": "This linked board is a focused working area. Use it to expand an idea from the Masterclass board without losing your place.",
+        "icon": "🔎",
+        "color": "#2563EB"
+      }
+    },
+    {
+      "id": "deep-back",
+      "x": -500,
+      "y": -250,
+      "width": 250,
+      "height": 135,
+      "type": "file",
+      "file": "_Templates/Visual Notes Masterclass.canvas",
+      "color": "#2563EB",
+      "ib": {
+        "kind": "tile",
+        "id": "deep-back",
+        "label": "← Back to Masterclass",
+        "subtitle": "Return to the complete showcase",
+        "icon": "arrow-left",
+        "color": "#2563EB",
+        "target": {
+          "kind": "board",
+          "path": "_Templates/Visual Notes Masterclass.canvas"
+        }
+      }
+    },
+    {
+      "id": "deep-frame",
+      "x": -520,
+      "y": -80,
+      "width": 660,
+      "height": 460,
+      "type": "group",
+      "label": "Develop one idea",
+      "color": "#8B5CF6",
+      "ib": {
+        "kind": "group",
+        "id": "deep-frame",
+        "label": "Develop one idea",
+        "color": "#8B5CF6"
+      }
+    },
+    {
+      "id": "deep-question",
+      "x": -480,
+      "y": -30,
+      "width": 280,
+      "height": 150,
+      "type": "text",
+      "text": "💭 QUESTION\n\nWhat do I want to understand, decide, or make next?",
+      "color": "#EDE9FE",
+      "ib": {
+        "kind": "sticky",
+        "id": "deep-question",
+        "text": "💭 QUESTION\n\nWhat do I want to understand, decide, or make next?",
+        "color": "#EDE9FE",
+        "topColor": "#8B5CF6"
+      }
+    },
+    {
+      "id": "deep-evidence",
+      "x": -160,
+      "y": -30,
+      "width": 260,
+      "height": 150,
+      "type": "text",
+      "text": "### Evidence\n\n- [ ] Source or observation\n- [ ] Counterpoint\n- [ ] Open question",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "checklist",
+        "id": "deep-evidence",
+        "title": "Evidence",
+        "color": "#FFFFFF",
+        "accentColor": "#2563EB",
+        "items": [
+          {
+            "id": "de-1",
+            "text": "Source or observation",
+            "done": false
+          },
+          {
+            "id": "de-2",
+            "text": "Counterpoint",
+            "done": false
+          },
+          {
+            "id": "de-3",
+            "text": "Open question",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "deep-decision",
+      "x": -480,
+      "y": 170,
+      "width": 580,
+      "height": 155,
+      "type": "text",
+      "text": "### Decision record\n\n| Option | Benefit | Risk | Choice |\n| --- | --- | --- | --- |\n| A |  |  |  |\n| B |  |  |  |",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "table",
+        "id": "deep-decision",
+        "title": "Decision record",
+        "color": "#FFFFFF",
+        "columns": [
+          {
+            "id": "dd-option",
+            "label": "Option",
+            "type": "text"
+          },
+          {
+            "id": "dd-benefit",
+            "label": "Benefit",
+            "type": "text"
+          },
+          {
+            "id": "dd-risk",
+            "label": "Risk",
+            "type": "text"
+          },
+          {
+            "id": "dd-choice",
+            "label": "Choice",
+            "type": "checkbox",
+            "align": "center"
+          }
+        ],
+        "rows": [
+          {
+            "id": "ddr-a",
+            "cells": {
+              "dd-option": "A",
+              "dd-benefit": "",
+              "dd-risk": "",
+              "dd-choice": ""
+            }
+          },
+          {
+            "id": "ddr-b",
+            "cells": {
+              "dd-option": "B",
+              "dd-benefit": "",
+              "dd-risk": "",
+              "dd-choice": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "deep-comment",
+      "x": 180,
+      "y": -80,
+      "width": 320,
+      "height": 210,
+      "type": "text",
+      "text": "**Collaborator** _(14/07/2026, 10:00:00)_\nWhat would change your mind?\n\n---\n**You** _(14/07/2026, 11:00:00)_\nAdd a response or resolve this thread.",
+      "color": "#FEF3C7",
+      "ib": {
+        "kind": "comment",
+        "id": "deep-comment",
+        "text": "What would change your mind?",
+        "author": "Collaborator",
+        "createdAt": 1783987200000,
+        "color": "#FEF3C7",
+        "replies": [
+          {
+            "id": "dcr-1",
+            "text": "Add a response or resolve this thread.",
+            "author": "You",
+            "createdAt": 1783990800000
+          }
+        ]
+      }
+    },
+    {
+      "id": "deep-next",
+      "x": 280,
+      "y": 180,
+      "width": 320,
+      "height": 155,
+      "type": "text",
+      "text": "✅ NEXT ACTION\n\nTurn the decision into one small, scheduled action.",
+      "color": "#DCFCE7",
+      "ib": {
+        "kind": "sticky",
+        "id": "deep-next",
+        "text": "✅ NEXT ACTION\n\nTurn the decision into one small, scheduled action.",
+        "color": "#DCFCE7",
+        "topColor": "#16A34A",
+        "textAlign": "center"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "deep-edge-1",
+      "fromNode": "deep-question",
+      "toNode": "deep-evidence",
+      "color": "#8B5CF6",
+      "label": "investigate",
+      "ib": {
+        "routing": "straight",
+        "bend": 57,
+        "style": "solid",
+        "arrowhead": "end",
+        "thickness": 4
+      }
+    },
+    {
+      "id": "deep-edge-2",
+      "fromNode": "deep-evidence",
+      "toNode": "deep-decision",
+      "color": "#2563EB",
+      "label": "weigh",
+      "ib": {
+        "routing": "elbow",
+        "elbowOrientation": "vertical-first",
+        "style": "dashed",
+        "arrowhead": "end",
+        "thickness": 2
+      }
+    },
+    {
+      "id": "deep-edge-3",
+      "fromNode": "deep-decision",
+      "toNode": "deep-next",
+      "color": "#16A34A",
+      "label": "commit",
+      "ib": {
+        "routing": "straight",
+        "bend": -45,
+        "style": "solid",
+        "arrowhead": "both",
+        "thickness": 4
+      }
+    }
+  ],
+  "ib": {
+    "version": 1,
+    "layout": "freeform",
+    "viewport": {
+      "zoom": 0.7137490608564987,
+      "x": 953.4266587489791,
+      "y": 572.5093086886657
+    },
+    "drawings": [
+      {
+        "id": "deep-ink-1",
+        "groupId": "deep-ink",
+        "points": [
+          {
+            "x": 125,
+            "y": -115
+          },
+          {
+            "x": 145,
+            "y": -130
+          },
+          {
+            "x": 165,
+            "y": -112
+          },
+          {
+            "x": 185,
+            "y": -132
+          },
+          {
+            "x": 205,
+            "y": -112
+          }
+        ],
+        "color": "#F59E0B",
+        "width": 5
+      },
+      {
+        "id": "deep-ink-2",
+        "groupId": "deep-ink",
+        "points": [
+          {
+            "x": -450,
+            "y": 142
+          },
+          {
+            "x": -180,
+            "y": 142
+          }
+        ],
+        "color": "#FDE047",
+        "width": 18,
+        "opacity": 0.32
+      }
+    ]
+  }
+}

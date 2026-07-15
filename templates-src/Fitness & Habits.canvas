@@ -1,0 +1,61 @@
+{
+  "nodes": [
+    { "id": "fh-callout", "x": -520, "y": -420, "width": 860, "height": 80, "type": "text",
+      "text": "> [!note] 💪\n> Train, track, repeat — plan the week's sessions, log what actually happened, and let the habits do the heavy lifting.",
+      "color": "#DC2626",
+      "ib": { "kind": "callout", "id": "fh-callout", "text": "Train, track, repeat — plan the week's sessions, log what actually happened, and let the habits do the heavy lifting.", "icon": "💪", "color": "#DC2626" } },
+    { "id": "fh-workouts", "x": -520, "y": -300, "width": 620, "height": 360, "type": "group", "label": "Workouts",
+      "ib": { "kind": "kanban-board", "id": "fh-workouts", "title": "Workouts", "columns": [
+        { "id": "wo-planned", "title": "Planned", "color": "#3B82F6", "items": [
+          { "id": "woi-1", "text": "Push day", "done": false },
+          { "id": "woi-2", "text": "5k easy run", "done": false } ] },
+        { "id": "wo-done", "title": "Done ✔", "color": "#10B981", "items": [
+          { "id": "woi-3", "text": "Legs + core", "done": true } ] }
+      ] } },
+    { "id": "fh-workouts::kbhdr::wo-planned", "x": -508, "y": -264, "width": 292, "height": 28, "type": "text", "text": "**Planned** (2)", "color": "#3B82F6" },
+    { "id": "fh-workouts::kbitem::wo-planned::woi-1", "x": -508, "y": -228, "width": 292, "height": 44, "type": "text", "text": "- [ ] Push day", "ib": { "id": "woi-1", "text": "Push day", "done": false } },
+    { "id": "fh-workouts::kbitem::wo-planned::woi-2", "x": -508, "y": -176, "width": 292, "height": 44, "type": "text", "text": "- [ ] 5k easy run", "ib": { "id": "woi-2", "text": "5k easy run", "done": false } },
+    { "id": "fh-workouts::kbhdr::wo-done", "x": -204, "y": -264, "width": 292, "height": 28, "type": "text", "text": "**Done ✔** (1)", "color": "#10B981" },
+    { "id": "fh-workouts::kbitem::wo-done::woi-3", "x": -204, "y": -228, "width": 292, "height": 44, "type": "text", "text": "- [x] Legs + core", "ib": { "id": "woi-3", "text": "Legs + core", "done": true } },
+    { "id": "fh-log", "x": 140, "y": -300, "width": 480, "height": 320, "type": "text",
+      "text": "### Weekly Log\n\n| Day | Workout | Min | Done |\n| --- | --- | --- | --- |\n| Mon | Push day | 45 | true |\n| Wed | Run | 30 |  |\n| Sat | Long walk | 60 |  |",
+      "color": "#FFFFFF",
+      "ib": { "kind": "table", "id": "fh-log", "title": "Weekly Log", "color": "#FFFFFF", "columns": [
+        { "id": "lg-day", "label": "Day", "type": "text", "align": "center" },
+        { "id": "lg-workout", "label": "Workout", "type": "text" },
+        { "id": "lg-min", "label": "Min", "type": "number", "align": "right" },
+        { "id": "lg-done", "label": "Done", "type": "checkbox", "align": "center" }
+      ], "rows": [
+        { "id": "lgr-1", "cells": { "lg-day": "Mon", "lg-workout": "Push day", "lg-min": "45", "lg-done": "true" } },
+        { "id": "lgr-2", "cells": { "lg-day": "Wed", "lg-workout": "Run", "lg-min": "30", "lg-done": "" } },
+        { "id": "lgr-3", "cells": { "lg-day": "Sat", "lg-workout": "Long walk", "lg-min": "60", "lg-done": "" } }
+      ] } },
+    { "id": "fh-habits", "x": -520, "y": 120, "width": 300, "height": 340, "type": "text",
+      "text": "### Habits\n\n- [ ] **Morning**\n  - [ ] Water 500 ml\n  - [ ] Stretch 10 min\n- [ ] **Daily**\n  - [ ] 8k steps\n  - [ ] No screens after 22:00\n- [ ] **Weekly**\n  - [ ] Meal prep",
+      "color": "#FFFFFF",
+      "ib": { "kind": "checklist", "id": "fh-habits", "title": "Habits", "color": "#FFFFFF", "accentColor": "#DC2626", "items": [
+        { "id": "hb-h1", "text": "Morning", "done": false, "isHeader": true },
+        { "id": "hb-1", "text": "Water 500 ml", "done": false, "parentId": "hb-h1" },
+        { "id": "hb-2", "text": "Stretch 10 min", "done": false, "parentId": "hb-h1" },
+        { "id": "hb-h2", "text": "Daily", "done": false, "isHeader": true },
+        { "id": "hb-3", "text": "8k steps", "done": false, "parentId": "hb-h2" },
+        { "id": "hb-4", "text": "No screens after 22:00", "done": false, "parentId": "hb-h2" },
+        { "id": "hb-h3", "text": "Weekly", "done": false, "isHeader": true },
+        { "id": "hb-5", "text": "Meal prep", "done": false, "parentId": "hb-h3" }
+      ] } },
+    { "id": "fh-goal", "x": -180, "y": 120, "width": 280, "height": 140, "type": "text",
+      "text": "🎯 GOAL\n\n5k under 25:00 by October. Log every run — the trend line is the reward.",
+      "color": "#FEE2E2",
+      "ib": { "kind": "sticky", "id": "fh-goal", "text": "🎯 GOAL\n\n5k under 25:00 by October. Log every run — the trend line is the reward.", "color": "#FEE2E2" } },
+    { "id": "fh-video", "x": 140, "y": 80, "width": 420, "height": 240, "type": "link",
+      "url": "https://www.youtube.com/watch?v=v7AYKMP6rOE",
+      "ib": { "kind": "bookmark", "id": "fh-video", "url": "https://www.youtube.com/watch?v=v7AYKMP6rOE" } }
+  ],
+  "edges": [
+    { "id": "fe-1", "fromNode": "fh-habits", "toNode": "fh-log", "color": "#DC2626", "label": "track it",
+      "ib": { "routing": "elbow", "elbowOrientation": "auto", "style": "dashed", "arrowhead": "end", "thickness": 2 } },
+    { "id": "fe-2", "fromNode": "fh-video", "toNode": "fh-workouts", "color": "#6B7280", "label": "recovery day",
+      "ib": { "routing": "straight", "style": "dashed", "arrowhead": "end", "thickness": 2 } }
+  ],
+  "ib": { "version": 1, "layout": "freeform", "viewport": { "x": 560, "y": 460, "zoom": 1 } }
+}

@@ -1,0 +1,616 @@
+{
+  "nodes": [
+    {
+      "id": "ck-callout",
+      "x": -520,
+      "y": -480,
+      "width": 820,
+      "height": 80,
+      "type": "text",
+      "text": "> [!note] 🍳\n> Kitchen HQ — plan the week's meals, keep recipes and macros side by side, and save techniques worth rewatching.",
+      "color": "#F97316",
+      "ib": {
+        "kind": "callout",
+        "id": "ck-callout",
+        "text": "Kitchen HQ — plan the week's meals, keep recipes and macros side by side, and save techniques worth rewatching.",
+        "icon": "🍳",
+        "color": "#F97316"
+      }
+    },
+    {
+      "id": "ck-group-inspo",
+      "x": -520,
+      "y": -360,
+      "width": 640,
+      "height": 460,
+      "type": "group",
+      "label": "Inspiration",
+      "color": "#F97316",
+      "ib": {
+        "kind": "group",
+        "id": "ck-group-inspo",
+        "label": "Inspiration",
+        "color": "#F97316"
+      }
+    },
+    {
+      "id": "ck-img-salad",
+      "x": -490,
+      "y": -300,
+      "width": 280,
+      "height": 280,
+      "type": "link",
+      "url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=900&q=80",
+      "ib": {
+        "kind": "image",
+        "id": "ck-img-salad",
+        "source": {
+          "type": "external",
+          "url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=900&q=80"
+        },
+        "caption": "Fresh & seasonal"
+      }
+    },
+    {
+      "id": "ck-img-pizza",
+      "x": -190,
+      "y": -300,
+      "width": 280,
+      "height": 340,
+      "type": "link",
+      "url": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=900&q=80",
+      "ib": {
+        "kind": "image",
+        "id": "ck-img-pizza",
+        "source": {
+          "type": "external",
+          "url": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=900&q=80"
+        },
+        "caption": "Friday night project"
+      }
+    },
+    {
+      "id": "ck-img-pancakes",
+      "x": -488,
+      "y": 36,
+      "width": 280,
+      "height": 340,
+      "type": "link",
+      "url": "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=900&q=80",
+      "ib": {
+        "kind": "image",
+        "id": "ck-img-pancakes",
+        "source": {
+          "type": "external",
+          "url": "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=900&q=80"
+        },
+        "caption": "Weekend brunch"
+      }
+    },
+    {
+      "id": "ck-sticky-inspo",
+      "x": -190,
+      "y": -80,
+      "width": 280,
+      "height": 160,
+      "type": "text",
+      "text": "📷 Paste your own food photos here — screenshots, restaurant dishes to recreate, plating ideas.",
+      "color": "#FED7AA",
+      "ib": {
+        "kind": "sticky",
+        "id": "ck-sticky-inspo",
+        "text": "📷 Paste your own food photos here — screenshots, restaurant dishes to recreate, plating ideas.",
+        "color": "#FED7AA"
+      }
+    },
+    {
+      "id": "ck-group-recipe",
+      "x": 160,
+      "y": -360,
+      "width": 620,
+      "height": 460,
+      "type": "group",
+      "label": "Recipe Corner",
+      "color": "#10B981",
+      "ib": {
+        "kind": "group",
+        "id": "ck-group-recipe",
+        "label": "Recipe Corner",
+        "color": "#10B981"
+      }
+    },
+    {
+      "id": "ck-recipe",
+      "x": 190,
+      "y": -300,
+      "width": 280,
+      "height": 380,
+      "type": "text",
+      "text": "🍝 Weeknight Carbonara — serves 2\n\n1. Boil spaghetti in well-salted water.\n2. Crisp guanciale in a dry pan.\n3. Whisk eggs + pecorino + lots of black pepper.\n4. Off the heat, toss pasta with guanciale, add egg mix + a splash of pasta water.\n5. Stir fast until glossy. Serve immediately.",
+      "color": "#FEF3C7",
+      "ib": {
+        "kind": "sticky",
+        "id": "ck-recipe",
+        "text": "🍝 Weeknight Carbonara — serves 2\n\n1. Boil spaghetti in well-salted water.\n2. Crisp guanciale in a dry pan.\n3. Whisk eggs + pecorino + lots of black pepper.\n4. Off the heat, toss pasta with guanciale, add egg mix + a splash of pasta water.\n5. Stir fast until glossy. Serve immediately.",
+        "color": "#FEF3C7"
+      }
+    },
+    {
+      "id": "ck-ingredients",
+      "x": 500,
+      "y": -300,
+      "width": 250,
+      "height": 380,
+      "type": "text",
+      "text": "### Ingredients\n\n- [ ] Spaghetti — 200 g\n- [ ] Guanciale — 100 g\n- [ ] Eggs — 3 (2 yolks + 1 whole)\n- [ ] Pecorino Romano — 50 g\n- [ ] Black pepper — plenty",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "checklist",
+        "id": "ck-ingredients",
+        "title": "Ingredients",
+        "color": "#FFFFFF",
+        "accentColor": "#10B981",
+        "items": [
+          {
+            "id": "ing-1",
+            "text": "Spaghetti — 200 g",
+            "done": false
+          },
+          {
+            "id": "ing-2",
+            "text": "Guanciale — 100 g",
+            "done": false
+          },
+          {
+            "id": "ing-3",
+            "text": "Eggs — 3 (2 yolks + 1 whole)",
+            "done": false
+          },
+          {
+            "id": "ing-4",
+            "text": "Pecorino Romano — 50 g",
+            "done": false
+          },
+          {
+            "id": "ing-5",
+            "text": "Black pepper — plenty",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "ck-video",
+      "x": 924,
+      "y": -436,
+      "width": 480,
+      "height": 270,
+      "type": "link",
+      "url": "https://www.youtube.com/watch?v=PUP7U5vTMM0",
+      "ib": {
+        "kind": "bookmark",
+        "id": "ck-video",
+        "url": "https://www.youtube.com/watch?v=PUP7U5vTMM0",
+        "fetchedAt": 1783801043179,
+        "fetchFailed": false
+      }
+    },
+    {
+      "id": "ck-macros",
+      "x": 820,
+      "y": -40,
+      "width": 520,
+      "height": 300,
+      "type": "text",
+      "text": "### Macros\n\n| Meal | Protein g | Carbs g | Fat g | kcal |\n| --- | --- | --- | --- | --- |\n| Carbonara | 32 | 78 | 30 | 720 |\n| Overnight oats | 22 | 58 | 14 | 450 |\n| Chicken salad | 38 | 18 | 22 | 420 |\n|  |  |  |  |  |",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "table",
+        "id": "ck-macros",
+        "title": "Macros",
+        "color": "#FFFFFF",
+        "columns": [
+          {
+            "id": "m-meal",
+            "label": "Meal",
+            "type": "text"
+          },
+          {
+            "id": "m-protein",
+            "label": "Protein g",
+            "type": "number",
+            "align": "right"
+          },
+          {
+            "id": "m-carbs",
+            "label": "Carbs g",
+            "type": "number",
+            "align": "right"
+          },
+          {
+            "id": "m-fat",
+            "label": "Fat g",
+            "type": "number",
+            "align": "right"
+          },
+          {
+            "id": "m-kcal",
+            "label": "kcal",
+            "type": "number",
+            "align": "right"
+          }
+        ],
+        "rows": [
+          {
+            "id": "mr-1",
+            "cells": {
+              "m-meal": "Carbonara",
+              "m-protein": "32",
+              "m-carbs": "78",
+              "m-fat": "30",
+              "m-kcal": "720"
+            }
+          },
+          {
+            "id": "mr-2",
+            "cells": {
+              "m-meal": "Overnight oats",
+              "m-protein": "22",
+              "m-carbs": "58",
+              "m-fat": "14",
+              "m-kcal": "450"
+            }
+          },
+          {
+            "id": "mr-3",
+            "cells": {
+              "m-meal": "Chicken salad",
+              "m-protein": "38",
+              "m-carbs": "18",
+              "m-fat": "22",
+              "m-kcal": "420"
+            }
+          },
+          {
+            "id": "mr-4",
+            "cells": {
+              "m-meal": "",
+              "m-protein": "",
+              "m-carbs": "",
+              "m-fat": "",
+              "m-kcal": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "ck-week",
+      "x": -604,
+      "y": 432,
+      "width": 640,
+      "height": 380,
+      "type": "group",
+      "label": "Meal Plan — This Week",
+      "ib": {
+        "kind": "kanban-board",
+        "id": "ck-week",
+        "title": "Meal Plan — This Week",
+        "columns": [
+          {
+            "id": "wk-cook",
+            "title": "To cook 🧑‍🍳",
+            "color": "#F97316",
+            "items": [
+              {
+                "id": "wi-1",
+                "text": "Carbonara — Tue",
+                "done": false
+              },
+              {
+                "id": "wi-2",
+                "text": "Sheet-pan salmon — Wed",
+                "done": false
+              }
+            ]
+          },
+          {
+            "id": "wk-prepped",
+            "title": "Prepped 🥡",
+            "color": "#3B82F6",
+            "items": [
+              {
+                "id": "wi-3",
+                "text": "Overnight oats ×3",
+                "done": false
+              }
+            ]
+          },
+          {
+            "id": "wk-done",
+            "title": "Cooked ✔",
+            "color": "#10B981",
+            "items": [
+              {
+                "id": "wi-4",
+                "text": "Chili con carne — froze 4 portions",
+                "done": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ck-week::kbhdr::wk-cook",
+      "type": "text",
+      "x": -592,
+      "y": 468,
+      "width": 197.33333333333334,
+      "height": 28,
+      "text": "**To cook 🧑‍🍳** (2)",
+      "color": "#F97316"
+    },
+    {
+      "id": "ck-week::kbitem::wk-cook::wi-1",
+      "type": "text",
+      "x": -592,
+      "y": 504,
+      "width": 197.33333333333334,
+      "height": 44,
+      "text": "- [ ] Carbonara — Tue",
+      "ib": {
+        "id": "wi-1",
+        "text": "Carbonara — Tue",
+        "done": false
+      }
+    },
+    {
+      "id": "ck-week::kbitem::wk-cook::wi-2",
+      "type": "text",
+      "x": -592,
+      "y": 556,
+      "width": 197.33333333333334,
+      "height": 44,
+      "text": "- [ ] Sheet-pan salmon — Wed",
+      "ib": {
+        "id": "wi-2",
+        "text": "Sheet-pan salmon — Wed",
+        "done": false
+      }
+    },
+    {
+      "id": "ck-week::kbhdr::wk-prepped",
+      "type": "text",
+      "x": -382.66666666666663,
+      "y": 468,
+      "width": 197.33333333333334,
+      "height": 28,
+      "text": "**Prepped 🥡** (1)",
+      "color": "#3B82F6"
+    },
+    {
+      "id": "ck-week::kbitem::wk-prepped::wi-3",
+      "type": "text",
+      "x": -382.66666666666663,
+      "y": 504,
+      "width": 197.33333333333334,
+      "height": 44,
+      "text": "- [ ] Overnight oats ×3",
+      "ib": {
+        "id": "wi-3",
+        "text": "Overnight oats ×3",
+        "done": false
+      }
+    },
+    {
+      "id": "ck-week::kbhdr::wk-done",
+      "type": "text",
+      "x": -173.33333333333331,
+      "y": 468,
+      "width": 197.33333333333334,
+      "height": 28,
+      "text": "**Cooked ✔** (1)",
+      "color": "#10B981"
+    },
+    {
+      "id": "ck-week::kbitem::wk-done::wi-4",
+      "type": "text",
+      "x": -173.33333333333331,
+      "y": 504,
+      "width": 197.33333333333334,
+      "height": 44,
+      "text": "- [x] Chili con carne — froze 4 portions",
+      "ib": {
+        "id": "wi-4",
+        "text": "Chili con carne — froze 4 portions",
+        "done": true
+      }
+    },
+    {
+      "id": "ck-pantry",
+      "x": 304,
+      "y": 608,
+      "width": 280,
+      "height": 380,
+      "type": "text",
+      "text": "### Pantry Restock\n\n- [ ] **Produce**\n  - [ ] Basil\n  - [ ] Cherry tomatoes\n  - [ ] Lemons\n- [ ] **Staples**\n  - [ ] Olive oil\n  - [ ] Spaghetti\n- [ ] **Fridge**\n  - [ ] Eggs\n  - [ ] Pecorino",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "checklist",
+        "id": "ck-pantry",
+        "title": "Pantry Restock",
+        "color": "#FFFFFF",
+        "accentColor": "#F97316",
+        "items": [
+          {
+            "id": "pt-h1",
+            "text": "Produce",
+            "done": false,
+            "isHeader": true
+          },
+          {
+            "id": "pt-1",
+            "text": "Basil",
+            "done": false,
+            "parentId": "pt-h1"
+          },
+          {
+            "id": "pt-2",
+            "text": "Cherry tomatoes",
+            "done": false,
+            "parentId": "pt-h1"
+          },
+          {
+            "id": "pt-3",
+            "text": "Lemons",
+            "done": false,
+            "parentId": "pt-h1"
+          },
+          {
+            "id": "pt-h2",
+            "text": "Staples",
+            "done": false,
+            "isHeader": true
+          },
+          {
+            "id": "pt-4",
+            "text": "Olive oil",
+            "done": false,
+            "parentId": "pt-h2"
+          },
+          {
+            "id": "pt-5",
+            "text": "Spaghetti",
+            "done": false,
+            "parentId": "pt-h2"
+          },
+          {
+            "id": "pt-h3",
+            "text": "Fridge",
+            "done": false,
+            "isHeader": true
+          },
+          {
+            "id": "pt-6",
+            "text": "Eggs",
+            "done": false,
+            "parentId": "pt-h3"
+          },
+          {
+            "id": "pt-7",
+            "text": "Pecorino",
+            "done": false,
+            "parentId": "pt-h3"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ck-comment",
+      "x": 480,
+      "y": 200,
+      "width": 300,
+      "height": 220,
+      "type": "text",
+      "text": "**Chef** _(11/07/2026, 02:13:20)_\nCarbonara verdict: 9/10 — silkier than last time. Guanciale > pancetta, confirmed.\n\n---\n**The critics** _(11/07/2026, 03:13:20)_\nMore pepper next time! 🌶️",
+      "color": "#FEF9C3",
+      "ib": {
+        "kind": "comment",
+        "id": "ck-comment",
+        "text": "Carbonara verdict: 9/10 — silkier than last time. Guanciale > pancetta, confirmed.",
+        "author": "Chef",
+        "createdAt": 1783700000000,
+        "color": "#FEF9C3",
+        "replies": [
+          {
+            "id": "cr-1",
+            "text": "More pepper next time! 🌶️",
+            "author": "The critics",
+            "createdAt": 1783703600000
+          }
+        ]
+      }
+    },
+    {
+      "id": "ck-map",
+      "x": 820,
+      "y": 320,
+      "width": 400,
+      "height": 300,
+      "type": "link",
+      "url": "https://www.google.com/maps/search/Borough+Market+London",
+      "ib": {
+        "kind": "map",
+        "id": "ck-map",
+        "url": "https://www.google.com/maps/search/Borough+Market+London"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "ce-1",
+      "fromNode": "ck-ingredients",
+      "toNode": "ck-recipe",
+      "color": "#10B981",
+      "label": "mise en place",
+      "ib": {
+        "routing": "straight",
+        "style": "solid",
+        "arrowhead": "end",
+        "thickness": 2
+      }
+    },
+    {
+      "id": "ce-2",
+      "fromNode": "ck-video",
+      "toNode": "ck-recipe",
+      "color": "#8B5CF6",
+      "label": "watch first",
+      "ib": {
+        "routing": "straight",
+        "bend": 222,
+        "style": "dashed",
+        "arrowhead": "end",
+        "thickness": 2
+      }
+    },
+    {
+      "id": "ce-3",
+      "fromNode": "ck-recipe",
+      "toNode": "ck-macros",
+      "color": "#3B82F6",
+      "label": "log it",
+      "ib": {
+        "routing": "elbow",
+        "elbowOrientation": "auto",
+        "style": "solid",
+        "arrowhead": "end",
+        "thickness": 2
+      }
+    },
+    {
+      "id": "ce-4",
+      "fromNode": "ck-pantry",
+      "toNode": "ck-week",
+      "color": "#F97316",
+      "label": "shop → cook",
+      "ib": {
+        "labelSize": 20,
+        "routing": "straight",
+        "style": "solid",
+        "arrowhead": "end",
+        "thickness": 4
+      }
+    }
+  ],
+  "ib": {
+    "version": 1,
+    "layout": "freeform",
+    "viewport": {
+      "zoom": 0.6209213230591556,
+      "x": 500.5858955902702,
+      "y": 152.93549244309338
+    }
+  }
+}

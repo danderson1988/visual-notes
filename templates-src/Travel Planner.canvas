@@ -1,0 +1,68 @@
+{
+  "nodes": [
+    { "id": "tp-callout", "x": -560, "y": -440, "width": 900, "height": 80, "type": "text",
+      "text": "> [!note] ✈️\n> Trip HQ — pin the destination, sketch the days, watch the budget, and pack without the 2am panic.",
+      "color": "#0EA5E9",
+      "ib": { "kind": "callout", "id": "tp-callout", "text": "Trip HQ — pin the destination, sketch the days, watch the budget, and pack without the 2am panic.", "icon": "✈️", "color": "#0EA5E9" } },
+    { "id": "tp-grp-inspo", "x": -560, "y": -320, "width": 560, "height": 320, "type": "group", "label": "Inspiration", "color": "#0EA5E9",
+      "ib": { "kind": "group", "id": "tp-grp-inspo", "label": "Inspiration", "color": "#0EA5E9" } },
+    { "id": "tp-img-1", "x": -530, "y": -260, "width": 240, "height": 200, "type": "link",
+      "url": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=900&q=80",
+      "ib": { "kind": "image", "id": "tp-img-1", "source": { "type": "external", "url": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=900&q=80" }, "caption": "The list starts here" } },
+    { "id": "tp-img-2", "x": -270, "y": -260, "width": 240, "height": 200, "type": "link",
+      "url": "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=900&q=80",
+      "ib": { "kind": "image", "id": "tp-img-2", "source": { "type": "external", "url": "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=900&q=80" }, "caption": "Paste your own finds" } },
+    { "id": "tp-map", "x": 40, "y": -320, "width": 420, "height": 320, "type": "link",
+      "url": "https://www.google.com/maps/search/Tokyo",
+      "ib": { "kind": "map", "id": "tp-map", "url": "https://www.google.com/maps/search/Tokyo" } },
+    { "id": "tp-itinerary", "x": -560, "y": 60, "width": 560, "height": 340, "type": "text",
+      "text": "### Itinerary\n\n| Day | Plan | Area | Booked |\n| --- | --- | --- | --- |\n| 1 | Arrive + hotel check-in | Shinjuku | true |\n| 2 | Museums + old town walk | Ueno |  |\n| 3 | Day trip | Hakone |  |",
+      "color": "#FFFFFF",
+      "ib": { "kind": "table", "id": "tp-itinerary", "title": "Itinerary", "color": "#FFFFFF", "columns": [
+        { "id": "it-day", "label": "Day", "type": "number", "align": "center" },
+        { "id": "it-plan", "label": "Plan", "type": "text" },
+        { "id": "it-area", "label": "Area", "type": "text" },
+        { "id": "it-booked", "label": "Booked", "type": "checkbox", "align": "center" }
+      ], "rows": [
+        { "id": "itr-1", "cells": { "it-day": "1", "it-plan": "Arrive + hotel check-in", "it-area": "Shinjuku", "it-booked": "true" } },
+        { "id": "itr-2", "cells": { "it-day": "2", "it-plan": "Museums + old town walk", "it-area": "Ueno", "it-booked": "" } },
+        { "id": "itr-3", "cells": { "it-day": "3", "it-plan": "Day trip", "it-area": "Hakone", "it-booked": "" } }
+      ] } },
+    { "id": "tp-budget", "x": 40, "y": 60, "width": 420, "height": 300, "type": "text",
+      "text": "### Budget\n\n| Item | Cost | Paid |\n| --- | --- | --- |\n| Flights | 650 | true |\n| Hotel | 480 |  |\n| Rail pass | 210 |  |",
+      "color": "#FFFFFF",
+      "ib": { "kind": "table", "id": "tp-budget", "title": "Budget", "color": "#FFFFFF", "columns": [
+        { "id": "bg-item", "label": "Item", "type": "text" },
+        { "id": "bg-cost", "label": "Cost", "type": "number", "align": "right" },
+        { "id": "bg-paid", "label": "Paid", "type": "checkbox", "align": "center" }
+      ], "rows": [
+        { "id": "bgr-1", "cells": { "bg-item": "Flights", "bg-cost": "650", "bg-paid": "true" } },
+        { "id": "bgr-2", "cells": { "bg-item": "Hotel", "bg-cost": "480", "bg-paid": "" } },
+        { "id": "bgr-3", "cells": { "bg-item": "Rail pass", "bg-cost": "210", "bg-paid": "" } }
+      ] } },
+    { "id": "tp-packing", "x": -560, "y": 460, "width": 300, "height": 360, "type": "text",
+      "text": "### Packing\n\n- [ ] **Documents**\n  - [ ] Passport\n  - [ ] Insurance\n- [ ] **Tech**\n  - [ ] Adapter\n  - [ ] Power bank\n- [ ] **Clothes**\n  - [ ] Layers\n  - [ ] Rain jacket",
+      "color": "#FFFFFF",
+      "ib": { "kind": "checklist", "id": "tp-packing", "title": "Packing", "color": "#FFFFFF", "accentColor": "#0EA5E9", "items": [
+        { "id": "pk-h1", "text": "Documents", "done": false, "isHeader": true },
+        { "id": "pk-1", "text": "Passport", "done": false, "parentId": "pk-h1" },
+        { "id": "pk-2", "text": "Insurance", "done": false, "parentId": "pk-h1" },
+        { "id": "pk-h2", "text": "Tech", "done": false, "isHeader": true },
+        { "id": "pk-3", "text": "Adapter", "done": false, "parentId": "pk-h2" },
+        { "id": "pk-4", "text": "Power bank", "done": false, "parentId": "pk-h2" },
+        { "id": "pk-h3", "text": "Clothes", "done": false, "isHeader": true },
+        { "id": "pk-5", "text": "Layers", "done": false, "parentId": "pk-h3" },
+        { "id": "pk-6", "text": "Rain jacket", "done": false, "parentId": "pk-h3" }
+      ] } },
+    { "id": "tp-booking", "x": -220, "y": 460, "width": 360, "height": 180, "type": "link",
+      "url": "https://www.booking.com",
+      "ib": { "kind": "bookmark", "id": "tp-booking", "url": "https://www.booking.com" } }
+  ],
+  "edges": [
+    { "id": "te-1", "fromNode": "tp-itinerary", "toNode": "tp-map", "color": "#0EA5E9", "label": "pin the stops",
+      "ib": { "routing": "straight", "style": "dashed", "arrowhead": "end", "thickness": 2 } },
+    { "id": "te-2", "fromNode": "tp-booking", "toNode": "tp-budget", "color": "#10B981", "label": "log bookings",
+      "ib": { "routing": "elbow", "elbowOrientation": "auto", "style": "dashed", "arrowhead": "end", "thickness": 2 } }
+  ],
+  "ib": { "version": 1, "layout": "freeform", "viewport": { "x": 600, "y": 480, "zoom": 1 } }
+}

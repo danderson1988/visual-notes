@@ -1,0 +1,393 @@
+{
+  "nodes": [
+    {
+      "id": "sc-callout",
+      "x": -560, "y": -560, "width": 900, "height": 80,
+      "type": "text",
+      "text": "> [!note] 🎬\n> Screenplay HQ — pitch it in one line, break the story into acts and beats, storyboard the key scene panel by panel, and track every scene to a locked draft.",
+      "color": "#8B5CF6",
+      "ib": { "kind": "callout", "id": "sc-callout", "text": "Screenplay HQ — pitch it in one line, break the story into acts and beats, storyboard the key scene panel by panel, and track every scene to a locked draft.", "icon": "🎬", "color": "#8B5CF6" }
+    },
+    {
+      "id": "sc-grp-core",
+      "x": -560, "y": -440, "width": 400, "height": 300,
+      "type": "group",
+      "label": "Story Core",
+      "color": "#14B8A6",
+      "ib": { "kind": "group", "id": "sc-grp-core", "label": "Story Core", "color": "#14B8A6" }
+    },
+    {
+      "id": "sc-logline",
+      "x": -530, "y": -385, "width": 340, "height": 110,
+      "type": "text",
+      "text": "🎯 LOGLINE\nWhen [inciting incident], a [flawed protagonist] must [objective] before [stakes/deadline].",
+      "color": "#FEF3C7",
+      "ib": { "kind": "sticky", "id": "sc-logline", "text": "🎯 LOGLINE\nWhen [inciting incident], a [flawed protagonist] must [objective] before [stakes/deadline].", "color": "#FEF3C7" }
+    },
+    {
+      "id": "sc-theme",
+      "x": -530, "y": -260, "width": 340, "height": 100,
+      "type": "text",
+      "text": "💭 THEME\nWhat is this story really about? State it as an argument, not a topic.",
+      "color": "#DBEAFE",
+      "ib": { "kind": "sticky", "id": "sc-theme", "text": "💭 THEME\nWhat is this story really about? State it as an argument, not a topic.", "color": "#DBEAFE" }
+    },
+    {
+      "id": "sc-characters",
+      "x": -120, "y": -440, "width": 460, "height": 300,
+      "type": "text",
+      "text": "### Characters\n\n| Name | Role | Want | Need |\n| --- | --- | --- | --- |\n| Rae Chen | Protagonist | Win the case | Forgive herself |\n| Marcus Hale | Antagonist | Bury the truth | Be seen |\n|  | Supporting |  |  |",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "table",
+        "id": "sc-characters",
+        "title": "Characters",
+        "color": "#FFFFFF",
+        "columns": [
+          { "id": "ch-name", "label": "Name", "type": "text" },
+          { "id": "ch-role", "label": "Role", "type": "select", "options": [
+            { "label": "Protagonist", "color": "#3B82F6" },
+            { "label": "Antagonist", "color": "#DC2626" },
+            { "label": "Supporting", "color": "#6B7280" }
+          ] },
+          { "id": "ch-want", "label": "Want", "type": "text" },
+          { "id": "ch-need", "label": "Need", "type": "text" }
+        ],
+        "rows": [
+          { "id": "chr-1", "cells": { "ch-name": "Rae Chen", "ch-role": "Protagonist", "ch-want": "Win the case", "ch-need": "Forgive herself" } },
+          { "id": "chr-2", "cells": { "ch-name": "Marcus Hale", "ch-role": "Antagonist", "ch-want": "Bury the truth", "ch-need": "Be seen" } },
+          { "id": "chr-3", "cells": { "ch-name": "", "ch-role": "Supporting", "ch-want": "", "ch-need": "" } }
+        ]
+      }
+    },
+    {
+      "id": "sc-video",
+      "x": 380, "y": -440, "width": 420, "height": 240,
+      "type": "link",
+      "url": "https://www.youtube.com/watch?v=KxDwieKpawg",
+      "ib": { "kind": "bookmark", "id": "sc-video", "url": "https://www.youtube.com/watch?v=KxDwieKpawg" }
+    },
+    {
+      "id": "sc-act1",
+      "x": -560, "y": -80, "width": 340, "height": 280,
+      "type": "group",
+      "label": "Act I — Setup",
+      "color": "#3B82F6",
+      "ib": { "kind": "group", "id": "sc-act1", "label": "Act I — Setup", "color": "#3B82F6" }
+    },
+    {
+      "id": "sc-a1-beat1",
+      "x": -535, "y": -15, "width": 290, "height": 90,
+      "type": "text",
+      "text": "Opening image — the world before. Mirror it in the final image.",
+      "color": "#DBEAFE",
+      "ib": { "kind": "sticky", "id": "sc-a1-beat1", "text": "Opening image — the world before. Mirror it in the final image.", "color": "#DBEAFE" }
+    },
+    {
+      "id": "sc-a1-beat2",
+      "x": -535, "y": 95, "width": 290, "height": 90,
+      "type": "text",
+      "text": "Catalyst (~p.12) — the event that breaks the routine. No going back.",
+      "color": "#DBEAFE",
+      "ib": { "kind": "sticky", "id": "sc-a1-beat2", "text": "Catalyst (~p.12) — the event that breaks the routine. No going back.", "color": "#DBEAFE" }
+    },
+    {
+      "id": "sc-act2",
+      "x": -180, "y": -80, "width": 340, "height": 280,
+      "type": "group",
+      "label": "Act II — Confrontation",
+      "color": "#F59E0B",
+      "ib": { "kind": "group", "id": "sc-act2", "label": "Act II — Confrontation", "color": "#F59E0B" }
+    },
+    {
+      "id": "sc-a2-beat1",
+      "x": -155, "y": -15, "width": 290, "height": 90,
+      "type": "text",
+      "text": "Midpoint (~p.55) — false victory or false defeat. Stakes double.",
+      "color": "#FEF3C7",
+      "ib": { "kind": "sticky", "id": "sc-a2-beat1", "text": "Midpoint (~p.55) — false victory or false defeat. Stakes double.", "color": "#FEF3C7" }
+    },
+    {
+      "id": "sc-a2-beat2",
+      "x": -155, "y": 95, "width": 290, "height": 90,
+      "type": "text",
+      "text": "All is lost (~p.75) — the worst moment. Whiff of death.",
+      "color": "#FEF3C7",
+      "ib": { "kind": "sticky", "id": "sc-a2-beat2", "text": "All is lost (~p.75) — the worst moment. Whiff of death.", "color": "#FEF3C7" }
+    },
+    {
+      "id": "sc-act3",
+      "x": 200, "y": -80, "width": 340, "height": 280,
+      "type": "group",
+      "label": "Act III — Resolution",
+      "color": "#DC2626",
+      "ib": { "kind": "group", "id": "sc-act3", "label": "Act III — Resolution", "color": "#DC2626" }
+    },
+    {
+      "id": "sc-a3-beat1",
+      "x": 225, "y": -15, "width": 290, "height": 90,
+      "type": "text",
+      "text": "Climax — the protagonist proves they've changed by choosing the need over the want.",
+      "color": "#FEE2E2",
+      "ib": { "kind": "sticky", "id": "sc-a3-beat1", "text": "Climax — the protagonist proves they've changed by choosing the need over the want.", "color": "#FEE2E2" }
+    },
+    {
+      "id": "sc-a3-beat2",
+      "x": 225, "y": 95, "width": 290, "height": 90,
+      "type": "text",
+      "text": "Final image — the world after. The opening image, transformed.",
+      "color": "#FEE2E2",
+      "ib": { "kind": "sticky", "id": "sc-a3-beat2", "text": "Final image — the world after. The opening image, transformed.", "color": "#FEE2E2" }
+    },
+    {
+      "id": "sc-grp-storyboard",
+      "x": -560, "y": 260, "width": 1100, "height": 340,
+      "type": "group",
+      "label": "Storyboard — Key Scene",
+      "color": "#8B5CF6",
+      "ib": { "kind": "group", "id": "sc-grp-storyboard", "label": "Storyboard — Key Scene", "color": "#8B5CF6" }
+    },
+    {
+      "id": "sc-panel-1",
+      "x": -530, "y": 320, "width": 240, "height": 220,
+      "type": "text",
+      "text": "PANEL 1 — WIDE\n\nEstablish the space. One image, one idea.\n\n🖼️ Paste a frame sketch or reference still here.",
+      "color": "#F3F4F6",
+      "ib": { "kind": "sticky", "id": "sc-panel-1", "text": "PANEL 1 — WIDE\n\nEstablish the space. One image, one idea.\n\n🖼️ Paste a frame sketch or reference still here.", "color": "#F3F4F6" }
+    },
+    {
+      "id": "sc-panel-2",
+      "x": -270, "y": 320, "width": 240, "height": 220,
+      "type": "text",
+      "text": "PANEL 2 — MEDIUM\n\nCharacter enters in motion — what are they doing, not saying?",
+      "color": "#F3F4F6",
+      "ib": { "kind": "sticky", "id": "sc-panel-2", "text": "PANEL 2 — MEDIUM\n\nCharacter enters in motion — what are they doing, not saying?", "color": "#F3F4F6" }
+    },
+    {
+      "id": "sc-panel-3",
+      "x": -10, "y": 320, "width": 240, "height": 220,
+      "type": "text",
+      "text": "PANEL 3 — CLOSE-UP\n\nThe detail that matters: hands, eyes, the object everything turns on.",
+      "color": "#F3F4F6",
+      "ib": { "kind": "sticky", "id": "sc-panel-3", "text": "PANEL 3 — CLOSE-UP\n\nThe detail that matters: hands, eyes, the object everything turns on.", "color": "#F3F4F6" }
+    },
+    {
+      "id": "sc-panel-4",
+      "x": 250, "y": 320, "width": 240, "height": 220,
+      "type": "text",
+      "text": "PANEL 4 — OVER-THE-SHOULDER\n\nThe confrontation. What do they see — and what do we see that they don't?",
+      "color": "#F3F4F6",
+      "ib": { "kind": "sticky", "id": "sc-panel-4", "text": "PANEL 4 — OVER-THE-SHOULDER\n\nThe confrontation. What do they see — and what do we see that they don't?", "color": "#F3F4F6" }
+    },
+    {
+      "id": "sc-beats",
+      "x": -560, "y": 660, "width": 560, "height": 400,
+      "type": "text",
+      "text": "### Beat Sheet\n\n| Beat | Act | Page | Status |\n| --- | --- | --- | --- |\n| Opening image | I | 1 | To write |\n| Catalyst | I | 12 | To write |\n| Break into two | I | 25 | To write |\n| Midpoint | II | 55 | To write |\n| All is lost | II | 75 | To write |\n| Break into three | III | 85 | To write |\n| Finale | III | 110 | To write |",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "table",
+        "id": "sc-beats",
+        "title": "Beat Sheet",
+        "color": "#FFFFFF",
+        "columns": [
+          { "id": "bt-beat", "label": "Beat", "type": "text" },
+          { "id": "bt-act", "label": "Act", "type": "select", "align": "center", "options": [
+            { "label": "I", "color": "#3B82F6" },
+            { "label": "II", "color": "#F59E0B" },
+            { "label": "III", "color": "#DC2626" }
+          ] },
+          { "id": "bt-page", "label": "Page", "type": "number", "align": "right" },
+          { "id": "bt-status", "label": "Status", "type": "select", "options": [
+            { "label": "To write", "color": "#6B7280" },
+            { "label": "Draft", "color": "#F59E0B" },
+            { "label": "Locked", "color": "#10B981" }
+          ] }
+        ],
+        "rows": [
+          { "id": "btr-1", "cells": { "bt-beat": "Opening image", "bt-act": "I", "bt-page": "1", "bt-status": "To write" } },
+          { "id": "btr-2", "cells": { "bt-beat": "Catalyst", "bt-act": "I", "bt-page": "12", "bt-status": "To write" } },
+          { "id": "btr-3", "cells": { "bt-beat": "Break into two", "bt-act": "I", "bt-page": "25", "bt-status": "To write" } },
+          { "id": "btr-4", "cells": { "bt-beat": "Midpoint", "bt-act": "II", "bt-page": "55", "bt-status": "To write" } },
+          { "id": "btr-5", "cells": { "bt-beat": "All is lost", "bt-act": "II", "bt-page": "75", "bt-status": "To write" } },
+          { "id": "btr-6", "cells": { "bt-beat": "Break into three", "bt-act": "III", "bt-page": "85", "bt-status": "To write" } },
+          { "id": "btr-7", "cells": { "bt-beat": "Finale", "bt-act": "III", "bt-page": "110", "bt-status": "To write" } }
+        ]
+      }
+    },
+    {
+      "id": "sc-scenes",
+      "x": 40, "y": 660, "width": 620, "height": 400,
+      "type": "group",
+      "label": "Scene Tracker",
+      "ib": {
+        "kind": "kanban-board",
+        "id": "sc-scenes",
+        "title": "Scene Tracker",
+        "columns": [
+          {
+            "id": "sn-outline", "title": "To outline 📝", "color": "#6B7280",
+            "items": [
+              { "id": "sni-1", "text": "Sc. 12 — Rooftop confrontation", "done": false },
+              { "id": "sni-2", "text": "Sc. 18 — The verdict", "done": false }
+            ]
+          },
+          {
+            "id": "sn-drafting", "title": "Drafting ✍️", "color": "#F59E0B",
+            "items": [
+              { "id": "sni-3", "text": "Sc. 1 — Cold open", "done": false }
+            ]
+          },
+          {
+            "id": "sn-locked", "title": "Locked 🔒", "color": "#10B981",
+            "items": [
+              { "id": "sni-4", "text": "Sc. 3 — Meet at the diner", "done": true }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "sc-scenes::kbhdr::sn-outline",
+      "x": 52, "y": 696, "width": 190.67, "height": 28,
+      "type": "text",
+      "text": "**To outline 📝** (2)",
+      "color": "#6B7280"
+    },
+    {
+      "id": "sc-scenes::kbitem::sn-outline::sni-1",
+      "x": 52, "y": 732, "width": 190.67, "height": 44,
+      "type": "text",
+      "text": "- [ ] Sc. 12 — Rooftop confrontation",
+      "ib": { "id": "sni-1", "text": "Sc. 12 — Rooftop confrontation", "done": false }
+    },
+    {
+      "id": "sc-scenes::kbitem::sn-outline::sni-2",
+      "x": 52, "y": 784, "width": 190.67, "height": 44,
+      "type": "text",
+      "text": "- [ ] Sc. 18 — The verdict",
+      "ib": { "id": "sni-2", "text": "Sc. 18 — The verdict", "done": false }
+    },
+    {
+      "id": "sc-scenes::kbhdr::sn-drafting",
+      "x": 254.67, "y": 696, "width": 190.67, "height": 28,
+      "type": "text",
+      "text": "**Drafting ✍️** (1)",
+      "color": "#F59E0B"
+    },
+    {
+      "id": "sc-scenes::kbitem::sn-drafting::sni-3",
+      "x": 254.67, "y": 732, "width": 190.67, "height": 44,
+      "type": "text",
+      "text": "- [ ] Sc. 1 — Cold open",
+      "ib": { "id": "sni-3", "text": "Sc. 1 — Cold open", "done": false }
+    },
+    {
+      "id": "sc-scenes::kbhdr::sn-locked",
+      "x": 457.33, "y": 696, "width": 190.67, "height": 28,
+      "type": "text",
+      "text": "**Locked 🔒** (1)",
+      "color": "#10B981"
+    },
+    {
+      "id": "sc-scenes::kbitem::sn-locked::sni-4",
+      "x": 457.33, "y": 732, "width": 190.67, "height": 44,
+      "type": "text",
+      "text": "- [x] Sc. 3 — Meet at the diner",
+      "ib": { "id": "sni-4", "text": "Sc. 3 — Meet at the diner", "done": true }
+    },
+    {
+      "id": "sc-progress",
+      "x": 700, "y": 660, "width": 280, "height": 400,
+      "type": "text",
+      "text": "### Draft Progress\n\n- [ ] **Milestones**\n  - [ ] Outline complete\n  - [ ] First draft\n  - [ ] Table read\n  - [ ] Revision pass\n  - [ ] Polish & proof\n- [ ] **Format**\n  - [ ] Title page\n  - [ ] Page count 90–120",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "checklist",
+        "id": "sc-progress",
+        "title": "Draft Progress",
+        "color": "#FFFFFF",
+        "accentColor": "#8B5CF6",
+        "items": [
+          { "id": "pg-h1", "text": "Milestones", "done": false, "isHeader": true },
+          { "id": "pg-1", "text": "Outline complete", "done": false, "parentId": "pg-h1" },
+          { "id": "pg-2", "text": "First draft", "done": false, "parentId": "pg-h1" },
+          { "id": "pg-3", "text": "Table read", "done": false, "parentId": "pg-h1" },
+          { "id": "pg-4", "text": "Revision pass", "done": false, "parentId": "pg-h1" },
+          { "id": "pg-5", "text": "Polish & proof", "done": false, "parentId": "pg-h1" },
+          { "id": "pg-h2", "text": "Format", "done": false, "isHeader": true },
+          { "id": "pg-6", "text": "Title page", "done": false, "parentId": "pg-h2" },
+          { "id": "pg-7", "text": "Page count 90–120", "done": false, "parentId": "pg-h2" }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "se-1",
+      "fromNode": "sc-act1",
+      "toNode": "sc-act2",
+      "color": "#3B82F6",
+      "label": "break into two",
+      "ib": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
+    },
+    {
+      "id": "se-2",
+      "fromNode": "sc-act2",
+      "toNode": "sc-act3",
+      "color": "#F59E0B",
+      "label": "break into three",
+      "ib": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
+    },
+    {
+      "id": "se-3",
+      "fromNode": "sc-panel-1",
+      "toNode": "sc-panel-2",
+      "color": "#8B5CF6",
+      "ib": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
+    },
+    {
+      "id": "se-4",
+      "fromNode": "sc-panel-2",
+      "toNode": "sc-panel-3",
+      "color": "#8B5CF6",
+      "ib": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
+    },
+    {
+      "id": "se-5",
+      "fromNode": "sc-panel-3",
+      "toNode": "sc-panel-4",
+      "color": "#8B5CF6",
+      "ib": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
+    },
+    {
+      "id": "se-6",
+      "fromNode": "sc-logline",
+      "toNode": "sc-beats",
+      "color": "#14B8A6",
+      "label": "expand into beats",
+      "ib": { "routing": "elbow", "elbowOrientation": "auto", "style": "dashed", "arrowhead": "end", "thickness": 2 }
+    },
+    {
+      "id": "se-7",
+      "fromNode": "sc-beats",
+      "toNode": "sc-grp-storyboard",
+      "color": "#8B5CF6",
+      "label": "visualize key scenes",
+      "ib": { "routing": "elbow", "elbowOrientation": "auto", "style": "dashed", "arrowhead": "end", "thickness": 2 }
+    },
+    {
+      "id": "se-8",
+      "fromNode": "sc-video",
+      "toNode": "sc-logline",
+      "color": "#6B7280",
+      "label": "story fundamentals",
+      "ib": { "routing": "straight", "style": "dashed", "arrowhead": "end", "thickness": 2 }
+    }
+  ],
+  "ib": {
+    "version": 1,
+    "layout": "freeform",
+    "viewport": { "x": 620, "y": 620, "zoom": 1 }
+  }
+}

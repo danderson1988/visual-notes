@@ -1,0 +1,85 @@
+{
+  "nodes": [
+    { "id": "pr-callout", "x": -540, "y": -420, "width": 880, "height": 80, "type": "text",
+      "text": "> [!note] 🚀\n> Roadmap HQ — goals set the direction, the board moves the work, milestones keep everyone honest, and risks stay where you can see them.",
+      "color": "#8B5CF6",
+      "ib": { "kind": "callout", "id": "pr-callout", "text": "Roadmap HQ — goals set the direction, the board moves the work, milestones keep everyone honest, and risks stay where you can see them.", "icon": "🚀", "color": "#8B5CF6" } },
+    { "id": "pr-grp-goals", "x": -540, "y": -300, "width": 360, "height": 300, "type": "group", "label": "Goals", "color": "#8B5CF6",
+      "ib": { "kind": "group", "id": "pr-grp-goals", "label": "Goals", "color": "#8B5CF6" } },
+    { "id": "pr-goal1", "x": -510, "y": -240, "width": 300, "height": 100, "type": "text",
+      "text": "🎯 Ship v1.0 beta to first testers",
+      "color": "#EDE9FE",
+      "ib": { "kind": "sticky", "id": "pr-goal1", "text": "🎯 Ship v1.0 beta to first testers", "color": "#EDE9FE" } },
+    { "id": "pr-goal2", "x": -510, "y": -120, "width": 300, "height": 100, "type": "text",
+      "text": "📈 100 weekly active users by launch + 30 days",
+      "color": "#EDE9FE",
+      "ib": { "kind": "sticky", "id": "pr-goal2", "text": "📈 100 weekly active users by launch + 30 days", "color": "#EDE9FE" } },
+    { "id": "pr-grp-risks", "x": -140, "y": -300, "width": 360, "height": 300, "type": "group", "label": "Risks", "color": "#DC2626",
+      "ib": { "kind": "group", "id": "pr-grp-risks", "label": "Risks", "color": "#DC2626" } },
+    { "id": "pr-risk1", "x": -110, "y": -240, "width": 300, "height": 100, "type": "text",
+      "text": "⚠️ Scope creep — cut something before adding anything.",
+      "color": "#FEE2E2",
+      "ib": { "kind": "sticky", "id": "pr-risk1", "text": "⚠️ Scope creep — cut something before adding anything.", "color": "#FEE2E2" } },
+    { "id": "pr-risk2", "x": -110, "y": -120, "width": 300, "height": 100, "type": "text",
+      "text": "⚠️ Deploy pipeline is a single point of failure.",
+      "color": "#FEE2E2",
+      "ib": { "kind": "sticky", "id": "pr-risk2", "text": "⚠️ Deploy pipeline is a single point of failure.", "color": "#FEE2E2" } },
+    { "id": "pr-milestones", "x": 260, "y": -300, "width": 480, "height": 300, "type": "text",
+      "text": "### Milestones\n\n| Milestone | Due | Status |\n| --- | --- | --- |\n| Beta cut | 2026-08-15 | Planned |\n| Public launch | 2026-09-30 | Planned |\n| Launch retro | 2026-10-07 | Planned |",
+      "color": "#FFFFFF",
+      "ib": { "kind": "table", "id": "pr-milestones", "title": "Milestones", "color": "#FFFFFF", "columns": [
+        { "id": "ml-name", "label": "Milestone", "type": "text" },
+        { "id": "ml-due", "label": "Due", "type": "date", "align": "center" },
+        { "id": "ml-status", "label": "Status", "type": "select", "options": [
+          { "label": "Planned", "color": "#6B7280" },
+          { "label": "At risk", "color": "#F59E0B" },
+          { "label": "Done", "color": "#10B981" } ] }
+      ], "rows": [
+        { "id": "mlr-1", "cells": { "ml-name": "Beta cut", "ml-due": "2026-08-15", "ml-status": "Planned" } },
+        { "id": "mlr-2", "cells": { "ml-name": "Public launch", "ml-due": "2026-09-30", "ml-status": "Planned" } },
+        { "id": "mlr-3", "cells": { "ml-name": "Launch retro", "ml-due": "2026-10-07", "ml-status": "Planned" } }
+      ] } },
+    { "id": "pr-board", "x": -540, "y": 80, "width": 900, "height": 400, "type": "group", "label": "Delivery Board",
+      "ib": { "kind": "kanban-board", "id": "pr-board", "title": "Delivery Board", "columns": [
+        { "id": "pb-backlog", "title": "Backlog", "color": "#6B7280", "items": [
+          { "id": "pbi-1", "text": "Onboarding flow", "done": false },
+          { "id": "pbi-2", "text": "Billing page", "done": false } ] },
+        { "id": "pb-progress", "title": "In progress", "color": "#3B82F6", "wipLimit": 2, "items": [
+          { "id": "pbi-3", "text": "Auth revamp", "done": false } ] },
+        { "id": "pb-review", "title": "Review", "color": "#F59E0B", "items": [
+          { "id": "pbi-4", "text": "Landing page copy", "done": false } ] },
+        { "id": "pb-done", "title": "Done", "color": "#10B981", "items": [
+          { "id": "pbi-5", "text": "CI pipeline", "done": true } ] }
+      ] } },
+    { "id": "pr-board::kbhdr::pb-backlog", "x": -528, "y": 116, "width": 210, "height": 28, "type": "text", "text": "**Backlog** (2)", "color": "#6B7280" },
+    { "id": "pr-board::kbitem::pb-backlog::pbi-1", "x": -528, "y": 152, "width": 210, "height": 44, "type": "text", "text": "- [ ] Onboarding flow", "ib": { "id": "pbi-1", "text": "Onboarding flow", "done": false } },
+    { "id": "pr-board::kbitem::pb-backlog::pbi-2", "x": -528, "y": 204, "width": 210, "height": 44, "type": "text", "text": "- [ ] Billing page", "ib": { "id": "pbi-2", "text": "Billing page", "done": false } },
+    { "id": "pr-board::kbhdr::pb-progress", "x": -306, "y": 116, "width": 210, "height": 28, "type": "text", "text": "**In progress** (1/2)", "color": "#3B82F6" },
+    { "id": "pr-board::kbitem::pb-progress::pbi-3", "x": -306, "y": 152, "width": 210, "height": 44, "type": "text", "text": "- [ ] Auth revamp", "ib": { "id": "pbi-3", "text": "Auth revamp", "done": false } },
+    { "id": "pr-board::kbhdr::pb-review", "x": -84, "y": 116, "width": 210, "height": 28, "type": "text", "text": "**Review** (1)", "color": "#F59E0B" },
+    { "id": "pr-board::kbitem::pb-review::pbi-4", "x": -84, "y": 152, "width": 210, "height": 44, "type": "text", "text": "- [ ] Landing page copy", "ib": { "id": "pbi-4", "text": "Landing page copy", "done": false } },
+    { "id": "pr-board::kbhdr::pb-done", "x": 138, "y": 116, "width": 210, "height": 28, "type": "text", "text": "**Done** (1)", "color": "#10B981" },
+    { "id": "pr-board::kbitem::pb-done::pbi-5", "x": 138, "y": 152, "width": 210, "height": 44, "type": "text", "text": "- [x] CI pipeline", "ib": { "id": "pbi-5", "text": "CI pipeline", "done": true } },
+    { "id": "pr-launch", "x": 400, "y": 80, "width": 300, "height": 360, "type": "text",
+      "text": "### Launch Checklist\n\n- [ ] **Before launch**\n  - [ ] Pricing final\n  - [ ] Docs pass\n  - [ ] Load test\n- [ ] **Launch day**\n  - [ ] Announcement post\n  - [ ] Monitor errors",
+      "color": "#FFFFFF",
+      "ib": { "kind": "checklist", "id": "pr-launch", "title": "Launch Checklist", "color": "#FFFFFF", "accentColor": "#8B5CF6", "items": [
+        { "id": "lc-h1", "text": "Before launch", "done": false, "isHeader": true },
+        { "id": "lc-1", "text": "Pricing final", "done": false, "parentId": "lc-h1" },
+        { "id": "lc-2", "text": "Docs pass", "done": false, "parentId": "lc-h1" },
+        { "id": "lc-3", "text": "Load test", "done": false, "parentId": "lc-h1" },
+        { "id": "lc-h2", "text": "Launch day", "done": false, "isHeader": true },
+        { "id": "lc-4", "text": "Announcement post", "done": false, "parentId": "lc-h2" },
+        { "id": "lc-5", "text": "Monitor errors", "done": false, "parentId": "lc-h2" }
+      ] } }
+  ],
+  "edges": [
+    { "id": "pe-1", "fromNode": "pr-grp-goals", "toNode": "pr-board", "color": "#8B5CF6", "label": "drives",
+      "ib": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 } },
+    { "id": "pe-2", "fromNode": "pr-grp-risks", "toNode": "pr-milestones", "color": "#DC2626", "label": "watch",
+      "ib": { "routing": "straight", "style": "dashed", "arrowhead": "end", "thickness": 2 } },
+    { "id": "pe-3", "fromNode": "pr-board", "toNode": "pr-launch", "color": "#10B981", "label": "when Done",
+      "ib": { "routing": "elbow", "elbowOrientation": "auto", "style": "dashed", "arrowhead": "end", "thickness": 2 } }
+  ],
+  "ib": { "version": 1, "layout": "freeform", "viewport": { "x": 580, "y": 460, "zoom": 1 } }
+}

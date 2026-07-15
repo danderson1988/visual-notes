@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "module": "ESNext",
+    "target": "ES2018",
+    "allowImportingTsExtensions": false,
+    "importHelpers": true,
+    "isolatedModules": true,
+    "strictNullChecks": true,
+    "noImplicitOverride": true,
+    "useUnknownInCatchVariables": true,
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "obsidian": ["./node_modules/obsidian/obsidian.d.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

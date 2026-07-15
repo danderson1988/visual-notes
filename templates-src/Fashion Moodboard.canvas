@@ -1,0 +1,450 @@
+{
+  "nodes": [
+    {
+      "id": "fm-callout",
+      "x": -480,
+      "y": -420,
+      "width": 740,
+      "height": 80,
+      "type": "text",
+      "text": "> [!note] 👗\n> Collect inspiration, build a season palette, plan outfits, and track your wardrobe — all in one place.",
+      "color": "#EC4899",
+      "ib": {
+        "kind": "callout",
+        "id": "fm-callout",
+        "text": "Collect inspiration, build a season palette, plan outfits, and track your wardrobe — all in one place.",
+        "icon": "👗",
+        "color": "#EC4899"
+      }
+    },
+    {
+      "id": "fm-group-inspo",
+      "x": -480,
+      "y": -300,
+      "width": 560,
+      "height": 400,
+      "type": "group",
+      "label": "Inspiration",
+      "color": "#EC4899",
+      "ib": {
+        "kind": "group",
+        "id": "fm-group-inspo",
+        "label": "Inspiration",
+        "color": "#EC4899"
+      }
+    },
+    {
+      "id": "fm-sticky-1",
+      "x": -450,
+      "y": -240,
+      "width": 240,
+      "height": 200,
+      "type": "text",
+      "text": "📸 Drop inspiration images here — paste from the clipboard or drag them in from your files.",
+      "color": "#FBCFE8",
+      "ib": {
+        "kind": "sticky",
+        "id": "fm-sticky-1",
+        "text": "📸 Drop inspiration images here — paste from the clipboard or drag them in from your files.",
+        "color": "#FBCFE8"
+      }
+    },
+    {
+      "id": "fm-sticky-2",
+      "x": -190,
+      "y": -240,
+      "width": 240,
+      "height": 200,
+      "type": "text",
+      "text": "✂️ Textures & fabrics — linen, silk, denim, knit. Note what feels right for the season.",
+      "color": "#E9D5FF",
+      "ib": {
+        "kind": "sticky",
+        "id": "fm-sticky-2",
+        "text": "✂️ Textures & fabrics — linen, silk, denim, knit. Note what feels right for the season.",
+        "color": "#E9D5FF"
+      }
+    },
+    {
+      "id": "fm-group-palette",
+      "x": 120,
+      "y": -300,
+      "width": 400,
+      "height": 400,
+      "type": "group",
+      "label": "Season Palette",
+      "color": "#8E2A3C",
+      "ib": {
+        "kind": "group",
+        "id": "fm-group-palette",
+        "label": "Season Palette",
+        "color": "#8E2A3C"
+      }
+    },
+    {
+      "id": "fm-swatch-1",
+      "x": 150,
+      "y": -245,
+      "width": 160,
+      "height": 160,
+      "type": "text",
+      "text": "#D4B896 — Desert Sand",
+      "color": "#D4B896",
+      "ib": {
+        "kind": "swatch",
+        "id": "fm-swatch-1",
+        "color": "#D4B896"
+      }
+    },
+    {
+      "id": "fm-swatch-2",
+      "x": 330,
+      "y": -245,
+      "width": 160,
+      "height": 160,
+      "type": "text",
+      "text": "#2F3A45 — Merlin",
+      "color": "#2F3A45",
+      "ib": {
+        "kind": "swatch",
+        "id": "fm-swatch-2",
+        "color": "#2F3A45"
+      }
+    },
+    {
+      "id": "fm-swatch-3",
+      "x": 150,
+      "y": -70,
+      "width": 160,
+      "height": 160,
+      "type": "text",
+      "text": "#8E2A3C — Chili Red",
+      "color": "#8E2A3C",
+      "ib": {
+        "kind": "swatch",
+        "id": "fm-swatch-3",
+        "color": "#8E2A3C"
+      }
+    },
+    {
+      "id": "fm-swatch-4",
+      "x": 330,
+      "y": -70,
+      "width": 160,
+      "height": 160,
+      "type": "text",
+      "text": "#F3E5D8 — Cream Sand",
+      "color": "#F3E5D8",
+      "ib": {
+        "kind": "swatch",
+        "id": "fm-swatch-4",
+        "color": "#F3E5D8"
+      }
+    },
+    {
+      "id": "fm-kanban",
+      "x": -480,
+      "y": 160,
+      "width": 620,
+      "height": 400,
+      "type": "group",
+      "label": "Outfit Planning",
+      "ib": {
+        "kind": "kanban-board",
+        "id": "fm-kanban",
+        "title": "Outfit Planning",
+        "columns": [
+          {
+            "id": "kb-ideas",
+            "title": "Ideas 💡",
+            "color": "#EC4899",
+            "items": [
+              {
+                "id": "ki-1",
+                "text": "Linen co-ord for warm days",
+                "done": false
+              },
+              {
+                "id": "ki-2",
+                "text": "Monochrome layering",
+                "done": false
+              }
+            ]
+          },
+          {
+            "id": "kb-try",
+            "title": "To try on",
+            "color": "#F59E0B",
+            "items": [
+              {
+                "id": "ki-3",
+                "text": "Denim jacket + white midi",
+                "done": false
+              }
+            ]
+          },
+          {
+            "id": "kb-ready",
+            "title": "Ready to wear",
+            "color": "#10B981",
+            "items": [
+              {
+                "id": "ki-4",
+                "text": "Black blazer evening look",
+                "done": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "fm-kanban::kbhdr::kb-ideas",
+      "type": "text",
+      "x": -468,
+      "y": 196,
+      "width": 190.66666666666666,
+      "height": 28,
+      "text": "**Ideas 💡** (2)",
+      "color": "#EC4899"
+    },
+    {
+      "id": "fm-kanban::kbitem::kb-ideas::ki-1",
+      "type": "text",
+      "x": -468,
+      "y": 232,
+      "width": 190.66666666666666,
+      "height": 44,
+      "text": "- [ ] Linen co-ord for warm days",
+      "ib": {
+        "id": "ki-1",
+        "text": "Linen co-ord for warm days",
+        "done": false
+      }
+    },
+    {
+      "id": "fm-kanban::kbitem::kb-ideas::ki-2",
+      "type": "text",
+      "x": -468,
+      "y": 284,
+      "width": 190.66666666666666,
+      "height": 44,
+      "text": "- [ ] Monochrome layering",
+      "ib": {
+        "id": "ki-2",
+        "text": "Monochrome layering",
+        "done": false
+      }
+    },
+    {
+      "id": "fm-kanban::kbhdr::kb-try",
+      "type": "text",
+      "x": -265.33333333333337,
+      "y": 196,
+      "width": 190.66666666666666,
+      "height": 28,
+      "text": "**To try on** (1)",
+      "color": "#F59E0B"
+    },
+    {
+      "id": "fm-kanban::kbitem::kb-try::ki-3",
+      "type": "text",
+      "x": -265.33333333333337,
+      "y": 232,
+      "width": 190.66666666666666,
+      "height": 44,
+      "text": "- [ ] Denim jacket + white midi",
+      "ib": {
+        "id": "ki-3",
+        "text": "Denim jacket + white midi",
+        "done": false
+      }
+    },
+    {
+      "id": "fm-kanban::kbhdr::kb-ready",
+      "type": "text",
+      "x": -62.666666666666686,
+      "y": 196,
+      "width": 190.66666666666666,
+      "height": 28,
+      "text": "**Ready to wear** (1)",
+      "color": "#10B981"
+    },
+    {
+      "id": "fm-kanban::kbitem::kb-ready::ki-4",
+      "type": "text",
+      "x": -62.666666666666686,
+      "y": 232,
+      "width": 190.66666666666666,
+      "height": 44,
+      "text": "- [x] Black blazer evening look",
+      "ib": {
+        "id": "ki-4",
+        "text": "Black blazer evening look",
+        "done": true
+      }
+    },
+    {
+      "id": "fm-checklist",
+      "x": 180,
+      "y": 160,
+      "width": 280,
+      "height": 340,
+      "type": "text",
+      "text": "### Shopping List\n\n- [ ] **Essentials**\n  - [ ] White button-down\n  - [ ] Straight-leg jeans\n  - [ ] Leather belt\n- [ ] **Accessories**\n  - [ ] Gold hoops\n  - [ ] Silk scarf",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "checklist",
+        "id": "fm-checklist",
+        "title": "Shopping List",
+        "color": "#FFFFFF",
+        "accentColor": "#EC4899",
+        "items": [
+          {
+            "id": "cl-h1",
+            "text": "Essentials",
+            "done": false,
+            "isHeader": true
+          },
+          {
+            "id": "cl-1",
+            "text": "White button-down",
+            "done": false,
+            "parentId": "cl-h1"
+          },
+          {
+            "id": "cl-2",
+            "text": "Straight-leg jeans",
+            "done": false,
+            "parentId": "cl-h1"
+          },
+          {
+            "id": "cl-3",
+            "text": "Leather belt",
+            "done": false,
+            "parentId": "cl-h1"
+          },
+          {
+            "id": "cl-h2",
+            "text": "Accessories",
+            "done": false,
+            "isHeader": true
+          },
+          {
+            "id": "cl-4",
+            "text": "Gold hoops",
+            "done": false,
+            "parentId": "cl-h2"
+          },
+          {
+            "id": "cl-5",
+            "text": "Silk scarf",
+            "done": false,
+            "parentId": "cl-h2"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fm-table",
+      "x": 500,
+      "y": 160,
+      "width": 470,
+      "height": 340,
+      "type": "text",
+      "text": "### Wardrobe Tracker\n\n| Item | Brand | Size | Price | Status |\n| --- | --- | --- | --- | --- |\n| Trench coat |  | M | 120 | Wishlist |\n| White sneakers |  | 38 | 85 | Owned |\n|  |  |  |  |  |",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "table",
+        "id": "fm-table",
+        "title": "Wardrobe Tracker",
+        "color": "#FFFFFF",
+        "columns": [
+          {
+            "id": "c-item",
+            "label": "Item",
+            "type": "text"
+          },
+          {
+            "id": "c-brand",
+            "label": "Brand",
+            "type": "text"
+          },
+          {
+            "id": "c-size",
+            "label": "Size",
+            "type": "text",
+            "align": "center"
+          },
+          {
+            "id": "c-price",
+            "label": "Price",
+            "type": "number",
+            "align": "right"
+          },
+          {
+            "id": "c-status",
+            "label": "Status",
+            "type": "select",
+            "options": [
+              {
+                "label": "Owned",
+                "color": "#10B981"
+              },
+              {
+                "label": "Wishlist",
+                "color": "#F59E0B"
+              },
+              {
+                "label": "Ordered",
+                "color": "#3B82F6"
+              }
+            ]
+          }
+        ],
+        "rows": [
+          {
+            "id": "r-1",
+            "cells": {
+              "c-item": "Trench coat",
+              "c-brand": "",
+              "c-size": "M",
+              "c-price": "120",
+              "c-status": "Wishlist"
+            }
+          },
+          {
+            "id": "r-2",
+            "cells": {
+              "c-item": "White sneakers",
+              "c-brand": "",
+              "c-size": "38",
+              "c-price": "85",
+              "c-status": "Owned"
+            }
+          },
+          {
+            "id": "r-3",
+            "cells": {
+              "c-item": "",
+              "c-brand": "",
+              "c-size": "",
+              "c-price": "",
+              "c-status": ""
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "edges": [],
+  "ib": {
+    "version": 1,
+    "layout": "freeform",
+    "viewport": {
+      "zoom": 0.6830134553650705,
+      "x": 747.5963390478794,
+      "y": 511.97035027918173
+    }
+  }
+}
