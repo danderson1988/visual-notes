@@ -35,7 +35,7 @@
 
 import {
   VisualNotesFile, Card, Connection, DrawingStroke,
-  TileCard, StickyCard, ChecklistCard, CommentCard, TableCard, ImageCard, AudioCard,
+  StickyCard, ChecklistCard, CommentCard, TableCard, ImageCard, AudioCard,
   NoteLinkCard, BookmarkCard, KanbanColumnCard, KanbanBoardCard, KanbanColumn, ColumnCard,
   MapCard, SwatchCard, FileCard, CalloutCard, GroupCard, ChecklistItem, KanbanItem,
   CalendarCard, CheckersCard,

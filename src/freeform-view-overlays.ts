@@ -3,7 +3,7 @@ import {
   MarkdownRenderer, Component, FuzzySuggestModal, requestUrl, sanitizeHTMLToDom,
 } from 'obsidian';
 import {
-  VisualNotesFile, TileCard, TileTarget, StickyCard, ChecklistCard, ChecklistItem, NoteLinkCard,
+  VisualNotesFile, TileTarget, StickyCard, ChecklistCard, ChecklistItem, NoteLinkCard,
   ImageCard, AudioCard, BookmarkCard, KanbanColumnCard, KanbanBoardCard, KanbanColumn,
   KanbanItem, Card, Connection, ColumnCard, ColumnChildCard, CommentCard, CommentReply,
   TableCard, TableColumn, TableRow, TableColumnType, TableSelectOption, TableViewMode,
