@@ -36,9 +36,9 @@
 import {
   VisualNotesFile, Card, Connection, DrawingStroke,
   StickyCard, ChecklistCard, CommentCard, TableCard, ImageCard, AudioCard,
-  NoteLinkCard, BookmarkCard, KanbanColumnCard, KanbanBoardCard, KanbanColumn, ColumnCard,
-  MapCard, SwatchCard, FileCard, CalloutCard, GroupCard, ChecklistItem, KanbanItem,
-  CalendarCard, CheckersCard,
+  NoteLinkCard, BookmarkCard, KanbanColumnCard, KanbanBoardCard,
+  MapCard, FileCard, GroupCard, KanbanItem,
+  CheckersCard,
 } from './file-types';
 import { isGoogleMapsUrl } from './thumbnail-utils';
 import { nearestColorName } from './named-colors';

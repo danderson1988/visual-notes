@@ -3,47 +3,17 @@
 // satellites). Nothing here depends on FreeformRenderer itself.
 
 import {
-  App, TFile, TFolder, TAbstractFile, Menu, Notice, Modal, setIcon,
-  MarkdownRenderer, Component, FuzzySuggestModal, requestUrl, sanitizeHTMLToDom,
+  App, TFile, Notice, Modal,
+  FuzzySuggestModal,
 } from 'obsidian';
 import {
-  VisualNotesFile, TileCard, TileTarget, StickyCard, ChecklistCard, ChecklistItem, NoteLinkCard,
-  ImageCard, AudioCard, BookmarkCard, KanbanColumnCard, KanbanBoardCard, KanbanColumn,
-  KanbanItem, Card, Connection, ColumnCard, ColumnChildCard, CommentCard, CommentReply,
-  TableCard, TableColumn, TableRow, TableColumnType, TableSelectOption, TableViewMode,
-  MapCard, SwatchCard, FileCard, CalloutCard, GroupCard, KanbanSubtask,
-  CalendarCard, CalendarNote, CalendarNoteImportance, CalendarDayStyle, CheckersCard,
-  DrawingStroke, TILE_DRAG_MIME, DraggedTilePayload,
+  TileCard, StickyCard, ChecklistCard, NoteLinkCard,
+  ImageCard, AudioCard, BookmarkCard, KanbanColumnCard, KanbanBoardCard,
+  KanbanItem, Card, ColumnCard, ColumnChildCard, CommentCard,
+  TableCard,
+  MapCard, SwatchCard, FileCard, CalloutCard, GroupCard,
+  CalendarCard, CalendarNoteImportance, CheckersCard,
 } from './file-types';
-import {
-  DatedItem, collectBoardDatedItems, tableDatedItems, renderCalendarGrid,
-  addDaysISO, todayISO, startOfWeekISO, monthTitle, shortDate,
-} from './dated-items';
-import {
-  straightAnchors, elbowAnchors, buildStraightPath, buildElbowPath, resolveOrientation, rectExitPoint,
-  buildCurvedPath, curveThroughPoint, perpendicularOffset,
-} from './canvas/geometry';
-import { contrastColor } from './color-utils';
-import {
-  resolveThumbnailSrc, parseYouTubeId, youTubeThumbnailUrl,
-  isGoogleMapsUrl, isGoogleMapsShortLink, googleMapsEmbedSrc,
-} from './thumbnail-utils';
-import { nearestColorName, randomNamedColor, COLOR_PALETTES, NamedColor } from './named-colors';
-import { TileModal, NamePromptModal } from './tile-modal';
-import { IconPickerModal } from './icon-picker';
-import { isCustomIconRef, resolveCustomIconSrc, CUSTOM_ICONS, customIconRef } from './custom-icons';
-import { LabelPromptModal, ReactionPickerModal } from './card-badges';
-import { TextFormatToolbar } from './text-format-toolbar';
-import { snap } from './canvas/snap';
-import {
-  Viewport, applyWheelZoom, applyPinchZoom,
-  viewportTransform, screenToCanvas, clampZoom,
-} from './canvas/pan-zoom';
-import { SelectionManager } from './canvas/selection';
-import { ContextBar, CtxEvent } from './context-bar';
-import { sortAssetFile, saveNewAsset } from './asset-manager';
-import { CropImageModal } from './crop-modal';
-import { isVisualNotesOwnedFile, createBoardFile, writeBoardFile } from './file-io';
 
 
 // ── Constants ──────────────────────────────────────────────────

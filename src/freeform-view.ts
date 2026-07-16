@@ -1,66 +1,27 @@
 import {
-  App, TFile, TFolder, TAbstractFile, Menu, Notice, Modal, setIcon,
-  MarkdownRenderer, Component, FuzzySuggestModal, requestUrl, sanitizeHTMLToDom,
+  App, TFile, TFolder, TAbstractFile, Notice, setIcon,
+  Component,
 } from 'obsidian';
 import {
-  VisualNotesFile, TileCard, TileTarget, StickyCard, ChecklistCard, ChecklistItem, NoteLinkCard,
-  ImageCard, AudioCard, BookmarkCard, KanbanColumnCard, KanbanBoardCard, KanbanColumn,
-  KanbanItem, Card, Connection, ColumnCard, ColumnChildCard, CommentCard, CommentReply,
-  TableCard, TableColumn, TableRow, TableColumnType, TableSelectOption, TableViewMode,
-  MapCard, SwatchCard, FileCard, CalloutCard, GroupCard, KanbanSubtask,
-  CalendarCard, CalendarNote, CalendarNoteImportance, CalendarDayStyle, CheckersCard,
-  DrawingStroke, TILE_DRAG_MIME, DraggedTilePayload,
+  VisualNotesFile, TileCard,
+  BookmarkCard,
+  Card,
 } from './file-types';
-import {
-  DatedItem, collectBoardDatedItems, tableDatedItems, renderCalendarGrid,
-  addDaysISO, todayISO, startOfWeekISO, monthTitle, shortDate,
-} from './dated-items';
-import {
-  straightAnchors, elbowAnchors, buildStraightPath, buildElbowPath, resolveOrientation, rectExitPoint,
-  buildCurvedPath, curveThroughPoint, perpendicularOffset,
-} from './canvas/geometry';
 import { contrastColor } from './color-utils';
-import {
-  resolveThumbnailSrc, parseYouTubeId, youTubeThumbnailUrl,
-  isGoogleMapsUrl, isGoogleMapsShortLink, googleMapsEmbedSrc,
-} from './thumbnail-utils';
-import { nearestColorName, randomNamedColor, COLOR_PALETTES, NamedColor } from './named-colors';
-import { TileModal, NamePromptModal } from './tile-modal';
-import { IconPickerModal } from './icon-picker';
+import { NamePromptModal } from './tile-modal';
 import { isCustomIconRef, resolveCustomIconSrc, CUSTOM_ICONS, customIconRef } from './custom-icons';
-import { LabelPromptModal, ReactionPickerModal } from './card-badges';
-import { TextFormatToolbar } from './text-format-toolbar';
-import { snap } from './canvas/snap';
 import {
-  Viewport, applyWheelZoom, applyPinchZoom,
-  viewportTransform, screenToCanvas, clampZoom,
+  Viewport,
+  viewportTransform,
 } from './canvas/pan-zoom';
 import { SelectionManager } from './canvas/selection';
-import { ContextBar, CtxEvent } from './context-bar';
-import { sortAssetFile, saveNewAsset } from './asset-manager';
-import { CropImageModal } from './crop-modal';
-import { isVisualNotesOwnedFile, createBoardFile, writeBoardFile } from './file-io';
+import { ContextBar } from './context-bar';
+import { createBoardFile, writeBoardFile } from './file-io';
 import { SaveQueue } from './save-queue';
 import {
-  TILE_DEFAULT_W, TILE_DEFAULT_H, TILE_MIN_W, TILE_MIN_H, STICKY_DEFAULT_W, STICKY_DEFAULT_H,
-  STICKY_MIN_W, STICKY_MIN_H, CHECKLIST_DEFAULT_W, CHECKLIST_DEFAULT_H, CHECKLIST_MIN_W, CHECKLIST_MIN_H,
-  COMMENT_DEFAULT_W, COMMENT_DEFAULT_H, COMMENT_MIN_W, COMMENT_MIN_H, TABLE_DEFAULT_W, TABLE_DEFAULT_H,
-  TABLE_MIN_W, TABLE_MIN_H, NOTELINK_DEFAULT_W, NOTELINK_DEFAULT_H, NOTELINK_TITLE_W, NOTELINK_TITLE_H,
-  NOTELINK_MIN_W, NOTELINK_MIN_H, IMAGE_DEFAULT_W, IMAGE_DEFAULT_H, IMAGE_MIN_W, IMAGE_MIN_H,
-  BOOKMARK_DEFAULT_W, BOOKMARK_DEFAULT_H, BOOKMARK_MIN_W, BOOKMARK_MIN_H, AUDIO_DEFAULT_W, AUDIO_DEFAULT_H,
-  MAP_DEFAULT_W, MAP_DEFAULT_H, MAP_MIN_W, MAP_MIN_H, SWATCH_DEFAULT_W, SWATCH_DEFAULT_H,
-  SWATCH_MIN_W, SWATCH_MIN_H, FILE_DEFAULT_W, FILE_DEFAULT_H, FILE_MIN_W, FILE_MIN_H,
-  CALLOUT_DEFAULT_W, CALLOUT_DEFAULT_H, CALLOUT_MIN_W, CALLOUT_MIN_H, GROUP_DEFAULT_W, GROUP_DEFAULT_H,
-  GROUP_MIN_W, GROUP_MIN_H, GROUP_PAD, AUDIO_MIN_W, AUDIO_MIN_H, AUDIO_EXTS,
-  KANBAN_DEFAULT_W, KANBAN_DEFAULT_H, KANBAN_MIN_W, KANBAN_MIN_H, COLUMN_DEFAULT_W, COLUMN_DEFAULT_H,
-  COLUMN_MIN_W, COLUMN_MIN_H, CALENDAR_DEFAULT_W, CALENDAR_DEFAULT_H, CALENDAR_MIN_W, CALENDAR_MIN_H,
-  DOT_SPACING, MAX_UNDO, DRAG_THRESHOLD, IMAGE_EXTS, CALENDAR_IMPORTANCE_OPTIONS, CONN_COLOR_PRESETS,
-  STICKY_COLORS, KANBAN_COLORS, COLUMN_CHILD_KINDS, isColumnChildKind, commentInitial, formatCommentTime,
-  DragManager, AppWithPrivateAPIs, SupportedCard, KANBAN_BOARD_MIN_W, cardMinSize, KanbanItemsOwner,
-  isValidURL, NoteLinkPickerModal, VaultImagePickerModal, VaultAudioPickerModal, VaultAnyFilePickerModal, formatDueDate,
-  dueUrgency, DueDateModal, ArchiveModal, CALLOUT_ICON_CHOICES, CalloutIconPickerModal, QuickAddEntry,
-  QuickAddModal, KanbanItemUrlModal, CalendarNoteTextModal, KANBAN_THUMB_IMAGE_EXTS, KanbanItemImageSuggestModal, KANBAN_ITEM_COLORS,
-  KanbanItemColorModal, WipLimitModal, MediaSourceModal, TagInputModal, BookmarkInputModal,
+  TILE_DEFAULT_W, TILE_DEFAULT_H,
+  DOT_SPACING,
+  SupportedCard,
 } from './freeform-view-shared';
 import { canvasMethods } from './freeform-view-canvas';
 import { cardsBasicMethods } from './freeform-view-cards-basic';
