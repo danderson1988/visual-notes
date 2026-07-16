@@ -478,7 +478,7 @@ export class KanbanItemColorModal extends Modal {
     colorWheel.value = this.current ?? '#3B82F6';
     colorWheel.addClass('visual-notes-modal-color-wheel');
     colorWheel.addEventListener('change', () => { this.close(); this.onSubmit(colorWheel.value); });
-    const wheelLabel = wheelRow.createEl('span');
+    const wheelLabel = wheelRow.createSpan();
     wheelLabel.setText('Custom…');
   }
 

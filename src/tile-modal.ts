@@ -341,9 +341,8 @@ export class TileModal extends Modal {
         .setName('Kanban board')
         .setDesc('Choose a .md file managed by the Kanban plugin');
 
-      const pathDisplay = pathSetting.controlEl.createEl('span');
+      const pathDisplay = pathSetting.controlEl.createSpan('visual-notes-modal-path-display' + (this.targetPath ? '' : ' is-empty'));
       pathDisplay.setText(this.targetPath || 'None selected');
-      pathDisplay.addClass('visual-notes-modal-path-display' + (this.targetPath ? '' : ' is-empty'));
 
       if (kanbanPaths.length > 0) {
         pathSetting.addButton(btn =>
@@ -378,9 +377,8 @@ export class TileModal extends Modal {
         .setName('Target')
         .setDesc(`Choose the ${label.toLowerCase()} to open when clicked`);
 
-      const pathDisplay = pathSetting.controlEl.createEl('span');
+      const pathDisplay = pathSetting.controlEl.createSpan('visual-notes-modal-path-display' + (this.targetPath ? '' : ' is-empty'));
       pathDisplay.setText(this.targetPath || 'None selected');
-      pathDisplay.addClass('visual-notes-modal-path-display' + (this.targetPath ? '' : ' is-empty'));
 
       pathSetting.addButton(btn =>
         btn.setButtonText('Browse…').onClick(() => {
@@ -441,9 +439,8 @@ export class TileModal extends Modal {
         .setName('Target board')
         .setDesc('Choose an existing board or create a new nested one');
 
-      const pathDisplay = pathSetting.controlEl.createEl('span');
+      const pathDisplay = pathSetting.controlEl.createSpan('visual-notes-modal-path-display' + (this.targetPath ? '' : ' is-empty'));
       pathDisplay.setText(this.targetPath || 'None selected');
-      pathDisplay.addClass('visual-notes-modal-path-display' + (this.targetPath ? '' : ' is-empty'));
 
       if (boardPaths.length > 0) {
         pathSetting.addButton(btn =>

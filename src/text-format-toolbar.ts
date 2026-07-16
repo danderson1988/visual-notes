@@ -77,7 +77,7 @@ export class TextFormatToolbar {
       const btn = row.createDiv('visual-notes-text-fmt-inline-btn');
       btn.setAttribute('title', title);
       if (cls) btn.addClass(cls);
-      const labelSpan = btn.createEl('span');
+      const labelSpan = btn.createSpan();
       labelSpan.setText(label);
       btn.addEventListener('click', () => this.applyInlineTag(tag));
     };
@@ -132,9 +132,8 @@ export class TextFormatToolbar {
     kind:   'color' | 'highlight',
   ): void {
     const section = parent.createDiv('visual-notes-text-fmt-section');
-    const sectionLabel = section.createEl('span');
+    const sectionLabel = section.createSpan('visual-notes-text-fmt-label');
     sectionLabel.setText(label);
-    sectionLabel.addClass('visual-notes-text-fmt-label');
     const row = section.createDiv('visual-notes-text-fmt-swatches');
 
     // Colour-wheel swatch (opens native picker)
@@ -153,15 +152,13 @@ export class TextFormatToolbar {
       const sw = row.createDiv('visual-notes-text-fmt-swatch');
       if (hex === null) {
         sw.addClass(kind === 'color' ? 'is-default' : 'is-none');
-        const nullLabel = sw.createEl('span');
+        const nullLabel = sw.createSpan('visual-notes-text-fmt-null-label');
         nullLabel.setText(kind === 'color' ? 'A' : '/');
-        nullLabel.addClass('visual-notes-text-fmt-null-label');
       } else {
         sw.style.backgroundColor = hex;
         if (hex === '#000000') {
-          const blackLabel = sw.createEl('span');
+          const blackLabel = sw.createSpan('visual-notes-text-fmt-black-label');
           blackLabel.setText('A');
-          blackLabel.addClass('visual-notes-text-fmt-black-label');
         }
       }
       sw.addEventListener('click', () => { apply(hex); this.dismiss(); });

@@ -162,9 +162,8 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
       .setName('Default board')
       .setDesc('Board opened when you click the ribbon icon or use the "Open" command.');
 
-    const pathDisplay = setting.controlEl.createEl('span');
+    const pathDisplay = setting.controlEl.createSpan('visual-notes-modal-path-display' + (this.plugin.settings.defaultBoardPath ? '' : ' is-empty'));
     pathDisplay.setText(this.plugin.settings.defaultBoardPath ?? 'None');
-    pathDisplay.addClass('visual-notes-modal-path-display' + (this.plugin.settings.defaultBoardPath ? '' : ' is-empty'));
 
     setting.addButton(btn =>
       btn.setButtonText('Browse…').onClick(() => {
