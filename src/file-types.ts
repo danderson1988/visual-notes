@@ -158,7 +158,7 @@ export interface StickyCard extends BaseCard {
   // on the card's current width/height, since border-radius:50% on a
   // non-square box naturally produces an ellipse. Default is a plain
   // rounded rectangle when unset.
-  shape?: 'rect' | 'round' | 'triangle';
+  shape?: 'rect' | 'round';
 }
 
 export interface CommentReply {

@@ -158,16 +158,12 @@ export const cardsBasicMethods = {
     el.addClass('visual-notes-freeform-sticky-card');
     if (card.blank) el.addClass('is-blank-card');
     if (card.shape === 'round') el.addClass('is-shape-round');
-    else if (card.shape === 'triangle') el.addClass('is-shape-triangle');
 
     // The colored/shaped fill lives on its own layer behind the content,
-    // separate from `el` itself — so a triangle's clip-path only clips the
-    // visual fill, never the resize handles (which are children of `el`
-    // and would otherwise land in the corners a triangle cuts away).
+    // separate from `el` itself.
     const shapeFill = el.createDiv('visual-notes-sticky-shape-fill');
     shapeFill.style.backgroundColor = card.color;
     if (card.shape === 'round') shapeFill.addClass('is-shape-round');
-    else if (card.shape === 'triangle') shapeFill.addClass('is-shape-triangle');
 
     if (card.topColor) {
       const strip = el.createDiv('ib-card-top-strip');

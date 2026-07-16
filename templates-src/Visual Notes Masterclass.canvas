@@ -90,12 +90,12 @@
       "width": 295,
       "height": 190,
       "type": "text",
-      "text": "💡 Sticky note\n\nWrite an insight, format selected text, change its colours, or make it a round/triangle card from the context menu.",
+      "text": "💡 Sticky note\n\nWrite an insight, format selected text, change its colours, or make it a round card from the context menu.",
       "color": "#FEF3C7",
       "ib": {
         "kind": "sticky",
         "id": "master-note",
-        "text": "💡 Sticky note\n\nWrite an insight, format selected text, change its colours, or make it a round/triangle card from the context menu.",
+        "text": "💡 Sticky note\n\nWrite an insight, format selected text, change its colours, or make it a round card from the context menu.",
         "color": "#FEF3C7",
         "topColor": "#F59E0B",
         "labels": [

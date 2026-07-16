@@ -4913,13 +4913,6 @@ input.visual-notes-accent-pop-hex {
   border-radius: 50%;
 }
 
-.visual-notes-sticky-shape-fill.is-shape-triangle {
-  border-radius: 0;
-  -webkit-clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-}
-
-.visual-notes-freeform-sticky-card.is-shape-triangle,
 .visual-notes-freeform-sticky-card.is-shape-round {
   box-shadow: none;
 }
@@ -4927,19 +4920,6 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-sticky-inner {
   position: relative;
   z-index: 1;
-}
-
-/* Bias text toward the wider base of the triangle, away from the point,
-   and center it so short labels read naturally within the visible fill. */
-.visual-notes-freeform-sticky-card.is-shape-triangle .visual-notes-sticky-inner {
-  justify-content: flex-end;
-  align-items: center;
-  text-align: center;
-  padding: 0 14px 14px;
-}
-.visual-notes-freeform-sticky-card.is-shape-triangle .visual-notes-sticky-text,
-.visual-notes-freeform-sticky-card.is-shape-triangle .visual-notes-sticky-editor {
-  text-align: center;
 }
 
 /* Round cards center their text rather than left-aligning from the top. */

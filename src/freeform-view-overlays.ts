@@ -89,13 +89,12 @@ export const overlaysMethods = {
       menu.addItem(i => i.setTitle('Edit text').setIcon('pencil').onClick(() => this.editStickyInline(el, card)));
       if (card.blank) {
         menu.addSeparator();
-        const applyShape = (shape: 'rect' | 'round' | 'triangle') => {
+        const applyShape = (shape: 'rect' | 'round') => {
           card.shape = shape;
-          el.removeClass('is-shape-round', 'is-shape-triangle');
+          el.removeClass('is-shape-round');
           const fill = el.querySelector<HTMLElement>('.visual-notes-sticky-shape-fill');
-          fill?.removeClass('is-shape-round', 'is-shape-triangle');
+          fill?.removeClass('is-shape-round');
           if (shape === 'round') { el.addClass('is-shape-round'); fill?.addClass('is-shape-round'); }
-          else if (shape === 'triangle') { el.addClass('is-shape-triangle'); fill?.addClass('is-shape-triangle'); }
         };
         menu.addItem(i => i.setTitle('Rectangle').setIcon('square').setChecked(!card.shape || card.shape === 'rect').onClick(() => {
           this.pushUndo(); applyShape('rect'); this.scheduleSave();
@@ -111,9 +110,6 @@ export const overlaysMethods = {
         }));
         menu.addItem(i => i.setTitle('Oval').setIcon('circle').setChecked(card.shape === 'round').onClick(() => {
           this.pushUndo(); applyShape('round'); this.scheduleSave();
-        }));
-        menu.addItem(i => i.setTitle('Triangle').setIcon('triangle').setChecked(card.shape === 'triangle').onClick(() => {
-          this.pushUndo(); applyShape('triangle'); this.scheduleSave();
         }));
       }
     }
