@@ -224,7 +224,7 @@ export const cardsTableMethods = {
     zoomLabel.addEventListener('dblclick', () => {
       card.zoom = undefined;
       zoomSlider.value = '1';
-      zoomLayer.style.setProperty('zoom', '1');
+      zoomLayer.setCssStyles({ zoom: '1' });
       zoomLabel.setText('100%');
       this.scheduleSave();
     });
@@ -559,7 +559,7 @@ export const cardsTableMethods = {
       if (row.color) {
         menu.addItem(i => i.setTitle('Reset row color').setIcon('x').onClick(() => {
           this.pushUndo(); row.color = undefined;
-          rowEl.style.backgroundColor = '';
+          rowEl.setCssStyles({ backgroundColor: '' });
           this.scheduleSave();
         }));
       }

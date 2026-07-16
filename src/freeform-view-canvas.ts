@@ -850,7 +850,7 @@ export const canvasMethods = {
         cancelAnimationFrame(tiltRafId);
         for (const cel of draggedEls) {
           cel.removeClass('is-lifted');
-          cel.style.transform = '';
+          cel.setCssStyles({ transform: '' });
           if (settled) {
             cel.addClass('is-settling');
             window.setTimeout(() => cel.removeClass('is-settling'), 260);
@@ -1616,8 +1616,7 @@ export const canvasMethods = {
     hit.setAttribute('fill', 'none');
     hit.setAttribute('stroke-linecap', 'round');
     hit.setAttribute('stroke-linejoin', 'round');
-    hit.style.cursor = 'pointer';
-    hit.style.pointerEvents = this.penModeActive ? 'none' : 'stroke';
+    hit.setCssStyles({ cursor: 'pointer', pointerEvents: this.penModeActive ? 'none' : 'stroke' });
     hit.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       e.stopPropagation();
@@ -2033,7 +2032,7 @@ export const canvasMethods = {
     // eraser still selected needs the eraser cursor back immediately.
     this.outer.toggleClass('is-eraser-mode', this.penTool === 'eraser');
     this.penToolBtn?.addClass('is-active');
-    this.inkHitPaths.forEach(p => { p.style.pointerEvents = 'none'; });
+    this.inkHitPaths.forEach(p => { p.setCssStyles({ pointerEvents: 'none' }); });
     this.showPenColorPicker();
     this.showPenBanner();
   },
@@ -2047,7 +2046,7 @@ export const canvasMethods = {
     this.outer.removeClass('is-pen-mode');
     this.outer.removeClass('is-eraser-mode');
     this.penToolBtn?.removeClass('is-active');
-    this.inkHitPaths.forEach(p => { p.style.pointerEvents = 'stroke'; });
+    this.inkHitPaths.forEach(p => { p.setCssStyles({ pointerEvents: 'stroke' }); });
     this.hidePenColorPicker();
     this.hidePenBanner();
   },

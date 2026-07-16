@@ -138,7 +138,6 @@ export const cardsBasicMethods = {
     square.style.backgroundColor = hasThumbForBg ? 'transparent' : tile.color;
     square.style.width = `${tileSize}px`; square.style.height = `${tileSize}px`;
     square.style.borderRadius = `${radius}px`;
-    square.style.overflow = 'hidden';
 
     const iconColor = contrastColor(tile.color);
     const thumbSrc = resolveThumbnailSrc(this.app, tile);
@@ -146,7 +145,6 @@ export const cardsBasicMethods = {
 
     if (thumbSrc) {
       const img = square.createEl('img', { cls: 'visual-notes-tile-thumbnail-img' });
-      img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;';
       img.src = thumbSrc;
       img.alt = tile.label;
       img.addEventListener('error', () => {

@@ -103,14 +103,12 @@ export class GridRenderer {
     // full art, not a glyph meant to sit on an accent-colored chip).
     const hasThumbForBg = !!tile.thumbnail || isCustomIconRef(tile.icon);
     tileEl.setCssProps({ '--ib-tile-color': hasThumbForBg ? 'transparent' : tile.color });
-    tileEl.style.overflow = 'hidden';
 
     const iconColor = contrastColor(tile.color);
     const thumbSrc = resolveThumbnailSrc(this.app, tile);
 
     if (thumbSrc) {
       const img = tileEl.createEl('img', { cls: 'visual-notes-tile-thumbnail-img' });
-      img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;';
       img.src = thumbSrc;
       img.alt = tile.label;
       // If the image fails to load (moved/deleted vault file, dead URL),

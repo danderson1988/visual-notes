@@ -283,8 +283,7 @@ export class TileModal extends Modal {
         ? (() => { const f = this.app.vault.getAbstractFileByPath(thumb.path); return f instanceof TFile ? this.app.vault.getResourcePath(f) : ''; })()
         : thumb.url;
       if (src) {
-        const img = thumbPreview.createEl('img', { attr: { src } });
-        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+        thumbPreview.createEl('img', { attr: { src } });
       }
     } else {
       thumbPreview.setText('None');

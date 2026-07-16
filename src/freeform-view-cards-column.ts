@@ -174,7 +174,10 @@ export const cardsColumnMethods = {
   renderColumnChild(this: FreeformRenderer, stackEl: HTMLElement, column: ColumnCard, child: ColumnChildCard): void {
     const childEl = stackEl.createDiv('visual-notes-column-child');
     childEl.dataset.childId = child.id;
-    childEl.style.position = 'relative';
+    // Kept as an inline style (not a CSS class) deliberately — startColumnChildDrag's
+    // ghost clone relies on an inline `position` always beating the CSS class's
+    // `position: fixed`, so this can't move into the stylesheet without breaking that.
+    childEl.setCssStyles({ position: 'relative' });
     // Every child kind, tiles included, fills the tray's width — align-items:
     // stretch on the stack handles this automatically as long as no explicit
     // width is set here, matching the backdrop box the tile now renders with.
@@ -321,11 +324,7 @@ export const cardsColumnMethods = {
     // style always wins over the CSS class's `position: fixed` below,
     // silently breaking the ghost's viewport-fixed positioning. Override it
     // explicitly rather than relying on the stylesheet.
-    ghost.style.position = 'fixed';
-    ghost.style.width = `${rect.width}px`;
-    ghost.style.height = `${rect.height}px`;
-    ghost.style.left = `${rect.left}px`;
-    ghost.style.top = `${rect.top}px`;
+    ghost.setCssStyles({ position: 'fixed', width: `${rect.width}px`, height: `${rect.height}px`, left: `${rect.left}px`, top: `${rect.top}px` });
     ghost.addClass('ib-no-pointer');
     activeDocument.body.appendChild(ghost);
     childEl.addClass('is-dragging');

@@ -199,9 +199,9 @@ export const cardsKanbanMethods = {
       card.collapsed = !card.collapsed;
       el.toggleClass('is-collapsed', !!card.collapsed);
       if (card.collapsed) {
-        el.style.height = '';
+        el.setCssStyles({ height: '' });
       } else {
-        el.style.height = `${card.h ?? 0}px`;
+        el.setCssStyles({ height: `${card.h ?? 0}px` });
       }
       this.scheduleSave();
     });
@@ -209,7 +209,7 @@ export const cardsKanbanMethods = {
     // Apply collapsed state
     if (card.collapsed) {
       el.addClass('is-collapsed');
-      el.style.height = '';
+      el.setCssStyles({ height: '' });
     }
 
     const itemsEl = el.createDiv('visual-notes-kanban-items');
@@ -778,7 +778,6 @@ export const cardsKanbanMethods = {
     if (itemThumbSrc) {
       const badge = itemEl.createDiv('visual-notes-kanban-item-icon-badge visual-notes-kanban-item-thumb-badge');
       const img = badge.createEl('img');
-      img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:inherit;pointer-events:none;';
       img.src = itemThumbSrc;
       img.alt = '';
       img.addEventListener('error', () => {

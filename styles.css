@@ -4648,6 +4648,7 @@ input.visual-notes-accent-pop-hex {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .visual-notes-modal-thumbnail-preview.is-empty {
@@ -4700,6 +4701,11 @@ input.visual-notes-accent-pop-hex {
 
 .visual-notes-kanban-item-thumb-badge img {
   display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 /* ── Kanban item YouTube video preview ──────────────────────── */
