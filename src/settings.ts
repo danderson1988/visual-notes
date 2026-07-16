@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, Notice, FuzzySuggestModal, TFile } from 'obsidian';
+import { App, PluginSettingTab, Setting, Notice, FuzzySuggestModal, TFile, type SettingDefinitionItem } from 'obsidian';
 import type VisualNotesPlugin from './main';
 import { ConfirmModal } from './tile-modal';
 import { Tile } from './types';
@@ -26,22 +26,125 @@ class BoardPickerModal extends FuzzySuggestModal<TFile> {
 }
 
 // ── Settings tab ──────────────────────────────────────────────
+//
+// Each setting is built by a small `buildX(setting)` method that fills in
+// an already-created Setting — shared verbatim between display() (the
+// imperative fallback for Obsidian < 1.13, still called on those versions)
+// and getSettingDefinitions() (the declarative form 1.13+ uses to render
+// this tab and to index every setting's name/desc for its settings search).
+// Keeping one body per setting means the two rendering paths can never
+// drift out of sync with each other.
 
 export class VisualNotesSettingsTab extends PluginSettingTab {
   plugin: VisualNotesPlugin;
   private importText = '';
+  private importAreaEl: HTMLTextAreaElement | null = null;
 
   constructor(app: App, plugin: VisualNotesPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
 
-  display(): void {
+  // ── Declarative definitions (Obsidian 1.13+) ────────────────
+
+  override getSettingDefinitions(): SettingDefinitionItem[] {
+    return [
+      { name: 'Open on startup', desc: 'Automatically open Visual Notes when Obsidian starts.',
+        render: (s) => this.buildOpenOnStartup(s) },
+      { name: 'Default board', desc: 'Board opened when you click the ribbon icon or use the "Open" command.',
+        render: (s) => this.buildDefaultBoard(s) },
+      { type: 'group', heading: 'Freeform canvas', items: [
+        { name: 'Toolbar position', desc: 'Where the card-creation toolbar appears on the canvas. Takes effect when you next open a board.',
+          render: (s) => this.buildToolbarPosition(s) },
+        { name: 'Grid dot color', desc: 'Color of the dot grid on the freeform canvas background. Updates any open board live.',
+          render: (s) => this.buildDotColor(s) },
+        { name: 'Grid dot size', desc: 'Radius of each dot in pixels. Updates any open board live.',
+          render: (s) => this.buildDotSize(s) },
+        { name: 'Canvas background color', desc: 'Background color of the freeform canvas itself. Updates any open board live.',
+          render: (s) => this.buildCanvasBgColor(s) },
+        { name: 'Card drag animation', desc: 'Lift, tilt, and settle a card as you drag it around the canvas. Takes effect the next time you open a board.',
+          render: (s) => this.buildCardDragAnimation(s) },
+        { name: 'Card drag animation intensity', desc: 'How pronounced the lift/tilt effect is. Takes effect the next time you open a board.',
+          render: (s) => this.buildCardDragAnimationIntensity(s) },
+        { name: 'Snap to grid', desc: 'Dragging, resizing, or placing a card on the freeform canvas snaps it to a grid. Can also be toggled per-session with the magnet button on the canvas. Takes effect the next time you open a board.',
+          render: (s) => this.buildSnapToGrid(s) },
+        { name: 'Grid size', desc: 'Spacing in pixels of the snap-to-grid. Default: 32.',
+          render: (s) => this.buildGridSize(s) },
+        { name: 'Trash zone size', desc: 'Diameter in pixels of the delete-by-drag circle in the bottom-left corner of the freeform canvas. Updates any open board live. Default: 56.',
+          render: (s) => this.buildTrashZoneSize(s) },
+        { name: 'Larger kanban cards', desc: 'Bigger text, padding, and icon badges on kanban items. Takes effect the next time you open a board.',
+          render: (s) => this.buildLargeKanbanItems(s) },
+        { name: 'Bookmark cache duration', desc: 'Days before bookmark previews are automatically re-fetched. Default: 30.',
+          render: (s) => this.buildBookmarkCacheDuration(s) },
+        { name: 'Default sticky colour', desc: 'Colour used when creating new sticky notes.',
+          render: (s) => this.buildDefaultStickyColor(s) },
+        { name: 'Comment author name', desc: 'Shown on new comments and replies you add to a board. Defaults to "Anonymous" when left blank.',
+          render: (s) => this.buildCommentAuthorName(s) },
+      ] },
+      { type: 'group', heading: 'Assets', items: [
+        { name: 'Auto-sort assets', desc: 'All images, audio, video, and documents imported or linked into a board are automatically moved to _Assets/Images/, _Assets/Audio/, etc. in the vault root. Always on.',
+          render: (s) => this.buildAutoSortAssets(s) },
+        { name: 'Auto-relink on board open', desc: 'When a board opens, silently scan for broken file links and fix any that have a unique filename match in the vault.',
+          render: (s) => this.buildAutoRelinkOnOpen(s) },
+        { name: 'Relink all boards now', desc: 'Scan every Visual Notes file in the vault and fix broken links with a unique filename match. Useful after moving files.',
+          render: (s) => this.buildRelinkAllBoardsNow(s) },
+      ] },
+      { type: 'group', heading: 'Data', items: [
+        { name: 'Export tiles as JSON', desc: 'Copy all your tile data to the clipboard as JSON.',
+          render: (s) => this.buildExportTilesJson(s) },
+        { name: 'Import tiles from JSON', desc: 'Paste JSON exported from another vault. This will replace all existing tiles. Make sure the JSON is an array of tile objects.',
+          render: (s) => this.buildImportDesc(s) },
+        { name: 'Import', render: (s) => this.buildImportButton(s) },
+      ] },
+      { type: 'group', heading: 'Danger zone', items: [
+        { name: 'Reset all tiles', desc: 'Permanently delete every tile and nested board. This cannot be undone.',
+          render: (s) => this.buildResetAllTiles(s) },
+      ] },
+    ];
+  }
+
+  // ── Imperative fallback (Obsidian < 1.13) ───────────────────
+
+  override display(): void {
     const { containerEl } = this;
     containerEl.empty();
 
-    // ── Open on startup ──────────────────────────────────────
-    new Setting(containerEl)
+    this.buildOpenOnStartup(new Setting(containerEl));
+    this.buildDefaultBoard(new Setting(containerEl));
+
+    new Setting(containerEl).setName('Freeform canvas').setHeading();
+    this.buildToolbarPosition(new Setting(containerEl));
+    this.buildDotColor(new Setting(containerEl));
+    this.buildDotSize(new Setting(containerEl));
+    this.buildCanvasBgColor(new Setting(containerEl));
+    this.buildCardDragAnimation(new Setting(containerEl));
+    this.buildCardDragAnimationIntensity(new Setting(containerEl));
+    this.buildSnapToGrid(new Setting(containerEl));
+    this.buildGridSize(new Setting(containerEl));
+    this.buildTrashZoneSize(new Setting(containerEl));
+    this.buildLargeKanbanItems(new Setting(containerEl));
+    this.buildBookmarkCacheDuration(new Setting(containerEl));
+    this.buildDefaultStickyColor(new Setting(containerEl));
+    this.buildCommentAuthorName(new Setting(containerEl));
+
+    new Setting(containerEl).setName('Assets').setHeading();
+    this.buildAutoSortAssets(new Setting(containerEl));
+    this.buildAutoRelinkOnOpen(new Setting(containerEl));
+    this.buildRelinkAllBoardsNow(new Setting(containerEl));
+
+    new Setting(containerEl).setName('Data').setHeading();
+    this.buildExportTilesJson(new Setting(containerEl));
+    this.buildImportDesc(new Setting(containerEl));
+    this.buildImportButton(new Setting(containerEl));
+
+    new Setting(containerEl).setName('Danger zone').setHeading();
+    this.buildResetAllTiles(new Setting(containerEl));
+  }
+
+  // ── Per-setting builders ─────────────────────────────────────
+
+  private buildOpenOnStartup(setting: Setting): void {
+    setting
       .setName('Open on startup')
       .setDesc('Automatically open Visual Notes when Obsidian starts.')
       .addToggle(toggle =>
@@ -52,18 +155,19 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+  }
 
-    // ── Default board ────────────────────────────────────────
-    const defaultSetting = new Setting(containerEl)
+  private buildDefaultBoard(setting: Setting): void {
+    setting
       .setName('Default board')
       .setDesc('Board opened when you click the ribbon icon or use the "Open" command.');
 
-    const pathDisplay = defaultSetting.controlEl.createEl('span', {
+    const pathDisplay = setting.controlEl.createEl('span', {
       text: this.plugin.settings.defaultBoardPath ?? 'None',
       cls: 'visual-notes-modal-path-display' + (this.plugin.settings.defaultBoardPath ? '' : ' is-empty'),
     });
 
-    defaultSetting.addButton(btn =>
+    setting.addButton(btn =>
       btn.setButtonText('Browse…').onClick(() => {
         new BoardPickerModal(this.app, (file) => { void (async () => {
           this.plugin.settings.defaultBoardPath = file.path;
@@ -77,7 +181,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
     );
 
     if (this.plugin.settings.defaultBoardPath) {
-      defaultSetting.addButton(btn =>
+      setting.addButton(btn =>
         btn.setButtonText('Clear').onClick(() => { void (async () => {
           this.plugin.settings.defaultBoardPath = undefined;
           await this.plugin.saveSettings();
@@ -85,11 +189,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
         })(); })
       );
     }
+  }
 
-    // ── Freeform canvas ──────────────────────────────────────
-    new Setting(containerEl).setName('Freeform canvas').setHeading();
-
-    new Setting(containerEl)
+  private buildToolbarPosition(setting: Setting): void {
+    setting
       .setName('Toolbar position')
       .setDesc('Where the card-creation toolbar appears on the canvas. Takes effect when you next open a board.')
       .addDropdown(dd =>
@@ -104,8 +207,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+  }
 
-    new Setting(containerEl)
+  private buildDotColor(setting: Setting): void {
+    setting
       .setName('Grid dot color')
       .setDesc('Color of the dot grid on the freeform canvas background. Updates any open board live.')
       .addColorPicker(c =>
@@ -125,8 +230,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           this.display();
         })
       );
+  }
 
-    new Setting(containerEl)
+  private buildDotSize(setting: Setting): void {
+    setting
       .setName('Grid dot size')
       .setDesc('Radius of each dot in pixels. Updates any open board live.')
       .addSlider(s =>
@@ -148,8 +255,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           this.display();
         })
       );
+  }
 
-    new Setting(containerEl)
+  private buildCanvasBgColor(setting: Setting): void {
+    setting
       .setName('Canvas background color')
       .setDesc('Background color of the freeform canvas itself. Updates any open board live.')
       .addColorPicker(c =>
@@ -169,8 +278,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           this.display();
         })
       );
+  }
 
-    new Setting(containerEl)
+  private buildCardDragAnimation(setting: Setting): void {
+    setting
       .setName('Card drag animation')
       .setDesc('Lift, tilt, and settle a card as you drag it around the canvas. Takes effect the next time you open a board.')
       .addToggle(toggle =>
@@ -181,8 +292,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+  }
 
-    new Setting(containerEl)
+  private buildCardDragAnimationIntensity(setting: Setting): void {
+    setting
       .setName('Card drag animation intensity')
       .setDesc('How pronounced the lift/tilt effect is. Takes effect the next time you open a board.')
       .addSlider(s =>
@@ -202,8 +315,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           this.display();
         })
       );
+  }
 
-    new Setting(containerEl)
+  private buildSnapToGrid(setting: Setting): void {
+    setting
       .setName('Snap to grid')
       .setDesc('Dragging, resizing, or placing a card on the freeform canvas snaps it to a grid. Can also be toggled per-session with the magnet button on the canvas. Takes effect the next time you open a board.')
       .addToggle(toggle =>
@@ -214,8 +329,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+  }
 
-    new Setting(containerEl)
+  private buildGridSize(setting: Setting): void {
+    setting
       .setName('Grid size')
       .setDesc('Spacing in pixels of the snap-to-grid. Default: 32.')
       .addSlider(s =>
@@ -235,8 +352,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           this.display();
         })
       );
+  }
 
-    new Setting(containerEl)
+  private buildTrashZoneSize(setting: Setting): void {
+    setting
       .setName('Trash zone size')
       .setDesc('Diameter in pixels of the delete-by-drag circle in the bottom-left corner of the freeform canvas. Updates any open board live. Default: 56.')
       .addSlider(s =>
@@ -258,8 +377,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           this.display();
         })
       );
+  }
 
-    new Setting(containerEl)
+  private buildLargeKanbanItems(setting: Setting): void {
+    setting
       .setName('Larger kanban cards')
       .setDesc('Bigger text, padding, and icon badges on kanban items. Takes effect the next time you open a board.')
       .addToggle(toggle =>
@@ -270,8 +391,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+  }
 
-    new Setting(containerEl)
+  private buildBookmarkCacheDuration(setting: Setting): void {
+    setting
       .setName('Bookmark cache duration')
       .setDesc('Days before bookmark previews are automatically re-fetched. Default: 30.')
       .addText(text => {
@@ -287,12 +410,14 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
         text.inputEl.min = '1';
         text.inputEl.addClass('ib-bookmark-days-input');
       });
+  }
 
-    const stickyColorSetting = new Setting(containerEl)
+  private buildDefaultStickyColor(setting: Setting): void {
+    setting
       .setName('Default sticky colour')
       .setDesc('Colour used when creating new sticky notes.');
 
-    const stickyPalette = stickyColorSetting.controlEl.createDiv('visual-notes-settings-sticky-palette');
+    const stickyPalette = setting.controlEl.createDiv('visual-notes-settings-sticky-palette');
     const STICKY_SWATCHES = [
       { color: '#FDE68A', name: 'Yellow' },
       { color: '#FCA5A5', name: 'Rose' },
@@ -317,8 +442,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
         await this.plugin.saveSettings();
       })(); });
     }
+  }
 
-    new Setting(containerEl)
+  private buildCommentAuthorName(setting: Setting): void {
+    setting
       .setName('Comment author name')
       .setDesc('Shown on new comments and replies you add to a board. Defaults to "Anonymous" when left blank.')
       .addText(text =>
@@ -330,16 +457,17 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+  }
 
-    // ── Assets ───────────────────────────────────────────────
-    new Setting(containerEl).setName('Assets').setHeading();
-
-    new Setting(containerEl)
+  private buildAutoSortAssets(setting: Setting): void {
+    setting
       .setName('Auto-sort assets')
       .setDesc('All images, audio, video, and documents imported or linked into a board are automatically moved to _Assets/Images/, _Assets/Audio/, etc. in the vault root. Always on.')
       .addText(t => { t.inputEl.disabled = true; t.setValue('Enabled'); });
+  }
 
-    new Setting(containerEl)
+  private buildAutoRelinkOnOpen(setting: Setting): void {
+    setting
       .setName('Auto-relink on board open')
       .setDesc('When a board opens, silently scan for broken file links and fix any that have a unique filename match in the vault.')
       .addToggle(toggle =>
@@ -350,8 +478,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+  }
 
-    new Setting(containerEl)
+  private buildRelinkAllBoardsNow(setting: Setting): void {
+    setting
       .setName('Relink all boards now')
       .setDesc('Scan every Visual Notes file in the vault and fix broken links with a unique filename match. Useful after moving files.')
       .addButton(btn =>
@@ -366,11 +496,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
             : 'No broken links found.');
         })(); })
       );
+  }
 
-    // ── Export ───────────────────────────────────────────────
-    new Setting(containerEl).setName('Data').setHeading();
-
-    new Setting(containerEl)
+  private buildExportTilesJson(setting: Setting): void {
+    setting
       .setName('Export tiles as JSON')
       .setDesc('Copy all your tile data to the clipboard as JSON.')
       .addButton(btn =>
@@ -380,24 +509,26 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           new Notice('Tile data copied to clipboard.');
         })(); })
       );
+  }
 
-    // ── Import ───────────────────────────────────────────────
-    new Setting(containerEl)
-      .setName('Import tiles from JSON')
-      .setDesc(
-        'Paste JSON exported from another vault. This will replace all existing tiles. ' +
-        'Make sure the JSON is an array of tile objects.'
-      );
+  private buildImportDesc(setting: Setting): void {
+    setting.setName('Import tiles from JSON').setDesc(
+      'Paste JSON exported from another vault. This will replace all existing tiles. ' +
+      'Make sure the JSON is an array of tile objects.'
+    );
 
-    const importArea = containerEl.createEl('textarea', {
+    const importArea = setting.settingEl.createEl('textarea', {
       cls: 'visual-notes-settings-import-area',
       placeholder: '[\n  { "id": "...", "label": "...", ... }\n]',
     });
     importArea.addEventListener('input', () => {
       this.importText = importArea.value;
     });
+    this.importAreaEl = importArea;
+  }
 
-    new Setting(containerEl)
+  private buildImportButton(setting: Setting): void {
+    setting
       .addButton(btn =>
         btn
           .setButtonText('Import')
@@ -421,18 +552,17 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
               () => { void (async () => {
                 this.plugin.settings.rootTiles = parsed;
                 await this.plugin.saveSettings();
-                importArea.value = '';
+                if (this.importAreaEl) this.importAreaEl.value = '';
                 this.importText = '';
                 new Notice(`Imported ${parsed.length} tile(s).`);
               })(); }
             ).open();
           })
       );
+  }
 
-    // ── Reset ────────────────────────────────────────────────
-    new Setting(containerEl).setName('Danger zone').setHeading();
-
-    new Setting(containerEl)
+  private buildResetAllTiles(setting: Setting): void {
+    setting
       .setName('Reset all tiles')
       .setDesc('Permanently delete every tile and nested board. This cannot be undone.')
       .addButton(btn =>

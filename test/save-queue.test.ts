@@ -1,3 +1,9 @@
+// @vitest-environment jsdom
+//
+// SaveQueue itself has no Obsidian dependency, but it now schedules through
+// window.setTimeout/clearTimeout (Obsidian's own guidance, for popout-window
+// compatibility) rather than the bare globals — jsdom is needed here purely
+// to give `window` a real definition for those calls to resolve against.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SaveQueue } from '../src/save-queue';
 

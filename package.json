@@ -1,6 +1,6 @@
 {
   "name": "visual-notes",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Visual Notes — a visual workspace for Obsidian",
   "main": "main.js",
   "scripts": {
@@ -31,7 +31,7 @@
     "@vitest/coverage-v8": "^4.1.10",
     "esbuild": "^0.21.5",
     "jsdom": "^29.1.1",
-    "obsidian": "1.12.3",
+    "obsidian": "1.13.0",
     "tslib": "^2.6.3",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"

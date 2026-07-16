@@ -139,6 +139,12 @@ HTMLElementProto.off = function (this: HTMLElement, type: string, selector: stri
   cb?.(frag);
   return frag;
 };
+(globalThis as any).createSvg = (tag: string, o?: DomElementInfo | string, cb?: (el: any) => void) => {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  applyInfo(el as unknown as HTMLElement, o);
+  cb?.(el);
+  return el;
+};
 
 // jsdom doesn't implement ResizeObserver at all.
 if (!(globalThis as any).ResizeObserver) {

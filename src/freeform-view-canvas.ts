@@ -1469,27 +1469,24 @@ export const canvasMethods = {
   },
 
   initConnectionLayer(this: FreeformRenderer): void {
-    const ns = 'http://www.w3.org/2000/svg';
-
     // Visual layer — behind cards (first child of inner)
-    const svg = activeDocument.createElementNS(ns, 'svg');
+    const svg = createSvg('svg');
     svg.classList.add('visual-notes-connections-svg');
-    this.svgDefs = activeDocument.createElementNS(ns, 'defs');
+    this.svgDefs = createSvg('defs');
     svg.appendChild(this.svgDefs);
     if (this.inner.firstChild) this.inner.insertBefore(svg, this.inner.firstChild);
     else this.inner.appendChild(svg);
     this.svgEl = svg;
 
     // Hit layer — above all cards so connection lines are always clickable
-    const hitSvg = activeDocument.createElementNS(ns, 'svg');
+    const hitSvg = createSvg('svg');
     hitSvg.classList.add('visual-notes-connections-hit-svg');
     this.inner.appendChild(hitSvg);
     this.hitSvgEl = hitSvg;
   },
 
   initInkLayer(this: FreeformRenderer): void {
-    const ns = 'http://www.w3.org/2000/svg';
-    const svg = activeDocument.createElementNS(ns, 'svg');
+    const svg = createSvg('svg');
     svg.classList.add('visual-notes-ink-svg');
     this.inner.appendChild(svg);
     this.inkSvgEl = svg;
@@ -1585,10 +1582,9 @@ export const canvasMethods = {
   },
 
   renderSingleDrawing(this: FreeformRenderer, stroke: DrawingStroke): void {
-    const ns = 'http://www.w3.org/2000/svg';
     const d = this.buildInkPathD(stroke.points);
 
-    const path = activeDocument.createElementNS(ns, 'path');
+    const path = createSvg('path');
     if (this.isHighlightStroke(stroke)) {
       path.setAttribute('d', this.buildHighlightOutlineD(stroke));
       path.setAttribute('fill', stroke.color);
@@ -1609,7 +1605,7 @@ export const canvasMethods = {
 
     // Invisible, much thicker hit path so a thin stroke is still easy to
     // click for selection — same trick used for connection lines.
-    const hit = activeDocument.createElementNS(ns, 'path');
+    const hit = createSvg('path');
     hit.setAttribute('d', d);
     hit.setAttribute('stroke', 'transparent');
     hit.setAttribute('stroke-width', String(Math.max(16, stroke.width + 12)));
@@ -1693,11 +1689,10 @@ export const canvasMethods = {
     const strokes = this.groupStrokes(groupId);
     if (!strokes.length) { this.removeDrawingBox(); return; }
 
-    const ns = 'http://www.w3.org/2000/svg';
-    const g = activeDocument.createElementNS(ns, 'g');
+    const g = createSvg('g');
     g.setAttribute('pointer-events', 'none');
     for (const stroke of strokes) {
-      const p = activeDocument.createElementNS(ns, 'path');
+      const p = createSvg('path');
       p.setAttribute('d', this.buildInkPathD(stroke.points));
       p.setAttribute('stroke', 'var(--interactive-accent)');
       p.setAttribute('stroke-width', String(stroke.width + 8));
@@ -1910,8 +1905,7 @@ export const canvasMethods = {
     // Anchor for Shift-drawn straight lines: the true (unsmoothed) start.
     const firstPoint = { ...stroke.points[0] };
 
-    const ns = 'http://www.w3.org/2000/svg';
-    const livePath = activeDocument.createElementNS(ns, 'path');
+    const livePath = createSvg('path');
     if (isHighlighter) {
       livePath.setAttribute('fill', stroke.color);
       livePath.setAttribute('fill-opacity', String(stroke.opacity));
@@ -2216,10 +2210,9 @@ export const canvasMethods = {
 
   renderSingleConnection(this: FreeformRenderer, conn: Connection): void {
     const d = this.buildConnectionPath(conn); if (!d) return;
-    const ns = 'http://www.w3.org/2000/svg';
 
     // Wide transparent hit area for easy clicking
-    const hit = activeDocument.createElementNS(ns, 'path');
+    const hit = createSvg('path');
     hit.setAttribute('d', d);
     hit.setAttribute('stroke', '#000000');
     hit.setAttribute('stroke-opacity', '0');
@@ -2270,7 +2263,7 @@ export const canvasMethods = {
     this.connectionHitPaths.set(conn.id, hit);
 
     // Visible path (pointer-events:none so hit area handles all events)
-    const path = activeDocument.createElementNS(ns, 'path');
+    const path = createSvg('path');
     path.setAttribute('d', d);
     path.setAttribute('stroke', conn.color);
     path.setAttribute('stroke-width', String(conn.thickness));
@@ -2334,13 +2327,12 @@ export const canvasMethods = {
   renderConnectionLabel(this: FreeformRenderer, conn: Connection): void {
     if (!conn.label) return;
     const pos = this.connectionLabelPos(conn); if (!pos) return;
-    const ns = 'http://www.w3.org/2000/svg';
-    const g = activeDocument.createElementNS(ns, 'g');
+    const g = createSvg('g');
     g.setAttribute('pointer-events', 'none');
     const bg = getComputedStyle(activeDocument.body).getPropertyValue('--background-primary').trim() || '#ffffff';
     const size = conn.labelSize ?? 14;
     const addText = (strokeColor: string | null, fillColor: string) => {
-      const t = activeDocument.createElementNS(ns, 'text');
+      const t = createSvg('text');
       t.setAttribute('x', String(pos.x)); t.setAttribute('y', String(pos.y));
       t.setAttribute('text-anchor', 'middle'); t.setAttribute('dominant-baseline', 'central');
       t.setAttribute('font-size', String(size));
@@ -2383,11 +2375,10 @@ export const canvasMethods = {
   getOrCreateMarker(this: FreeformRenderer, color: string, thickness: number, end: 'end' | 'start'): string {
     const id = `ibm-${end === 'end' ? 'e' : 's'}-${color.replace('#', '')}-${thickness}`;
     if (!this.svgDefs.querySelector(`#${id}`)) {
-      const ns = 'http://www.w3.org/2000/svg';
       const size = 10 + thickness * 2;
       const mid  = Math.round(size * 0.42);
       const h    = mid * 2;
-      const marker = activeDocument.createElementNS(ns, 'marker');
+      const marker = createSvg('marker');
       marker.setAttribute('id', id);
       marker.setAttribute('markerUnits', 'userSpaceOnUse');
       marker.setAttribute('markerWidth', String(size));
@@ -2395,7 +2386,7 @@ export const canvasMethods = {
       marker.setAttribute('refX', end === 'end' ? String(size) : '0');
       marker.setAttribute('refY', String(mid));
       marker.setAttribute('orient', end === 'end' ? 'auto' : 'auto-start-reverse');
-      const poly = activeDocument.createElementNS(ns, 'polygon');
+      const poly = createSvg('polygon');
       poly.setAttribute('points', `0 0, ${size} ${mid}, 0 ${h}`);
       poly.setAttribute('fill', color);
       marker.appendChild(poly);
@@ -2495,8 +2486,7 @@ export const canvasMethods = {
 
   updateGhostPath(this: FreeformRenderer, sx: number, sy: number, tx: number, ty: number): void {
     if (!this.ghostPath) {
-      const ns = 'http://www.w3.org/2000/svg';
-      this.ghostPath = activeDocument.createElementNS(ns, 'path');
+      this.ghostPath = createSvg('path');
       this.ghostPath.setAttribute('fill', 'none');
       this.ghostPath.setAttribute('stroke', 'var(--interactive-accent)');
       this.ghostPath.setAttribute('stroke-width', '1.5');
@@ -2571,8 +2561,7 @@ export const canvasMethods = {
     const rect = this.outer.getBoundingClientRect();
     const startCp = screenToCanvas(startEvent.clientX - rect.left, startEvent.clientY - rect.top, this.vp);
 
-    const ns = 'http://www.w3.org/2000/svg';
-    const livePath = activeDocument.createElementNS(ns, 'path');
+    const livePath = createSvg('path');
     livePath.setAttribute('fill', 'none');
     livePath.setAttribute('stroke', 'var(--interactive-accent)');
     livePath.setAttribute('stroke-width', '1.5');
@@ -2655,8 +2644,7 @@ export const canvasMethods = {
     const conn = this.board.connections.find(c => c.id === id); if (!conn) return;
     const d = this.buildConnectionPath(conn); if (!d) return;
 
-    const ns = 'http://www.w3.org/2000/svg';
-    this.connectionSelectPath = activeDocument.createElementNS(ns, 'path');
+    this.connectionSelectPath = createSvg('path');
     this.connectionSelectPath.setAttribute('d', d);
     this.connectionSelectPath.setAttribute('stroke', 'var(--interactive-accent)');
     this.connectionSelectPath.setAttribute('stroke-width', String(conn.thickness + 6));
@@ -2682,12 +2670,11 @@ export const canvasMethods = {
 
   showConnectionEndpointHandles(this: FreeformRenderer, conn: Connection): void {
     this.hideConnectionEndpointHandles();
-    const ns = 'http://www.w3.org/2000/svg';
 
     const addHandle = (getPoint: () => { x: number; y: number } | undefined, setPoint: (p: { x: number; y: number }) => void) => {
       const p = getPoint();
       if (!p) return;
-      const handle = activeDocument.createElementNS(ns, 'circle');
+      const handle = createSvg('circle');
       handle.setAttribute('cx', String(p.x));
       handle.setAttribute('cy', String(p.y));
       handle.setAttribute('r', '6');
@@ -2737,8 +2724,7 @@ export const canvasMethods = {
     const { src, tgt } = straightAnchors(from, to);
     const pt = curveThroughPoint(src, tgt, conn.bend ?? 0);
 
-    const ns = 'http://www.w3.org/2000/svg';
-    const handle = activeDocument.createElementNS(ns, 'circle');
+    const handle = createSvg('circle');
     handle.setAttribute('cx', String(pt.x));
     handle.setAttribute('cy', String(pt.y));
     handle.setAttribute('r', '6');
@@ -2906,10 +2892,10 @@ export const canvasMethods = {
       const btn = thickGroup.createDiv('visual-notes-conn-props-btn');
       btn.setAttribute('aria-label', `Thickness ${t}`);
       btn.toggleClass('is-active', conn.thickness === t);
-      const svg = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      const svg = createSvg('svg');
       svg.setAttribute('width', '20'); svg.setAttribute('height', '16');
       svg.setAttribute('viewBox', '0 0 20 16');
-      const line = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'line');
+      const line = createSvg('line');
       line.setAttribute('x1', '2'); line.setAttribute('y1', '8');
       line.setAttribute('x2', '18'); line.setAttribute('y2', '8');
       line.setAttribute('stroke', 'currentColor');
@@ -2934,10 +2920,10 @@ export const canvasMethods = {
       const btn = styleGroup.createDiv('visual-notes-conn-props-btn');
       btn.setAttribute('aria-label', style);
       btn.toggleClass('is-active', conn.style === style);
-      const svg = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      const svg = createSvg('svg');
       svg.setAttribute('width', '22'); svg.setAttribute('height', '16');
       svg.setAttribute('viewBox', '0 0 22 16');
-      const line = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'line');
+      const line = createSvg('line');
       line.setAttribute('x1', '2'); line.setAttribute('y1', '8');
       line.setAttribute('x2', '20'); line.setAttribute('y2', '8');
       line.setAttribute('stroke', 'currentColor');

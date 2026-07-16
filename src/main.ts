@@ -9,7 +9,7 @@ import { isVisualNotesOwnedFile, listTemplates, createBoardFileFromTemplate, ins
 import { STARTER_TEMPLATES } from './starter-templates';
 
 export default class VisualNotesPlugin extends Plugin {
-  settings: VisualNotesSettings;
+  override settings: VisualNotesSettings;
 
   // Files the user has explicitly chosen to view with Obsidian's native
   // Canvas instead of Visual Notes' own UI for this session — e.g. so a

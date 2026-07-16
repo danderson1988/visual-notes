@@ -18,10 +18,7 @@
 //     state still eventually gets written instead of only surviving in
 //     memory until the next unrelated edit happens to trigger a save.
 export class SaveQueue {
-  // Bare setTimeout/clearTimeout (not window.*) deliberately — this class
-  // has no DOM dependency so it can run in a plain Node test environment
-  // (see test/save-queue.test.ts), which has no `window` global at all.
-  private timer: ReturnType<typeof setTimeout> | null = null;
+  private timer: number | null = null;
   private inFlight: Promise<void> | null = null;
   private pending = false;
 
@@ -37,15 +34,15 @@ export class SaveQueue {
   }
 
   schedule(): void {
-    if (this.timer !== null) clearTimeout(this.timer);
-    this.timer = setTimeout(() => {
+    if (this.timer !== null) window.clearTimeout(this.timer);
+    this.timer = window.setTimeout(() => {
       this.timer = null;
       void this.flush();
     }, this.debounceMs);
   }
 
   async flush(): Promise<void> {
-    if (this.timer !== null) { clearTimeout(this.timer); this.timer = null; }
+    if (this.timer !== null) { window.clearTimeout(this.timer); this.timer = null; }
 
     if (this.inFlight) {
       this.pending = true;
