@@ -162,6 +162,15 @@ Boards save automatically as you work. All data lives in the `.canvas` file — 
 
 ---
 
+## Permissions & data access
+
+Visual Notes only reads and writes files inside your own vault — it makes no network requests and sends no data anywhere. Two vault-wide capabilities it uses, and why:
+
+- **Vault file listing** (`vault.getFiles`, `getMarkdownFiles`): needed to power the note/image/audio/file pickers (e.g. linking a note to a kanban item, choosing a cover image, auto-relinking moved assets). Nothing is read or transmitted beyond the file list itself until you pick a specific file.
+- **Clipboard access**: used to paste images directly onto a board (Ctrl/Cmd+V) and to copy/paste cards between boards. It only reads the clipboard when you trigger a paste action inside the plugin.
+
+---
+
 ## Compatibility
 
 | Platform | Status |
