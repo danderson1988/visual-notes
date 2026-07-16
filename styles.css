@@ -324,6 +324,11 @@ body.theme-dark {
      off-screen at any given time. */
   content-visibility: auto;
   contain-intrinsic-size: 260px 200px;
+  /* Set inline as --card-z (not the z-index property itself) precisely so
+     that .is-lifted below can outrank it via ordinary class-selector
+     specificity instead of !important — an inline z-index would otherwise
+     always win the cascade regardless of any class rule's specificity. */
+  z-index: var(--card-z, 0);
 }
 
 /* Tile-specific layout within the base card */
@@ -4910,6 +4915,7 @@ input.visual-notes-accent-pop-hex {
 
 .visual-notes-sticky-shape-fill.is-shape-triangle {
   border-radius: 0;
+  -webkit-clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
@@ -5465,8 +5471,7 @@ input.visual-notes-accent-pop-hex {
      rather than stretching the label and subtitle rows to split it evenly
      (which pins a subtitle-less label toward the top). */
   align-content: center;
-  column-gap: 10px;
-  row-gap: 0;
+  gap: 0 10px;
 }
 
 .visual-notes-column-child.visual-notes-freeform-tile-card .visual-notes-freeform-tile-square {
@@ -5750,7 +5755,7 @@ path.ib-highlight-stroke {
      everything, and no pointer interception mid-flight. transform itself
      (scale + tilt) is driven per-frame from JS. */
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22), 0 4px 10px rgba(0, 0, 0, 0.12);
-  z-index: 9998 !important;
+  z-index: 9998;
   cursor: grabbing;
   will-change: transform;
   transition: box-shadow 150ms ease;

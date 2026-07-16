@@ -424,7 +424,7 @@ export class FreeformRenderer extends Component {
     // Regular sticky notes auto-size to content; blank cards and every
     // other kind use their saved height.
     el.style.height = (card.kind === 'sticky' && !card.blank) ? '' : `${card.h ?? TILE_DEFAULT_H}px`;
-    el.style.zIndex = String(card.z ?? 0);
+    el.setCssProps({ '--card-z': String(card.z ?? 0) });
   }
 
   // ── Content dispatch ───────────────────────────────────────────

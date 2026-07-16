@@ -527,7 +527,7 @@ export const overlaysMethods = {
       for (const id of this.selection.getIds()) {
         const c = this.board.cards.find(c => c.id === id);
         const cel = this.cardEls.get(id);
-        if (c) { c.z = maxZ + off++; if (cel) cel.style.zIndex = String(c.z); }
+        if (c) { c.z = maxZ + off++; if (cel) cel.setCssProps({ '--card-z': String(c.z) }); }
       }
       this.scheduleSave();
     }));
@@ -537,7 +537,7 @@ export const overlaysMethods = {
       for (const id of this.selection.getIds()) {
         const c = this.board.cards.find(c => c.id === id);
         const cel = this.cardEls.get(id);
-        if (c) { c.z = minZ - off++; if (cel) cel.style.zIndex = String(c.z); }
+        if (c) { c.z = minZ - off++; if (cel) cel.setCssProps({ '--card-z': String(c.z) }); }
       }
       this.scheduleSave();
     }));
