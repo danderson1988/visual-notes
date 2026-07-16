@@ -8,7 +8,7 @@
 // display as a calendar without duplicating rows anywhere.
 
 import {
-  VisualNotesFile, TableCard, TableRow, KanbanBoardCard, KanbanColumnCard, KanbanItem,
+  VisualNotesFile, TableCard, TableRow, KanbanItem,
   CalendarCard, CalendarNote, CalendarNoteImportance, CalendarDayStyle,
 } from './file-types';
 import { setIcon, type App } from 'obsidian';
@@ -208,7 +208,7 @@ export function collectBoardDatedItems(board: VisualNotesFile): DatedItem[] {
   const out: DatedItem[] = [];
   for (const card of board.cards) {
     if (card.kind === 'kanban-board') {
-      const b = card as KanbanBoardCard;
+      const b = card;
       const name = b.title || 'Kanban';
       for (const col of b.columns) {
         for (const item of col.items) {
@@ -217,15 +217,15 @@ export function collectBoardDatedItems(board: VisualNotesFile): DatedItem[] {
         }
       }
     } else if (card.kind === 'kanban-column') {
-      const k = card as KanbanColumnCard;
+      const k = card;
       for (const item of k.items) {
         const d = kanbanItemToDated(item, k.id, k.title || 'Kanban', k.topColor ?? k.color);
         if (d) out.push(d);
       }
     } else if (card.kind === 'table') {
-      out.push(...tableDatedItems(card as TableCard));
+      out.push(...tableDatedItems(card));
     } else if (card.kind === 'calendar') {
-      const c = card as CalendarCard;
+      const c = card;
       for (const note of c.notes ?? []) out.push(calendarNoteToDated(note, c));
     }
   }

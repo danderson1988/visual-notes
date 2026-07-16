@@ -90,7 +90,7 @@ export const cardsCalendarMethods = {
         || (c.kind === 'table' && (c.view ?? 'table') !== 'table');
       if (!showsDates && c.id !== sourceCardId) continue;
       const cel = this.cardEls.get(c.id);
-      if (cel) this.rerenderCard(cel, c as SupportedCard);
+      if (cel) this.rerenderCard(cel, c);
     }
   },
 
@@ -122,7 +122,7 @@ export const cardsCalendarMethods = {
     span: HTMLElement, current: string | undefined,
     apply: (v: string | undefined) => void, cardEl: HTMLElement, card: SupportedCard,
   ): void {
-    const input = document.createElement('input');
+    const input = createEl('input');
     input.type = 'text';
     input.value = current ?? '';
     input.className = 'visual-notes-dataview-title-input';

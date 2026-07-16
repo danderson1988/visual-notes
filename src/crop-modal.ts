@@ -220,7 +220,7 @@ export class CropImageModal extends Modal {
     const sw = Math.max(1, Math.round(this.rect.w * scaleX));
     const sh = Math.max(1, Math.round(this.rect.h * scaleY));
 
-    const canvas = activeDocument.createElement('canvas');
+    const canvas = createEl('canvas');
     canvas.width = sw; canvas.height = sh;
     const ctx = canvas.getContext('2d');
     if (!ctx) { new Notice('Crop failed — canvas unavailable.'); return; }

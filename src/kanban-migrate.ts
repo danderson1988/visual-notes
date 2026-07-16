@@ -1,4 +1,4 @@
-import { Card, VisualNotesFile, KanbanBoardCard, KanbanColumnCard } from './file-types';
+import { Card, VisualNotesFile, KanbanBoardCard } from './file-types';
 
 /**
  * Converts any legacy KanbanColumnCard (one column = one whole card) into a
@@ -16,7 +16,7 @@ export function migrateLegacyKanbanColumns(board: VisualNotesFile): VisualNotesF
 
   const cards: Card[] = board.cards.map(card => {
     if (card.kind !== 'kanban-column') return card;
-    const legacy = card as KanbanColumnCard;
+    const legacy = card;
     const migrated: KanbanBoardCard = {
       id: legacy.id,
       x: legacy.x, y: legacy.y, w: legacy.w, h: legacy.h, z: legacy.z, order: legacy.order,

@@ -454,7 +454,7 @@ export const cardsKanbanMethods = {
     menuBtn.setAttribute('aria-label', 'Column options');
     menuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.showColumnMenu(e as unknown as MouseEvent, board, column, columnEl);
+      this.showColumnMenu(e, board, column, columnEl);
     });
 
     if (column.collapsed) columnEl.addClass('is-collapsed');
@@ -1373,9 +1373,9 @@ export const cardsKanbanMethods = {
         const rot = Math.max(-4 * intensity, Math.min(4 * intensity, tiltVX * 0.01 * intensity));
         const liftScale = 1 + 0.02 * intensity;
         ghost.style.transform = `scale(${liftScale}) rotate(${rot.toFixed(2)}deg)`;
-        tiltRafId = requestAnimationFrame(tiltLoop);
+        tiltRafId = window.requestAnimationFrame(tiltLoop);
       };
-      tiltRafId = requestAnimationFrame(tiltLoop);
+      tiltRafId = window.requestAnimationFrame(tiltLoop);
     }
 
     const onMove = (e: PointerEvent) => {
@@ -1406,7 +1406,7 @@ export const cardsKanbanMethods = {
       targetOwner = owner;
 
       const visItems = Array.from(tItemsEl.querySelectorAll<HTMLElement>('.visual-notes-kanban-item:not(.is-dragging)'));
-      dropIndicator = activeDocument.createElement('div');
+      dropIndicator = createDiv();
       dropIndicator.className = 'visual-notes-kanban-drop-indicator';
 
       let placed = false;
@@ -1428,7 +1428,7 @@ export const cardsKanbanMethods = {
     const onUp = () => {
       activeDocument.removeEventListener('pointermove', onMove);
       activeDocument.removeEventListener('pointerup', onUp);
-      cancelAnimationFrame(tiltRafId);
+      window.cancelAnimationFrame(tiltRafId);
       ghost.remove();
       removeIndicator();
       itemEl.removeClass('is-dragging');

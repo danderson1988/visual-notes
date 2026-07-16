@@ -482,7 +482,7 @@ export const cardsMediaMethods = {
       createCard(newPath, h);
     })(); }).open();
     const fromUpload = () => {
-      const input = activeDocument.createElement('input');
+      const input = createEl('input');
       input.type = 'file'; input.accept = IMAGE_EXTS.map(e => `.${e}`).join(',');
       input.addEventListener('change', () => { void (async () => {
         const file = input.files?.[0]; if (!file) return;
@@ -512,7 +512,7 @@ export const cardsMediaMethods = {
       createCard(newPath);
     })(); }).open();
     const fromUpload = () => {
-      const input = activeDocument.createElement('input');
+      const input = createEl('input');
       input.type = 'file'; input.accept = AUDIO_EXTS.map(e => `.${e}`).join(',');
       input.addEventListener('change', () => { void (async () => {
         const file = input.files?.[0]; if (!file) return;

@@ -10,7 +10,7 @@ class FolderSuggestModal extends FuzzySuggestModal<TFolder> {
 
   constructor(app: App, onChoose: (folder: TFolder | null) => void) {
     super(app);
-    this.folders = app.vault.getAllLoadedFiles().filter(f => f instanceof TFolder) as TFolder[];
+    this.folders = app.vault.getAllLoadedFiles().filter(f => f instanceof TFolder);
     this.onChoose = onChoose;
     this.setPlaceholder('Type to search folders…');
   }

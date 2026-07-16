@@ -68,7 +68,7 @@ export default class VisualNotesPlugin extends Plugin {
           this.openTemplatePicker((file) => { void this.openBoardFile(file); });
         })
       );
-      menu.showAtMouseEvent(e as unknown as MouseEvent);
+      menu.showAtMouseEvent(e);
     });
 
     // File explorer: right-clicking a folder gets a "New Visual Notes board"
@@ -141,7 +141,7 @@ export default class VisualNotesPlugin extends Plugin {
         const view = this.app.workspace.getActiveViewOfType(FileView);
         const file = view?.file;
         if (!file || file.extension !== 'canvas') return false;
-        if (!checking) void this.toggleNativeView(view!);
+        if (!checking) void this.toggleNativeView(view);
         return true;
       },
     });

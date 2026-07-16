@@ -147,12 +147,12 @@ export const persistenceMethods = {
     new ArchiveModal(
       this.app,
       () => this.board.archived ?? [],
-      (c) => this.cardDisplayName(c as SupportedCard),
+      (c) => this.cardDisplayName(c),
       (c) => {
         this.pushUndo();
         this.board.archived = (this.board.archived ?? []).filter(a => a.id !== c.id);
         this.board.cards.push(c);
-        this.createCardEl(c as SupportedCard);
+        this.createCardEl(c);
         this.selection.select(c.id);
         this.refreshSelectionVisuals();
         this.centerOnCard(c.id);

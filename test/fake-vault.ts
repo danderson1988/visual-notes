@@ -3,9 +3,10 @@
 // (getAbstractFileByPath, getFiles, read, modify, create, createBinary,
 // createFolder, fileManager.renameFile). Shared across their test files so
 // each one isn't hand-rolling its own fake Vault.
-import { TFile, type App } from 'obsidian';
+import { TFile, TFolder, type App } from 'obsidian';
 
 export interface FakeFile { path: string; name: string; basename: string; extension: string; }
+export interface FakeFolder { path: string; name: string; }
 
 // A real instance of the stubbed TFile class (not a plain object) — some
 // production code (installStarterTemplate) does `existing instanceof TFile`,
@@ -18,6 +19,15 @@ function makeFile(path: string): FakeFile {
   const file = new TFile() as unknown as FakeFile;
   Object.assign(file, { path, name, basename, extension });
   return file;
+}
+
+// Same reasoning as makeFile — production code does `instanceof TFolder`
+// (see saveBoardAsTemplate), which a plain duck-typed object would always fail.
+function makeFolder(path: string): FakeFolder {
+  const name = path.split('/').pop() ?? path;
+  const folder = new TFolder() as unknown as FakeFolder;
+  Object.assign(folder, { path, name });
+  return folder;
 }
 
 export class FakeVault {
@@ -45,7 +55,7 @@ export class FakeVault {
       getAbstractFileByPath: (path: string) => {
         const entry = this.entries.get(path);
         if (entry) return entry.file;
-        if (this.folders.has(path)) return { path, name: path.split('/').pop() ?? path };
+        if (this.folders.has(path)) return makeFolder(path);
         return null;
       },
       getFiles: () => Array.from(this.entries.values()).map(e => e.file),

@@ -181,10 +181,10 @@ export const cardsColumnMethods = {
     // Every child kind, tiles included, fills the tray's width — align-items:
     // stretch on the stack handles this automatically as long as no explicit
     // width is set here, matching the backdrop box the tile now renders with.
-    if (child.kind !== 'sticky' || (child as StickyCard).blank) {
+    if (child.kind !== 'sticky' || child.blank) {
       childEl.style.height = `${child.h ?? TILE_DEFAULT_H}px`;
     }
-    this.renderCardContent(childEl, child as SupportedCard);
+    this.renderCardContent(childEl, child);
     this.bindColumnChildEvents(childEl, column, child);
   },
 
@@ -233,7 +233,7 @@ export const cardsColumnMethods = {
         const newCard = { ...child, x: this.applySnap(cp.x), y: this.applySnap(cp.y), z: this.nextZ() } as Card;
         this.board.cards.push(newCard);
         this.rebuildKanbanCard(column);
-        this.createCardEl(newCard as SupportedCard);
+        this.createCardEl(newCard);
         this.selection.select(newCard.id);
         this.refreshSelectionVisuals();
         this.scheduleSave();
@@ -251,7 +251,7 @@ export const cardsColumnMethods = {
         }));
       } else {
         menu.addItem(i => i.setTitle('Create nested board…').setIcon('layout-template').onClick(() => {
-          this.createNestedBoardFrom(this.cardDisplayName(child as SupportedCard), (path, icon) => {
+          this.createNestedBoardFrom(this.cardDisplayName(child), (path, icon) => {
             this.pushUndo();
             child.nestedBoardPath = path; child.nestedBoardIcon = icon;
             this.rebuildColumnChild(column, child);
@@ -343,9 +343,9 @@ export const cardsColumnMethods = {
         const rot = Math.max(-4 * intensity, Math.min(4 * intensity, tiltVX * 0.01 * intensity));
         const liftScale = 1 + 0.02 * intensity;
         ghost.style.transform = `scale(${liftScale}) rotate(${rot.toFixed(2)}deg)`;
-        tiltRafId = requestAnimationFrame(tiltLoop);
+        tiltRafId = window.requestAnimationFrame(tiltLoop);
       };
-      tiltRafId = requestAnimationFrame(tiltLoop);
+      tiltRafId = window.requestAnimationFrame(tiltLoop);
     }
 
     let dropIndicator: HTMLElement | null = null;
@@ -382,7 +382,7 @@ export const cardsColumnMethods = {
       targetStackEl = foundStackEl;
 
       const visChildren = Array.from(foundStackEl.querySelectorAll<HTMLElement>('.visual-notes-column-child:not(.is-dragging)'));
-      dropIndicator = activeDocument.createElement('div');
+      dropIndicator = createDiv();
       dropIndicator.className = 'visual-notes-column-drop-indicator';
       let placed = false;
       for (const vc of visChildren) {
@@ -399,7 +399,7 @@ export const cardsColumnMethods = {
     const onUp = () => {
       activeDocument.removeEventListener('pointermove', onMove);
       activeDocument.removeEventListener('pointerup', onUp);
-      cancelAnimationFrame(tiltRafId);
+      window.cancelAnimationFrame(tiltRafId);
       ghost.remove();
       removeIndicator();
       childEl.removeClass('is-dragging');
@@ -426,7 +426,7 @@ export const cardsColumnMethods = {
         const newCard = { ...child, x: this.applySnap(cp.x - w / 2), y: this.applySnap(cp.y - h / 2), z: this.nextZ() } as Card;
         this.board.cards.push(newCard);
         this.rebuildKanbanCard(sourceColumn);
-        this.createCardEl(newCard as SupportedCard);
+        this.createCardEl(newCard);
         this.selection.select(newCard.id);
         this.refreshSelectionVisuals();
         this.scheduleSave();

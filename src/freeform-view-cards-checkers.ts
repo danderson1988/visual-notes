@@ -15,7 +15,7 @@ declare module './freeform-view' {
 // ── Pure game logic (no DOM, no FreeformRenderer) ────────────────────────
 
 export function initialCheckersBoard(): (CheckersPiece | null)[] {
-  const board: (CheckersPiece | null)[] = new Array(64).fill(null);
+  const board = new Array<CheckersPiece | null>(64).fill(null);
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
       if ((row + col) % 2 !== 1) continue; // only dark squares are playable

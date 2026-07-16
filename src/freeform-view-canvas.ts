@@ -443,7 +443,7 @@ export const canvasMethods = {
       const tileData = e.dataTransfer?.getData(TILE_DRAG_MIME);
       if (tileData) {
         let payload: DraggedTilePayload;
-        try { payload = JSON.parse(tileData); } catch { return; }
+        try { payload = JSON.parse(tileData) as DraggedTilePayload; } catch { return; }
         const rect = this.outer.getBoundingClientRect();
         const cp = screenToCanvas(e.clientX - rect.left, e.clientY - rect.top, this.vp);
         const card: TileCard = {
@@ -677,7 +677,7 @@ export const canvasMethods = {
     const ids = this.selection.getIds();
     if (ids.length === 1) {
       const card = this.board.cards.find(c => c.id === ids[0]);
-      if (card) this.contextBar?.show(card as SupportedCard);
+      if (card) this.contextBar?.show(card);
       else this.contextBar?.hide();
     } else {
       this.contextBar?.hide();
@@ -809,7 +809,7 @@ export const canvasMethods = {
           const isKanbanContainer = kc.kind === 'kanban-column' || kc.kind === 'kanban-board';
           const isColumnContainer = kc.kind === 'column';
           if (!(isKanbanEligible && isKanbanContainer) && !(isColumnEligible && isColumnContainer)) continue;
-          if ((kc as KanbanColumnCard | KanbanBoardCard | ColumnCard).locked) continue; // padlocked: not a drop target
+          if (kc.locked) continue; // padlocked: not a drop target
           const kEl = this.cardEls.get(kc.id);
           if (!kEl) continue;
           dropCandidates.push({ id: kc.id, kind: isKanbanContainer ? 'kanban' : 'column', rect: kEl.getBoundingClientRect() });
@@ -835,7 +835,7 @@ export const canvasMethods = {
         for (const cel of draggedEls) {
           cel.style.transform = `scale(${liftScale}) rotate(${rot.toFixed(2)}deg) translate(${(-tiltVX * 0.006 * intensity).toFixed(2)}px, ${(-tiltVY * 0.006 * intensity).toFixed(2)}px)`;
         }
-        tiltRafId = requestAnimationFrame(tiltLoop);
+        tiltRafId = window.requestAnimationFrame(tiltLoop);
       };
       const startLift = () => {
         if (!this.cardDragAnimationEnabled) return;
@@ -843,11 +843,11 @@ export const canvasMethods = {
           const cel = this.cardEls.get(id);
           if (cel) { cel.addClass('is-lifted'); draggedEls.push(cel); }
         }
-        tiltRafId = requestAnimationFrame(tiltLoop);
+        tiltRafId = window.requestAnimationFrame(tiltLoop);
       };
       const endLift = (settled: boolean) => {
         if (!this.cardDragAnimationEnabled) return;
-        cancelAnimationFrame(tiltRafId);
+        window.cancelAnimationFrame(tiltRafId);
         for (const cel of draggedEls) {
           cel.removeClass('is-lifted');
           cel.setCssStyles({ transform: '' });
@@ -926,12 +926,12 @@ export const canvasMethods = {
         latestX = e.clientX; latestY = e.clientY;
         if (!moveFramePending) {
           moveFramePending = true;
-          moveFrameId = requestAnimationFrame(flushMoveFrame);
+          moveFrameId = window.requestAnimationFrame(flushMoveFrame);
         }
       };
       const onUp = (ue: PointerEvent) => {
         el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerup', onUp);
-        if (moveFramePending) { cancelAnimationFrame(moveFrameId); latestX = ue.clientX; latestY = ue.clientY; flushMoveFrame(); }
+        if (moveFramePending) { window.cancelAnimationFrame(moveFrameId); latestX = ue.clientX; latestY = ue.clientY; flushMoveFrame(); }
         if (hoveredCardId) this.cardEls.get(hoveredCardId)?.removeClass('is-kanban-drop-target');
         this.clearTrashHover();
         const trashing = dragMoved && this.isOverTrash(ue.clientX, ue.clientY);
@@ -1140,11 +1140,11 @@ export const canvasMethods = {
       latestEv = ev;
       if (moveFramePending) return;
       moveFramePending = true;
-      moveFrameId = requestAnimationFrame(() => { moveFramePending = false; applyResize(latestEv); });
+      moveFrameId = window.requestAnimationFrame(() => { moveFramePending = false; applyResize(latestEv); });
     };
     const onUp = () => {
       el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerup', onUp);
-      if (moveFramePending) { cancelAnimationFrame(moveFrameId); moveFramePending = false; applyResize(latestEv); }
+      if (moveFramePending) { window.cancelAnimationFrame(moveFrameId); moveFramePending = false; applyResize(latestEv); }
       this.renderCardContent(el, card);
       this.updateConnectionsForCard(card.id);
       this.scheduleSave();
@@ -1588,7 +1588,7 @@ export const canvasMethods = {
     const ns = 'http://www.w3.org/2000/svg';
     const d = this.buildInkPathD(stroke.points);
 
-    const path = activeDocument.createElementNS(ns, 'path') as SVGPathElement;
+    const path = activeDocument.createElementNS(ns, 'path');
     if (this.isHighlightStroke(stroke)) {
       path.setAttribute('d', this.buildHighlightOutlineD(stroke));
       path.setAttribute('fill', stroke.color);
@@ -1609,7 +1609,7 @@ export const canvasMethods = {
 
     // Invisible, much thicker hit path so a thin stroke is still easy to
     // click for selection — same trick used for connection lines.
-    const hit = activeDocument.createElementNS(ns, 'path') as SVGPathElement;
+    const hit = activeDocument.createElementNS(ns, 'path');
     hit.setAttribute('d', d);
     hit.setAttribute('stroke', 'transparent');
     hit.setAttribute('stroke-width', String(Math.max(16, stroke.width + 12)));
@@ -1667,7 +1667,7 @@ export const canvasMethods = {
     hit.addEventListener('contextmenu', (e) => {
       e.preventDefault(); e.stopPropagation();
       this.selectDrawing(stroke.groupId);
-      this.showDrawingMenu(e as unknown as MouseEvent, stroke.groupId);
+      this.showDrawingMenu(e, stroke.groupId);
     });
     this.inkSvgEl.appendChild(hit);
     this.inkHitPaths.set(stroke.id, hit);
@@ -1694,7 +1694,7 @@ export const canvasMethods = {
     if (!strokes.length) { this.removeDrawingBox(); return; }
 
     const ns = 'http://www.w3.org/2000/svg';
-    const g = activeDocument.createElementNS(ns, 'g') as SVGGElement;
+    const g = activeDocument.createElementNS(ns, 'g');
     g.setAttribute('pointer-events', 'none');
     for (const stroke of strokes) {
       const p = activeDocument.createElementNS(ns, 'path');
@@ -1911,7 +1911,7 @@ export const canvasMethods = {
     const firstPoint = { ...stroke.points[0] };
 
     const ns = 'http://www.w3.org/2000/svg';
-    const livePath = activeDocument.createElementNS(ns, 'path') as SVGPathElement;
+    const livePath = activeDocument.createElementNS(ns, 'path');
     if (isHighlighter) {
       livePath.setAttribute('fill', stroke.color);
       livePath.setAttribute('fill-opacity', String(stroke.opacity));
@@ -2198,7 +2198,7 @@ export const canvasMethods = {
   scheduleCullingRefresh(this: FreeformRenderer): void {
     if (this.cullFramePending) return;
     this.cullFramePending = true;
-    requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
       this.cullFramePending = false;
       this.refreshConnectionCulling();
     });
@@ -2465,13 +2465,13 @@ export const canvasMethods = {
       latestEv = ev;
       if (moveFramePending) return;
       moveFramePending = true;
-      moveFrameId = requestAnimationFrame(() => { moveFramePending = false; if (latestEv) applyHandleMove(latestEv); });
+      moveFrameId = window.requestAnimationFrame(() => { moveFramePending = false; if (latestEv) applyHandleMove(latestEv); });
     };
 
     const onUp = (ev: PointerEvent) => {
       handleEl.removeEventListener('pointermove', onMove);
       handleEl.removeEventListener('pointerup', onUp);
-      if (moveFramePending) { cancelAnimationFrame(moveFrameId); moveFramePending = false; }
+      if (moveFramePending) { window.cancelAnimationFrame(moveFrameId); moveFramePending = false; }
       this.removeGhostPath();
       if (hoveredId) this.cardEls.get(hoveredId)?.removeClass('is-connect-target');
       const targetId = this.cardIdAtPoint(ev.clientX, ev.clientY);
@@ -2687,7 +2687,7 @@ export const canvasMethods = {
     const addHandle = (getPoint: () => { x: number; y: number } | undefined, setPoint: (p: { x: number; y: number }) => void) => {
       const p = getPoint();
       if (!p) return;
-      const handle = activeDocument.createElementNS(ns, 'circle') as SVGCircleElement;
+      const handle = activeDocument.createElementNS(ns, 'circle');
       handle.setAttribute('cx', String(p.x));
       handle.setAttribute('cy', String(p.y));
       handle.setAttribute('r', '6');
@@ -2738,7 +2738,7 @@ export const canvasMethods = {
     const pt = curveThroughPoint(src, tgt, conn.bend ?? 0);
 
     const ns = 'http://www.w3.org/2000/svg';
-    const handle = activeDocument.createElementNS(ns, 'circle') as SVGCircleElement;
+    const handle = activeDocument.createElementNS(ns, 'circle');
     handle.setAttribute('cx', String(pt.x));
     handle.setAttribute('cy', String(pt.y));
     handle.setAttribute('r', '6');

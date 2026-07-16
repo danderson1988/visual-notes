@@ -18,6 +18,9 @@
 //     state still eventually gets written instead of only surviving in
 //     memory until the next unrelated edit happens to trigger a save.
 export class SaveQueue {
+  // Bare setTimeout/clearTimeout (not window.*) deliberately — this class
+  // has no DOM dependency so it can run in a plain Node test environment
+  // (see test/save-queue.test.ts), which has no `window` global at all.
   private timer: ReturnType<typeof setTimeout> | null = null;
   private inFlight: Promise<void> | null = null;
   private pending = false;

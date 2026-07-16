@@ -115,7 +115,7 @@ export class TextFormatToolbar {
         sel.removeAllRanges();
       }
     } else {
-      const wrapper = activeDocument.createElement(tag);
+      const wrapper = createEl(tag as keyof HTMLElementTagNameMap);
       this.wrapRange(range, wrapper);
       const nr = activeDocument.createRange();
       nr.selectNodeContents(wrapper);
@@ -208,7 +208,7 @@ export class TextFormatToolbar {
     const range = sel.getRangeAt(0);
     if (range.collapsed) return;
     if (hex === null) this.unwrapRange(range, 'span');
-    else { const s = activeDocument.createElement('span'); s.style.color = hex; this.wrapRange(range, s); }
+    else { const s = createSpan(); s.style.color = hex; this.wrapRange(range, s); }
     sel.removeAllRanges();
   }
 
@@ -219,7 +219,7 @@ export class TextFormatToolbar {
     const range = sel.getRangeAt(0);
     if (range.collapsed) return;
     if (hex === null) this.unwrapRange(range, 'mark');
-    else { const m = activeDocument.createElement('mark'); m.style.background = hex; this.wrapRange(range, m); }
+    else { const m = createEl('mark'); m.style.background = hex; this.wrapRange(range, m); }
     sel.removeAllRanges();
   }
 
@@ -237,7 +237,7 @@ export class TextFormatToolbar {
     const tag = wrapper.tagName.toLowerCase();
     // Extract selection, flatten any same-type tags inside, then rewrap
     const extracted = range.extractContents();
-    const tmp = activeDocument.createElement('div');
+    const tmp = createDiv();
     tmp.appendChild(extracted);
     tmp.querySelectorAll(tag).forEach(el => el.replaceWith(...Array.from(el.childNodes)));
     while (tmp.firstChild) wrapper.appendChild(tmp.firstChild);
@@ -247,7 +247,7 @@ export class TextFormatToolbar {
 
   private unwrapRange(range: Range, tag: string): void {
     const extracted = range.extractContents();
-    const tmp = activeDocument.createElement('div');
+    const tmp = createDiv();
     tmp.appendChild(extracted);
     tmp.querySelectorAll(tag).forEach(el => el.replaceWith(...Array.from(el.childNodes)));
     const frag = activeDocument.createDocumentFragment();

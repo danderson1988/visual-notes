@@ -109,7 +109,8 @@ export async function installStarterTemplate(app: App, name: string, json: strin
 // not carry over whatever happened to be archived on the board it came from.
 export async function saveBoardAsTemplate(app: App, board: VisualNotesFile, name: string): Promise<TFile> {
   await ensureDir(app, TEMPLATES_FOLDER);
-  const folder = app.vault.getAbstractFileByPath(TEMPLATES_FOLDER) as TFolder;
+  const found = app.vault.getAbstractFileByPath(TEMPLATES_FOLDER);
+  const folder = found instanceof TFolder ? found : null;
   const clone = JSON.parse(JSON.stringify(board)) as VisualNotesFile;
   delete clone.archived;
   return writeNewBoardFile(app, name, folder, clone);

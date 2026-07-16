@@ -207,7 +207,7 @@ function cardToNodes(card: Card): CanvasNode[] {
 
   switch (card.kind) {
     case 'tile': {
-      const t = card as TileCard;
+      const t = card;
       if (t.target.kind === 'folder') {
         return [{ ...base, type: 'text', text: `📁 **${t.label}**${t.subtitle ? `\n${t.subtitle}` : ''}`, color: t.color, ib: stashable(t) }];
       }
@@ -215,27 +215,27 @@ function cardToNodes(card: Card): CanvasNode[] {
     }
 
     case 'sticky': {
-      const s = card as StickyCard;
+      const s = card;
       return [{ ...base, type: 'text', text: s.text, color: s.color, ib: stashable(s) }];
     }
 
     case 'checklist': {
-      const c = card as ChecklistCard;
+      const c = card;
       return [{ ...base, type: 'text', text: checklistToMarkdown(c), color: c.color, ib: stashable(c) }];
     }
 
     case 'comment': {
-      const c = card as CommentCard;
+      const c = card;
       return [{ ...base, type: 'text', text: commentToMarkdown(c), color: c.color, ib: stashable(c) }];
     }
 
     case 'table': {
-      const t = card as TableCard;
+      const t = card;
       return [{ ...base, type: 'text', text: tableToMarkdown(t), color: t.color, ib: stashable(t) }];
     }
 
     case 'image': {
-      const img = card as ImageCard;
+      const img = card;
       if (img.source.type === 'external') {
         return [{ ...base, type: 'link', url: img.source.url, ib: stashable(img) }];
       }
@@ -243,37 +243,37 @@ function cardToNodes(card: Card): CanvasNode[] {
     }
 
     case 'audio': {
-      const a = card as AudioCard;
+      const a = card;
       return [{ ...base, type: 'file', file: a.source.path, ib: stashable(a) }];
     }
 
     case 'note-link': {
-      const n = card as NoteLinkCard;
+      const n = card;
       return [{ ...base, type: 'file', file: n.path, ib: stashable(n) }];
     }
 
     case 'bookmark': {
-      const b = card as BookmarkCard;
+      const b = card;
       return [{ ...base, type: 'link', url: b.url, ib: stashable(b) }];
     }
 
     case 'map': {
-      const m = card as MapCard;
+      const m = card;
       return [{ ...base, type: 'link', url: m.url, ib: stashable(m) }];
     }
 
     case 'swatch': {
-      const s = card as SwatchCard;
+      const s = card;
       return [{ ...base, type: 'text', text: `${s.color.toUpperCase()} — ${nearestColorName(s.color)}`, color: s.color, ib: stashable(s) }];
     }
 
     case 'file': {
-      const f = card as FileCard;
+      const f = card;
       return [{ ...base, type: 'file', file: f.path, ib: stashable(f) }];
     }
 
     case 'callout': {
-      const c = card as CalloutCard;
+      const c = card;
       // Obsidian callout markdown so native Canvas renders it as a proper
       // callout block rather than plain text.
       const body = c.text.split('\n').map(l => `> ${l}`).join('\n');
@@ -284,13 +284,13 @@ function cardToNodes(card: Card): CanvasNode[] {
       // This is a 1:1 match with the JSON Canvas spec's own group node —
       // native Canvas renders and lets you drag/resize this exactly like
       // one of its own groups, no ib fallback needed for the visuals.
-      const g = card as GroupCard;
+      const g = card;
       const group: CanvasGroupNode = { ...base, type: 'group', label: g.label, color: g.color, ib: stashable(g) };
       return [group];
     }
 
     case 'kanban-column': {
-      const k = card as KanbanColumnCard;
+      const k = card;
       const group: CanvasGroupNode = {
         ...base, type: 'group', label: k.titleHidden ? undefined : k.title,
         color: k.topColor ?? k.color, ib: stashable(k),
@@ -300,7 +300,7 @@ function cardToNodes(card: Card): CanvasNode[] {
     }
 
     case 'kanban-board': {
-      const b = card as KanbanBoardCard;
+      const b = card;
       const group: CanvasGroupNode = {
         ...base, type: 'group', label: b.titleHidden ? undefined : b.title, ib: stashable(b),
       };
@@ -313,7 +313,7 @@ function cardToNodes(card: Card): CanvasNode[] {
       // children array preserved in `ib`. Opening this in native Canvas
       // shows an empty labeled box rather than a degraded child preview;
       // Column Board's own view still renders every child in full.
-      const col = card as ColumnCard;
+      const col = card;
       const group: CanvasGroupNode = {
         ...base, type: 'group', label: col.titleHidden ? undefined : col.title,
         color: col.color, ib: stashable(col),
@@ -325,12 +325,12 @@ function cardToNodes(card: Card): CanvasNode[] {
     // of its own to project, so native Canvas just gets a placeholder text
     // node and the view config rides along in `ib`.
     case 'calendar': {
-      const c = card as CalendarCard;
+      const c = card;
       return [{ ...base, type: 'text', text: `📅 **${c.title ?? 'Calendar'}**\n*(Visual Notes calendar view)*`, ib: stashable(c) }];
     }
 
     case 'checkers': {
-      const c = card as CheckersCard;
+      const c = card;
       return [{ ...base, type: 'text', text: checkersToMarkdown(c), ib: stashable(c) }];
     }
   }

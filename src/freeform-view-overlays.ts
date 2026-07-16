@@ -951,7 +951,7 @@ export const overlaysMethods = {
         break;
       case 'column':
         parts.push(card.title ?? '');
-        for (const child of card.children) parts.push(this.cardSearchText(child as SupportedCard));
+        for (const child of card.children) parts.push(this.cardSearchText(child));
         break;
       case 'map': parts.push(card.url); break;
       case 'swatch': parts.push(card.color, nearestColorName(card.color)); break;
@@ -1036,7 +1036,7 @@ export const overlaysMethods = {
       return;
     }
     this.searchMatches = this.board.cards
-      .filter(c => this.cardSearchText(c as SupportedCard).includes(q))
+      .filter(c => this.cardSearchText(c).includes(q))
       .map(c => c.id);
     this.searchIndex = 0;
     for (const [id, el] of this.cardEls) {
@@ -1068,7 +1068,7 @@ export const overlaysMethods = {
     } else if (card.kind === 'kanban-board') {
       for (const col of card.columns) for (const item of col.items) for (const t of item.tags ?? []) into.add(`tag:${t}`);
     } else if (card.kind === 'column') {
-      for (const child of card.children) this.cardFilterKeys(child as SupportedCard, into);
+      for (const child of card.children) this.cardFilterKeys(child, into);
     }
     return into;
   },
@@ -1100,7 +1100,7 @@ export const overlaysMethods = {
     const tags = new Set<string>();
     const labels = new Set<string>();
     for (const card of this.board.cards) {
-      for (const key of this.cardFilterKeys(card as SupportedCard)) {
+      for (const key of this.cardFilterKeys(card)) {
         if (key.startsWith('tag:')) tags.add(key.slice(4));
         else labels.add(key.slice(6));
       }
@@ -1148,7 +1148,7 @@ export const overlaysMethods = {
     for (const [id, el] of this.cardEls) {
       if (!active.size) { el.removeClass('is-filter-dim'); continue; }
       const card = this.board.cards.find(c => c.id === id);
-      const keys = card ? this.cardFilterKeys(card as SupportedCard) : new Set<string>();
+      const keys = card ? this.cardFilterKeys(card) : new Set<string>();
       let match = false;
       for (const k of active) { if (keys.has(k)) { match = true; break; } }
       el.toggleClass('is-filter-dim', !match);

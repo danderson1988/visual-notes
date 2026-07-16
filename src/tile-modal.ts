@@ -494,7 +494,7 @@ export class TileModal extends Modal {
 
       const saved: TileCard = {
         ...(this.tile as TileCard),
-        target: { kind: this.targetKind, path: this.targetPath } as TileTarget,
+        target: { kind: this.targetKind, path: this.targetPath },
       };
       this.onSave(saved);
       this.close();

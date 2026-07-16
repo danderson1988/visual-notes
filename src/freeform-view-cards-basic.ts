@@ -267,9 +267,9 @@ export const cardsBasicMethods = {
         }
       } else {
         // Wrap — re-select the new wrapper's contents
-        const wrapper = activeDocument.createElement(tag);
+        const wrapper = createEl(tag as keyof HTMLElementTagNameMap);
         const extracted = range.extractContents();
-        const tmp = activeDocument.createElement('div');
+        const tmp = createDiv();
         tmp.appendChild(extracted);
         tmp.querySelectorAll(tag).forEach(n => n.replaceWith(...Array.from(n.childNodes)));
         while (tmp.firstChild) wrapper.appendChild(tmp.firstChild);
@@ -550,7 +550,7 @@ export const cardsBasicMethods = {
       const rows = Array.from(listEl.querySelectorAll<HTMLElement>(
         '.visual-notes-checklist-item:not(.is-dragging):not(.visual-notes-checklist-ghost)'
       ));
-      dropIndicator = activeDocument.createElement('div');
+      dropIndicator = createDiv();
       dropIndicator.className = 'visual-notes-checklist-drop-indicator';
 
       let placed = false;
@@ -1093,7 +1093,7 @@ export const cardsBasicMethods = {
       createCard(await sortAssetFile(this.app, f));
     })(); }).open();
     const fromUpload = () => {
-      const input = activeDocument.createElement('input');
+      const input = createEl('input');
       input.type = 'file';
       input.addEventListener('change', () => { void (async () => {
         const file = input.files?.[0]; if (!file) return;
