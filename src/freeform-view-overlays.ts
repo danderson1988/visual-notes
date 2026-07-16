@@ -525,7 +525,9 @@ export const overlaysMethods = {
       btn.setAttribute('tabindex', '0'); btn.setAttribute('aria-label', label);
       const iconEl = btn.createDiv('visual-notes-tb-btn-icon');
       setIcon(iconEl, icon);
-      btn.createEl('span', { text: label, cls: 'visual-notes-tb-btn-label' });
+      const labelSpan = btn.createEl('span');
+      labelSpan.setText(label);
+      labelSpan.addClass('visual-notes-tb-btn-label');
       const handler = onClick ?? (() => this.activateTool(tool, btn));
       btn.addEventListener('click', handler);
       btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });

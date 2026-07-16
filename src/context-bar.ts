@@ -290,7 +290,9 @@ export class ContextBar {
     btn.setAttribute('aria-label', label);
     const ic = btn.createDiv('visual-notes-tb-btn-icon');
     setIcon(ic, icon);
-    btn.createEl('span', { text: label, cls: 'visual-notes-tb-btn-label' });
+    const labelSpan = btn.createEl('span');
+    labelSpan.setText(label);
+    labelSpan.addClass('visual-notes-tb-btn-label');
     btn.addEventListener('click', handler);
     btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
     return btn;
@@ -315,7 +317,9 @@ export class ContextBar {
     btn.setAttribute('aria-label', 'Delete');
     const ic = btn.createDiv('visual-notes-tb-btn-icon');
     setIcon(ic, 'trash-2');
-    labelEl = btn.createEl('span', { text: 'Delete', cls: 'visual-notes-tb-btn-label' });
+    labelEl = btn.createEl('span');
+    labelEl.setText('Delete');
+    labelEl.addClass('visual-notes-tb-btn-label');
 
     const confirm = () => {
       if (this.trashConfirmActive) { this.emit({ type: 'delete' }); return; }

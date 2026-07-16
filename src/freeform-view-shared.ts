@@ -478,7 +478,8 @@ export class KanbanItemColorModal extends Modal {
     colorWheel.value = this.current ?? '#3B82F6';
     colorWheel.addClass('visual-notes-modal-color-wheel');
     colorWheel.addEventListener('change', () => { this.close(); this.onSubmit(colorWheel.value); });
-    wheelRow.createEl('span', { text: 'Custom…' });
+    const wheelLabel = wheelRow.createEl('span');
+    wheelLabel.setText('Custom…');
   }
 
   override onClose(): void { this.contentEl.empty(); }
@@ -539,7 +540,7 @@ export class MediaSourceModal extends Modal {
       cls: 'mod-cta visual-notes-media-source-btn',
     });
     vaultBtn.addEventListener('click', () => { this.close(); this.onVault(); });
-    contentEl.createEl('div', { cls: 'visual-notes-media-source-sep' });
+    contentEl.createDiv('visual-notes-media-source-sep');
     const uploadBtn = contentEl.createEl('button', {
       text: 'Upload from disk…',
       cls: 'visual-notes-media-source-btn',

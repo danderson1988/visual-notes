@@ -77,7 +77,8 @@ export class TextFormatToolbar {
       const btn = row.createDiv('visual-notes-text-fmt-inline-btn');
       btn.setAttribute('title', title);
       if (cls) btn.addClass(cls);
-      btn.createEl('span', { text: label });
+      const labelSpan = btn.createEl('span');
+      labelSpan.setText(label);
       btn.addEventListener('click', () => this.applyInlineTag(tag));
     };
     mkBtn('B', 'strong', 'Bold (⌘B)', 'ib-fmt-bold');
@@ -131,7 +132,9 @@ export class TextFormatToolbar {
     kind:   'color' | 'highlight',
   ): void {
     const section = parent.createDiv('visual-notes-text-fmt-section');
-    section.createEl('span', { text: label, cls: 'visual-notes-text-fmt-label' });
+    const sectionLabel = section.createEl('span');
+    sectionLabel.setText(label);
+    sectionLabel.addClass('visual-notes-text-fmt-label');
     const row = section.createDiv('visual-notes-text-fmt-swatches');
 
     // Colour-wheel swatch (opens native picker)
@@ -150,11 +153,15 @@ export class TextFormatToolbar {
       const sw = row.createDiv('visual-notes-text-fmt-swatch');
       if (hex === null) {
         sw.addClass(kind === 'color' ? 'is-default' : 'is-none');
-        sw.createEl('span', { text: kind === 'color' ? 'A' : '/', cls: 'visual-notes-text-fmt-null-label' });
+        const nullLabel = sw.createEl('span');
+        nullLabel.setText(kind === 'color' ? 'A' : '/');
+        nullLabel.addClass('visual-notes-text-fmt-null-label');
       } else {
         sw.style.backgroundColor = hex;
         if (hex === '#000000') {
-          sw.createEl('span', { text: 'A', cls: 'visual-notes-text-fmt-black-label' });
+          const blackLabel = sw.createEl('span');
+          blackLabel.setText('A');
+          blackLabel.addClass('visual-notes-text-fmt-black-label');
         }
       }
       sw.addEventListener('click', () => { apply(hex); this.dismiss(); });
@@ -250,7 +257,7 @@ export class TextFormatToolbar {
     const tmp = createDiv();
     tmp.appendChild(extracted);
     tmp.querySelectorAll(tag).forEach(el => el.replaceWith(...Array.from(el.childNodes)));
-    const frag = activeDocument.createDocumentFragment();
+    const frag = createFragment();
     while (tmp.firstChild) frag.appendChild(tmp.firstChild);
     range.insertNode(frag);
   }
