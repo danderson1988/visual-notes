@@ -26,7 +26,7 @@ jobs:
           npm run build
 
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
             main.js
