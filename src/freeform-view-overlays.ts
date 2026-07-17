@@ -650,6 +650,24 @@ export const overlaysMethods = {
       pop.style.left = `${aRect.right - cRect.left + 8}px`;
     }
 
+    // Clamp into the container so the panel is never cut off at an edge —
+    // on short windows the "…" button sits near the toolbar's bottom and
+    // the anchor-aligned position above would run past the viewport
+    // (reported: menu items unreachable on small screens). Measure the
+    // rendered panel, convert whichever sides were set into top/left, and
+    // pull it fully inside; the CSS max-height makes it scroll instead of
+    // overflowing when the container is shorter than the menu itself.
+    const margin = 8;
+    const pRect = pop.getBoundingClientRect();
+    let top  = pRect.top  - cRect.top;
+    let left = pRect.left - cRect.left;
+    top  = Math.max(margin, Math.min(top,  cRect.height - margin - pRect.height));
+    left = Math.max(margin, Math.min(left, cRect.width  - margin - pRect.width));
+    pop.style.top = `${top}px`;
+    pop.style.left = `${left}px`;
+    pop.style.bottom = '';
+    pop.style.right = '';
+
     // Dismiss on outside click
     const onOutside = (e: MouseEvent) => {
       if (!pop.contains(e.target as Node) && e.target !== anchor) {

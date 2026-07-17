@@ -694,6 +694,11 @@ path.is-marquee-selected {
   box-shadow: var(--ib-shadow-high);
   z-index: 200;
   min-width: 160px;
+  /* Never taller than the board area — on very short windows the item
+     list scrolls instead of running off-screen (toggleOverflow clamps the
+     panel's position to match). */
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
 }
 
 .visual-notes-tb-overflow-item {
