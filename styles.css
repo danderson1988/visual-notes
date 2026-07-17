@@ -3030,6 +3030,14 @@ input.visual-notes-checklist-title {
   opacity: 0.3;
 }
 
+/* Dragged noticeably right over an eligible row — dropping now nests the
+   dragged item under this row instead of just reordering it. */
+.visual-notes-checklist-item.is-nest-target {
+  background: var(--interactive-accent-hover);
+  border-radius: 4px;
+  opacity: 0.25;
+}
+
 /* A real clone of the item row's own DOM (see startChecklistItemDrag), same
    approach as the kanban item drag ghost. */
 .visual-notes-checklist-drag-ghost {

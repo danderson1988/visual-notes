@@ -51,6 +51,9 @@ declare module './freeform-view' {
       ): void;
     setHeaderCheckboxState(cb: HTMLInputElement, card: ChecklistCard, headerId: string): void;
     refreshHeaderCheckbox(listEl: HTMLElement, card: ChecklistCard, headerId: string): void;
+    findChecklistIndentTarget(card: ChecklistCard, item: ChecklistItem): ChecklistItem | null;
+    indentChecklistItem(card: ChecklistCard, item: ChecklistItem, row: HTMLElement): boolean;
+    outdentChecklistItem(item: ChecklistItem, row: HTMLElement): boolean;
     renderCommentContent(el: HTMLElement, card: CommentCard): void;
     appendCommentReply(listEl: HTMLElement, card: CommentCard, reply: CommentReply): HTMLElement;
     appendCommentReplyGhost(listEl: HTMLElement, card: CommentCard): HTMLElement;
@@ -334,6 +337,29 @@ export const cardsBasicMethods = {
     if (item.isHeader) row.addClass('is-header');
     if (item.parentId) row.addClass('is-child');
 
+    row.addEventListener('contextmenu', (e) => {
+      // Headers can't be indented/outdented, and a top-level item with
+      // nothing above it has nowhere to nest under — in both cases let the
+      // event bubble up to the card's own context menu instead of showing
+      // an item menu with nothing useful in it.
+      if (item.isHeader) return;
+      if (!item.parentId && !this.findChecklistIndentTarget(card, item)) return;
+      e.preventDefault(); e.stopPropagation();
+      const menu = this.newMenu();
+      if (item.parentId) {
+        menu.addItem(i => i.setTitle('Remove subtask').setIcon('outdent').onClick(() => {
+          this.pushUndo();
+          if (this.outdentChecklistItem(item, row)) this.scheduleSave();
+        }));
+      } else {
+        menu.addItem(i => i.setTitle('Make subtask').setIcon('indent').onClick(() => {
+          this.pushUndo();
+          if (this.indentChecklistItem(card, item, row)) this.scheduleSave();
+        }));
+      }
+      menu.showAtMouseEvent(e);
+    });
+
     const handle = row.createDiv('visual-notes-checklist-drag-handle');
     setIcon(handle, 'grip-vertical');
     handle.addEventListener('pointerdown', (e) => {
@@ -394,22 +420,9 @@ export const cardsBasicMethods = {
       if (e.key === 'Tab') {
         e.preventDefault(); e.stopPropagation();
         if (e.shiftKey) {
-          if (item.parentId) {
-            item.parentId = undefined;
-            row.removeClass('is-child');
-            this.scheduleSave();
-          }
-        } else if (!item.parentId && !item.isHeader) {
-          const idx = card.items.indexOf(item);
-          for (let i = idx - 1; i >= 0; i--) {
-            const above = card.items[i];
-            if (above.isHeader || !above.parentId) {
-              item.parentId = above.id;
-              row.addClass('is-child');
-              this.scheduleSave();
-              break;
-            }
-          }
+          if (this.outdentChecklistItem(item, row)) this.scheduleSave();
+        } else if (this.indentChecklistItem(card, item, row)) {
+          this.scheduleSave();
         }
       }
       if (e.key === 'Backspace' && (textDiv.innerHTML === '' || textDiv.innerHTML === '<br>')) {
@@ -496,14 +509,24 @@ export const cardsBasicMethods = {
 
     let dropIndicator: HTMLElement | null = null;
     let insertBeforeId: string | null = null;
+    let nestUnderId: string | null = null;
+    let nestTargetRow: HTMLElement | null = null;
     let hasValidTarget = false;
     const removeIndicator = () => { dropIndicator?.remove(); dropIndicator = null; };
+    const clearNestTarget = () => { nestTargetRow?.removeClass('is-nest-target'); nestTargetRow = null; };
+
+    // Dragging the row noticeably to the right (like an outliner) while
+    // hovering another eligible row nests it under that row instead of
+    // just reordering it — mouse-driven equivalent of the Tab shortcut.
+    const NEST_DRAG_THRESHOLD = 24;
 
     const onMove = (e: PointerEvent) => {
       ghost.style.left = `${itemRect.left + (e.clientX - startEvent.clientX)}px`;
       ghost.style.top = `${itemRect.top + (e.clientY - startEvent.clientY)}px`;
       removeIndicator();
+      clearNestTarget();
       insertBeforeId = null;
+      nestUnderId = null;
       hasValidTarget = false;
 
       const listRect = listEl.getBoundingClientRect();
@@ -515,6 +538,21 @@ export const cardsBasicMethods = {
       const rows = Array.from(listEl.querySelectorAll<HTMLElement>(
         '.visual-notes-checklist-item:not(.is-dragging):not(.visual-notes-checklist-ghost)'
       ));
+
+      if (!item.isHeader && (e.clientX - startEvent.clientX) > NEST_DRAG_THRESHOLD) {
+        for (const r of rows) {
+          const rr = r.getBoundingClientRect();
+          if (e.clientY < rr.top || e.clientY > rr.bottom) continue;
+          const target = card.items.find(i => i.id === r.dataset.id);
+          if (target && (target.isHeader || !target.parentId)) {
+            nestUnderId = target.id;
+            nestTargetRow = r;
+            r.addClass('is-nest-target');
+            return;
+          }
+        }
+      }
+
       dropIndicator = createDiv();
       dropIndicator.className = 'visual-notes-checklist-drop-indicator';
 
@@ -541,22 +579,33 @@ export const cardsBasicMethods = {
       activeDocument.removeEventListener('pointerup', onUp);
       ghost.remove();
       removeIndicator();
+      clearNestTarget();
       itemEl.removeClass('is-dragging');
 
-      if (hasValidTarget) {
-        const idx = card.items.indexOf(item);
-        if (idx !== -1) {
-          const without = card.items.slice(0, idx).concat(card.items.slice(idx + 1));
-          const insertIdx = insertBeforeId ? without.findIndex(i => i.id === insertBeforeId) : -1;
-          const finalIdx = insertIdx === -1 ? without.length : insertIdx;
-          if (finalIdx !== idx) {
-            this.pushUndo();
-            without.splice(finalIdx, 0, item);
-            card.items = without;
-            this.rebuildChecklistList(listEl, card);
-            this.scheduleSave();
-          }
-        }
+      if (!hasValidTarget) return;
+      const idx = card.items.indexOf(item);
+      if (idx === -1) return;
+      const without = card.items.slice(0, idx).concat(card.items.slice(idx + 1));
+
+      if (nestUnderId) {
+        this.pushUndo();
+        item.parentId = nestUnderId;
+        const targetIdx = without.findIndex(i => i.id === nestUnderId);
+        without.splice(targetIdx + 1, 0, item);
+        card.items = without;
+        this.rebuildChecklistList(listEl, card);
+        this.scheduleSave();
+        return;
+      }
+
+      const insertIdx = insertBeforeId ? without.findIndex(i => i.id === insertBeforeId) : -1;
+      const finalIdx = insertIdx === -1 ? without.length : insertIdx;
+      if (finalIdx !== idx) {
+        this.pushUndo();
+        without.splice(finalIdx, 0, item);
+        card.items = without;
+        this.rebuildChecklistList(listEl, card);
+        this.scheduleSave();
       }
     };
 
@@ -589,6 +638,33 @@ export const cardsBasicMethods = {
     } else {
       headerCb.checked = false; headerCb.indeterminate = false;
     }
+  },
+
+  // Nearest header or top-level item above `item` in list order — the one
+  // it would nest under. null if there's nothing eligible above it.
+  findChecklistIndentTarget(this: FreeformRenderer, card: ChecklistCard, item: ChecklistItem): ChecklistItem | null {
+    const idx = card.items.indexOf(item);
+    for (let i = idx - 1; i >= 0; i--) {
+      const above = card.items[i];
+      if (above.isHeader || !above.parentId) return above;
+    }
+    return null;
+  },
+
+  indentChecklistItem(this: FreeformRenderer, card: ChecklistCard, item: ChecklistItem, row: HTMLElement): boolean {
+    if (item.parentId || item.isHeader) return false;
+    const target = this.findChecklistIndentTarget(card, item);
+    if (!target) return false;
+    item.parentId = target.id;
+    row.addClass('is-child');
+    return true;
+  },
+
+  outdentChecklistItem(this: FreeformRenderer, item: ChecklistItem, row: HTMLElement): boolean {
+    if (!item.parentId) return false;
+    item.parentId = undefined;
+    row.removeClass('is-child');
+    return true;
   },
 
   renderCommentContent(this: FreeformRenderer, el: HTMLElement, card: CommentCard): void {
