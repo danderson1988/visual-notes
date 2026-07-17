@@ -106,6 +106,20 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
   // ── Imperative fallback (Obsidian < 1.13) ───────────────────
 
   override display(): void {
+    this.renderImperative();
+  }
+
+  // Re-render after a settings mutation that changes the tab's structure
+  // (reset buttons, board picker's Clear visibility, sticky palette).
+  private refresh(): void {
+    // On 1.13+ the tab renders declaratively from getSettingDefinitions();
+    // update() re-renders it from fresh definitions. Older versions have no
+    // update() and rendered imperatively — re-render the same way.
+    if (typeof this.update === 'function') this.update();
+    else this.renderImperative();
+  }
+
+  private renderImperative(): void {
     const { containerEl } = this;
     containerEl.empty();
 
@@ -173,7 +187,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           pathDisplay.textContent = file.path;
           pathDisplay.removeClass('is-empty');
           // Update "Clear" button visibility by re-rendering
-          this.display();
+          this.refresh();
         })(); }).open();
       })
     );
@@ -183,7 +197,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
         btn.setButtonText('Clear').onClick(() => { void (async () => {
           this.plugin.settings.defaultBoardPath = undefined;
           await this.plugin.saveSettings();
-          this.display();
+          this.refresh();
         })(); })
       );
     }
@@ -225,7 +239,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           this.plugin.settings.dotColor = undefined;
           this.plugin.applyCanvasAppearanceSettings();
           await this.plugin.saveSettings();
-          this.display();
+          this.refresh();
         })
       );
   }
@@ -250,7 +264,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           this.plugin.settings.dotSize = undefined;
           this.plugin.applyCanvasAppearanceSettings();
           await this.plugin.saveSettings();
-          this.display();
+          this.refresh();
         })
       );
   }
@@ -273,7 +287,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           this.plugin.settings.canvasBgColor = undefined;
           this.plugin.applyCanvasAppearanceSettings();
           await this.plugin.saveSettings();
-          this.display();
+          this.refresh();
         })
       );
   }
@@ -310,7 +324,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
         btn.setButtonText('Default').onClick(async () => {
           this.plugin.settings.cardDragAnimationIntensity = undefined;
           await this.plugin.saveSettings();
-          this.display();
+          this.refresh();
         })
       );
   }
@@ -347,7 +361,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
         btn.setButtonText('Default').onClick(async () => {
           this.plugin.settings.snapGridSize = undefined;
           await this.plugin.saveSettings();
-          this.display();
+          this.refresh();
         })
       );
   }
@@ -372,7 +386,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           this.plugin.settings.trashZoneSize = undefined;
           this.plugin.applyCanvasAppearanceSettings();
           await this.plugin.saveSettings();
-          this.display();
+          this.refresh();
         })
       );
   }
@@ -563,10 +577,13 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
     setting
       .setName('Reset all tiles')
       .setDesc('Permanently delete every tile and nested board. This cannot be undone.')
-      .addButton(btn =>
-        btn
+      .addButton(btn => {
+        // setDestructive() is 1.13+; on older Obsidian apply the same
+        // styling class the deprecated setWarning() would have added.
+        if (typeof btn.setDestructive === 'function') btn.setDestructive();
+        else btn.buttonEl.addClass('mod-warning');
+        return btn
           .setButtonText('Reset everything')
-          .setWarning()
           .onClick(() => {
             new ConfirmModal(
               this.app,
@@ -577,7 +594,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
                 new Notice('All tiles deleted.');
               })(); }
             ).open();
-          })
-      );
+          });
+      });
   }
 }

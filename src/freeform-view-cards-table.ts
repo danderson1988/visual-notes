@@ -458,7 +458,24 @@ export const cardsTableMethods = {
     const grid = this.parseClipboardGrid(e.clipboardData?.getData('text/plain') ?? '');
 
     if (grid.length === 1 && grid[0].length === 1) {
-      activeDocument.execCommand('insertText', false, grid[0][0]);
+      // Plain single-value paste: insert at the caret in the focused cell
+      // (execCommand did this before it was deprecated).
+      const sel = activeWindow.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const node = activeDocument.createTextNode(grid[0][0]);
+        range.insertNode(node);
+        range.setStartAfter(node);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        // execCommand fired 'input' natively; the delegated input listener
+        // on the layer is what persists cell text into the card data.
+        if (e.target instanceof HTMLElement) {
+          e.target.dispatchEvent(new InputEvent('input', { bubbles: true }));
+        }
+      }
       return;
     }
 
