@@ -1,12 +1,17 @@
 import esbuild from "esbuild";
 import process from "process";
 import { builtinModules } from "module";
+import { readFileSync } from "fs";
 
 const prod = process.argv[2] === "production";
+const manifest = JSON.parse(readFileSync("./manifest.json", "utf8"));
 
 const context = await esbuild.context({
   entryPoints: ["src/main.ts"],
   bundle: true,
+  banner: {
+    js: `/* Visual Notes v${manifest.version} — bundled file, do not edit. Source: https://github.com/danderson1988/visual-notes */`,
+  },
   external: [
     "obsidian",
     "electron",

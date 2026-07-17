@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
-      attestations: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -28,14 +26,15 @@ jobs:
       - name: Build plugin
         run: npm run build
 
-      - name: Attest release assets
-        uses: actions/attest@v4
-        with:
-          subject-path: |
-            main.js
-            manifest.json
-            styles.css
-
+      # NOTE: no attestation step, deliberately. Attestations generated here
+      # (attest-build-provenance v1/v2, actions/attest v4 — all tried) are
+      # cryptographically well-formed and correctly identify this repo, but
+      # Obsidian's release checker fails to verify them ("signature is
+      # invalid or does not match this repository"), turning an optional
+      # nice-to-have into a hard review Error. A missing attestation is only
+      # a soft Recommendation. Attestations are also permanent and keyed by
+      # file digest — re-attesting unchanged bytes stacks more of them — so
+      # don't re-add this step unless Obsidian's verifier is confirmed fixed.
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
