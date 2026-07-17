@@ -381,10 +381,10 @@ export class QuickAddModal extends FuzzySuggestModal<QuickAddEntry> {
 }
 
 export class KanbanItemUrlModal extends Modal {
-  constructor(app: App, private initialValue: string, private onSubmit: (url: string) => void) { super(app); }
+  constructor(app: App, private initialValue: string, private onSubmit: (url: string) => void, private title = 'Link URL') { super(app); }
 
   override onOpen(): void {
-    this.contentEl.createEl('h3', { text: 'Link URL' });
+    this.contentEl.createEl('h3', { text: this.title });
     const input = this.contentEl.createEl('input');
     input.type = 'text'; input.placeholder = 'https://…'; input.value = this.initialValue;
     input.addClass('ib-modal-text-input');
@@ -529,7 +529,8 @@ export class MediaSourceModal extends Modal {
     app: App,
     private label: string,
     private onVault: () => void,
-    private onUpload: () => void
+    private onUpload: () => void,
+    private onUrl?: () => void
   ) { super(app); }
 
   override onOpen(): void {
@@ -546,6 +547,14 @@ export class MediaSourceModal extends Modal {
       cls: 'visual-notes-media-source-btn',
     });
     uploadBtn.addEventListener('click', () => { this.close(); this.onUpload(); });
+    if (this.onUrl) {
+      contentEl.createDiv('visual-notes-media-source-sep');
+      const urlBtn = contentEl.createEl('button', {
+        text: 'From web URL…',
+        cls: 'visual-notes-media-source-btn',
+      });
+      urlBtn.addEventListener('click', () => { this.close(); this.onUrl!(); });
+    }
   }
 }
 

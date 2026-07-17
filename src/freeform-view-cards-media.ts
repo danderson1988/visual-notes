@@ -22,7 +22,7 @@ import {
   IMAGE_EXTS,
   AppWithPrivateAPIs,
   VaultImagePickerModal, VaultAudioPickerModal,
-  MediaSourceModal, BookmarkInputModal,
+  MediaSourceModal, BookmarkInputModal, KanbanItemUrlModal, isValidURL,
 } from './freeform-view-shared';
 import type { FreeformRenderer } from './freeform-view';
 
@@ -432,8 +432,8 @@ export const cardsMediaMethods = {
   addImage(this: FreeformRenderer): void { const p = this.centerPos(IMAGE_DEFAULT_W, IMAGE_DEFAULT_H); this.addImageAt(p.x, p.y); },
 
   addImageAt(this: FreeformRenderer, x: number, y: number): void {
-    const createCard = (path: string, h: number) => {
-      const card: ImageCard = { id: crypto.randomUUID(), kind: 'image', x, y, w: IMAGE_DEFAULT_W, h, z: this.nextZ(), source: { type: 'vault', path }, captionHidden: true };
+    const createCard = (source: ImageCard['source'], h: number) => {
+      const card: ImageCard = { id: crypto.randomUUID(), kind: 'image', x, y, w: IMAGE_DEFAULT_W, h, z: this.nextZ(), source, captionHidden: true };
       this.pushUndo(); this.board.cards.push(card); void this.saveNow();
       this.createCardEl(card); this.selection.select(card.id); this.refreshSelectionVisuals();
     };
@@ -442,7 +442,7 @@ export const cardsMediaMethods = {
       const newFile = this.app.vault.getAbstractFileByPath(newPath);
       if (!(newFile instanceof TFile)) return;
       const h = await this.measureImageH(this.app.vault.getResourcePath(newFile));
-      createCard(newPath, h);
+      createCard({ type: 'vault', path: newPath }, h);
     })(); }).open();
     const fromUpload = () => {
       const input = createEl('input');
@@ -455,11 +455,20 @@ export const cardsMediaMethods = {
         try { path = await saveNewAsset(this.app, await file.arrayBuffer(), `${base}.${ext}`); }
         catch { new Notice(`Failed to save ${file.name}.`); return; }
         const h = await this.measureImageH(file);
-        createCard(path, h);
+        createCard({ type: 'vault', path }, h);
       })(); });
       input.click();
     };
-    new MediaSourceModal(this.app, 'Add image', fromVault, fromUpload).open();
+    const fromUrl = () => new KanbanItemUrlModal(this.app, '', (url) => { void (async () => {
+      if (!url) return;
+      if (!isValidURL(url)) { new Notice('Please enter a valid https:// URL.'); return; }
+      // The card is hot-linked: nothing is downloaded into the vault, the
+      // image loads from the web each time the board renders (same as
+      // pasting an image URL, or the external images in the templates).
+      const h = await this.measureImageH(url);
+      createCard({ type: 'external', url }, h);
+    })(); }, 'Image URL').open();
+    new MediaSourceModal(this.app, 'Add image', fromVault, fromUpload, fromUrl).open();
   },
 
   addAudio(this: FreeformRenderer): void { const p = this.centerPos(AUDIO_DEFAULT_W, AUDIO_DEFAULT_H); this.addAudioAt(p.x, p.y); },
