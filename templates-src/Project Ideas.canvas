@@ -1,0 +1,465 @@
+{
+  "nodes": [
+    {
+      "id": "pi-intro",
+      "x": -1240,
+      "y": -800,
+      "width": 2420,
+      "height": 90,
+      "type": "text",
+      "text": "> [!note] 🗂️\n> Project Ideas — a moodboard-style project hub: brief, inspiration, palette, budget, and this week's tasks. Replace the sample brand with your own.",
+      "color": "#64748B",
+      "ib": {
+        "kind": "callout",
+        "id": "pi-intro",
+        "text": "Project Ideas — a moodboard-style project hub: brief, inspiration, palette, budget, and this week's tasks. Replace the sample brand with your own.",
+        "icon": "🗂️",
+        "color": "#64748B"
+      }
+    },
+    {
+      "id": "pi-about",
+      "x": -1240,
+      "y": -640,
+      "width": 420,
+      "height": 500,
+      "type": "group",
+      "label": "About",
+      "color": "#94A3B8",
+      "ib": {
+        "kind": "column",
+        "id": "pi-about",
+        "title": "About",
+        "color": "#94A3B8",
+        "bgColor": "#FFFFFF",
+        "trayColor": "#F8FAFC",
+        "borderColor": "#E2E8F0",
+        "locked": false,
+        "children": [
+          {
+            "kind": "sticky",
+            "id": "pi-about-brief",
+            "x": 0,
+            "y": 0,
+            "w": 340,
+            "h": 210,
+            "text": "MIRA is a modern fashion label known for its minimalist aesthetics, high-quality craftsmanship, and versatile pieces. The website should reflect the brand's ethos: understated elegance, sustainability, and timeless design.",
+            "color": "#FFFFFF"
+          },
+          {
+            "kind": "file",
+            "id": "pi-about-pdf",
+            "x": 0,
+            "y": 0,
+            "w": 340,
+            "h": 110,
+            "path": "_Assets/Docs/Brand-Brief.pdf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pi-logo",
+      "x": -1240,
+      "y": -70,
+      "width": 380,
+      "height": 210,
+      "type": "text",
+      "text": "M I R A",
+      "color": "#D9DDE3",
+      "ib": {
+        "kind": "sticky",
+        "id": "pi-logo",
+        "text": "M I R A",
+        "color": "#D9DDE3",
+        "textColor": "#111827",
+        "textScale": "lg",
+        "textAlign": "center",
+        "blank": true,
+        "shape": "rect"
+      }
+    },
+    {
+      "id": "pi-week",
+      "x": -1240,
+      "y": 200,
+      "width": 380,
+      "height": 250,
+      "type": "text",
+      "text": "### This week\n\n- [x] Develop moodboards\n- [x] Present to client\n- [ ] Create website wireframes",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "checklist",
+        "id": "pi-week",
+        "title": "This week",
+        "color": "#FFFFFF",
+        "items": [
+          {
+            "id": "pi-week-1",
+            "text": "Develop moodboards",
+            "done": true
+          },
+          {
+            "id": "pi-week-2",
+            "text": "Present to client",
+            "done": true
+          },
+          {
+            "id": "pi-week-3",
+            "text": "Create website wireframes",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "pi-model",
+      "x": -760,
+      "y": -640,
+      "width": 330,
+      "height": 440,
+      "type": "link",
+      "url": "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80",
+      "ib": {
+        "kind": "image",
+        "id": "pi-model",
+        "source": {
+          "type": "external",
+          "url": "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80"
+        },
+        "captionHidden": true
+      }
+    },
+    {
+      "id": "pi-swatch",
+      "x": -400,
+      "y": -300,
+      "width": 160,
+      "height": 190,
+      "type": "text",
+      "text": "#FF2E58 — Radical Red",
+      "color": "#FF2E58",
+      "ib": {
+        "kind": "swatch",
+        "id": "pi-swatch",
+        "color": "#FF2E58"
+      }
+    },
+    {
+      "id": "pi-tile-brainstorm",
+      "x": -700,
+      "y": 300,
+      "width": 190,
+      "height": 200,
+      "type": "file",
+      "file": "Brainstorm.canvas",
+      "color": "#A16207",
+      "ib": {
+        "kind": "tile",
+        "id": "pi-tile-brainstorm",
+        "label": "Brainstorm",
+        "subtitle": "12 cards",
+        "icon": "flower",
+        "color": "#A16207",
+        "target": {
+          "kind": "board",
+          "path": "Brainstorm.canvas"
+        }
+      }
+    },
+    {
+      "id": "pi-tile-moodboards",
+      "x": -410,
+      "y": 380,
+      "width": 190,
+      "height": 210,
+      "type": "file",
+      "file": "Moodboards.canvas",
+      "color": "#1E40AF",
+      "ib": {
+        "kind": "tile",
+        "id": "pi-tile-moodboards",
+        "label": "Moodboards",
+        "subtitle": "16 cards, 2 files",
+        "icon": "layout-grid",
+        "color": "#1E40AF",
+        "target": {
+          "kind": "board",
+          "path": "Moodboards.canvas"
+        }
+      }
+    },
+    {
+      "id": "pi-inspiration",
+      "x": -140,
+      "y": -640,
+      "width": 420,
+      "height": 640,
+      "type": "group",
+      "label": "Inspiration",
+      "color": "#94A3B8",
+      "ib": {
+        "kind": "column",
+        "id": "pi-inspiration",
+        "title": "Inspiration",
+        "color": "#94A3B8",
+        "bgColor": "#FFFFFF",
+        "trayColor": "#F8FAFC",
+        "borderColor": "#E2E8F0",
+        "locked": false,
+        "children": [
+          {
+            "kind": "sticky",
+            "id": "pi-insp-typeface",
+            "x": 0,
+            "y": 0,
+            "w": 340,
+            "h": 170,
+            "text": "Abc",
+            "color": "#22C55E",
+            "textColor": "#052E16",
+            "textScale": "lg",
+            "textAlign": "center",
+            "blank": true
+          },
+          {
+            "kind": "image",
+            "id": "pi-insp-runway",
+            "x": 0,
+            "y": 0,
+            "w": 340,
+            "h": 220,
+            "source": {
+              "type": "external",
+              "url": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"
+            },
+            "captionHidden": true
+          },
+          {
+            "kind": "file",
+            "id": "pi-insp-video",
+            "x": 0,
+            "y": 0,
+            "w": 340,
+            "h": 100,
+            "path": "_Assets/Video/runway-models.mp4"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pi-budget",
+      "x": -140,
+      "y": 90,
+      "width": 470,
+      "height": 250,
+      "type": "text",
+      "text": "### Budget\n\n| Project stage | Cost |\n| --- | --- |\n| 2 x directional moodboards | $400.00 |\n| 1 x set of wireframes | $900.00 |\n| 2 x homepage design concepts | $1,600.00 |\n| Total | $2,900.00 |",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "table",
+        "id": "pi-budget",
+        "title": "Budget",
+        "color": "#FFFFFF",
+        "columns": [
+          {
+            "id": "pib-stage",
+            "label": "Project stage",
+            "type": "text"
+          },
+          {
+            "id": "pib-cost",
+            "label": "Cost",
+            "type": "text",
+            "align": "right"
+          }
+        ],
+        "rows": [
+          {
+            "id": "pibr-1",
+            "cells": {
+              "pib-stage": "2 x directional moodboards",
+              "pib-cost": "$400.00"
+            }
+          },
+          {
+            "id": "pibr-2",
+            "cells": {
+              "pib-stage": "1 x set of wireframes",
+              "pib-cost": "$900.00"
+            }
+          },
+          {
+            "id": "pibr-3",
+            "cells": {
+              "pib-stage": "2 x homepage design concepts",
+              "pib-cost": "$1,600.00"
+            }
+          },
+          {
+            "id": "pibr-4",
+            "cells": {
+              "pib-stage": "Total",
+              "pib-cost": "$2,900.00"
+            },
+            "color": "#F1F5F9"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pi-texture",
+      "x": 420,
+      "y": -640,
+      "width": 360,
+      "height": 330,
+      "type": "link",
+      "url": "https://images.unsplash.com/photo-1550684376-efcbd6e3f031?auto=format&fit=crop&w=800&q=80",
+      "ib": {
+        "kind": "image",
+        "id": "pi-texture",
+        "source": {
+          "type": "external",
+          "url": "https://images.unsplash.com/photo-1550684376-efcbd6e3f031?auto=format&fit=crop&w=800&q=80"
+        },
+        "caption": "Wall texture",
+        "captionHidden": false
+      }
+    },
+    {
+      "id": "pi-comment",
+      "x": 860,
+      "y": -520,
+      "width": 320,
+      "height": 170,
+      "type": "text",
+      "text": "**Marc** _(15/07/2026)_\nWould be great if we could use this honeycomb pattern on the website.",
+      "color": "#F8FAFC",
+      "ib": {
+        "kind": "comment",
+        "id": "pi-comment",
+        "text": "Would be great if we could use this honeycomb pattern on the website.",
+        "author": "Marc",
+        "createdAt": 1784160000000,
+        "color": "#F8FAFC",
+        "resolved": false,
+        "replies": []
+      }
+    },
+    {
+      "id": "pi-look",
+      "x": 880,
+      "y": -290,
+      "width": 300,
+      "height": 400,
+      "type": "link",
+      "url": "https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=800&q=80",
+      "ib": {
+        "kind": "image",
+        "id": "pi-look",
+        "source": {
+          "type": "external",
+          "url": "https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=800&q=80"
+        },
+        "captionHidden": true
+      }
+    },
+    {
+      "id": "pi-keywords",
+      "x": 430,
+      "y": -230,
+      "width": 210,
+      "height": 180,
+      "type": "text",
+      "text": "Sleek\n\nSculptural\n\nEdgy",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "sticky",
+        "id": "pi-keywords",
+        "text": "Sleek\n\nSculptural\n\nEdgy",
+        "color": "#FFFFFF",
+        "textColor": "#1D4ED8",
+        "blank": true,
+        "textAlign": "center"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "pi-edge-logo",
+      "fromNode": "pi-swatch",
+      "toNode": "pi-logo",
+      "color": "#22C55E",
+      "ib": {
+        "routing": "straight",
+        "bend": 60,
+        "style": "solid",
+        "arrowhead": "end",
+        "thickness": 4
+      }
+    },
+    {
+      "id": "pi-edge-comment",
+      "fromNode": "pi-comment",
+      "toNode": "pi-texture",
+      "color": "#22C55E",
+      "ib": {
+        "routing": "straight",
+        "bend": -50,
+        "style": "solid",
+        "arrowhead": "end",
+        "thickness": 4
+      }
+    },
+    {
+      "id": "pi-edge-tiles",
+      "fromNode": "pi-tile-brainstorm",
+      "toNode": "pi-tile-moodboards",
+      "color": "#94A3B8",
+      "ib": {
+        "routing": "straight",
+        "style": "solid",
+        "arrowhead": "none",
+        "thickness": 2
+      }
+    }
+  ],
+  "ib": {
+    "version": 1,
+    "layout": "freeform",
+    "viewport": {
+      "zoom": 0.36,
+      "x": 880,
+      "y": 700
+    },
+    "drawings": [
+      {
+        "id": "pi-ink-circle",
+        "groupId": "pi-keywords-ink",
+        "points": [
+          { "x": 680, "y": -147 },
+          { "x": 672, "y": -102 },
+          { "x": 646, "y": -66 },
+          { "x": 607, "y": -39 },
+          { "x": 558, "y": -26 },
+          { "x": 505, "y": -28 },
+          { "x": 456, "y": -43 },
+          { "x": 417, "y": -70 },
+          { "x": 390, "y": -108 },
+          { "x": 380, "y": -148 },
+          { "x": 391, "y": -186 },
+          { "x": 419, "y": -222 },
+          { "x": 458, "y": -249 },
+          { "x": 506, "y": -264 },
+          { "x": 557, "y": -262 },
+          { "x": 606, "y": -247 },
+          { "x": 645, "y": -220 },
+          { "x": 673, "y": -184 },
+          { "x": 683, "y": -155 }
+        ],
+        "color": "#3B82F6",
+        "width": 5
+      }
+    ]
+  }
+}
