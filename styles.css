@@ -1701,6 +1701,13 @@ input.visual-notes-table-date-input {
   /* Deliberately no padding/overflow-hidden — this is a spatial frame
      behind its contents, not a content box; contained cards are separate
      sibling elements stacked on top via z-index, not DOM children. */
+  /* The name tab straddles the top border (.visual-notes-group-label,
+     top: -13px), but the base card rule's content-visibility: auto brings
+     paint containment, which clips everything to the card box — cutting
+     the tab's top half off. Opt groups out: a group is just a border and
+     one label, so it contributes nothing to the large-board rendering
+     cost that content-visibility exists to solve. */
+  content-visibility: visible;
 }
 
 .visual-notes-freeform-group-card.is-lifted {
