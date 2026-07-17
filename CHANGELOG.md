@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.27
+
+### Changed
+- Internal: the overflow menu's positioning now uses Obsidian's `setCssStyles` API (plugin-review compliance). No behaviour change.
+
 ## 1.0.26
 
 ### Fixed

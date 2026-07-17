@@ -637,17 +637,13 @@ export const overlaysMethods = {
     const aRect = anchor.getBoundingClientRect();
     const cRect = this.container.getBoundingClientRect();
     if (this.toolbarPosition === 'right') {
-      pop.style.top  = `${aRect.top - cRect.top}px`;
-      pop.style.right = `${cRect.right - aRect.left + 8}px`;
+      pop.setCssStyles({ top: `${aRect.top - cRect.top}px`, right: `${cRect.right - aRect.left + 8}px` });
     } else if (this.toolbarPosition === 'bottom') {
-      pop.style.bottom = `${cRect.bottom - aRect.top + 8}px`;
-      pop.style.left   = `${aRect.left - cRect.left}px`;
+      pop.setCssStyles({ bottom: `${cRect.bottom - aRect.top + 8}px`, left: `${aRect.left - cRect.left}px` });
     } else if (this.toolbarPosition === 'top') {
-      pop.style.top  = `${aRect.bottom - cRect.top + 8}px`;
-      pop.style.left = `${aRect.left - cRect.left}px`;
+      pop.setCssStyles({ top: `${aRect.bottom - cRect.top + 8}px`, left: `${aRect.left - cRect.left}px` });
     } else {
-      pop.style.top  = `${aRect.top - cRect.top}px`;
-      pop.style.left = `${aRect.right - cRect.left + 8}px`;
+      pop.setCssStyles({ top: `${aRect.top - cRect.top}px`, left: `${aRect.right - cRect.left + 8}px` });
     }
 
     // Clamp into the container so the panel is never cut off at an edge —
@@ -663,10 +659,7 @@ export const overlaysMethods = {
     let left = pRect.left - cRect.left;
     top  = Math.max(margin, Math.min(top,  cRect.height - margin - pRect.height));
     left = Math.max(margin, Math.min(left, cRect.width  - margin - pRect.width));
-    pop.style.top = `${top}px`;
-    pop.style.left = `${left}px`;
-    pop.style.bottom = '';
-    pop.style.right = '';
+    pop.setCssStyles({ top: `${top}px`, left: `${left}px`, bottom: '', right: '' });
 
     // Dismiss on outside click
     const onOutside = (e: MouseEvent) => {
