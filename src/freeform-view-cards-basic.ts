@@ -54,6 +54,7 @@ declare module './freeform-view' {
     findChecklistIndentTarget(card: ChecklistCard, item: ChecklistItem): ChecklistItem | null;
     indentChecklistItem(card: ChecklistCard, item: ChecklistItem, row: HTMLElement): boolean;
     outdentChecklistItem(item: ChecklistItem, row: HTMLElement): boolean;
+    deleteChecklistItem(listEl: HTMLElement, card: ChecklistCard, item: ChecklistItem, row: HTMLElement): void;
     renderCommentContent(el: HTMLElement, card: CommentCard): void;
     appendCommentReply(listEl: HTMLElement, card: CommentCard, reply: CommentReply): HTMLElement;
     appendCommentReplyGhost(listEl: HTMLElement, card: CommentCard): HTMLElement;
@@ -338,12 +339,9 @@ export const cardsBasicMethods = {
     if (item.parentId) row.addClass('is-child');
 
     row.addEventListener('contextmenu', (e) => {
-      // Headers can't be indented/outdented, and a top-level item with
-      // nothing above it has nowhere to nest under — in both cases let the
-      // event bubble up to the card's own context menu instead of showing
-      // an item menu with nothing useful in it.
+      // Headers keep the card's own context menu (add section, accent
+      // colour, etc) — deleting one is still done via empty-then-Backspace.
       if (item.isHeader) return;
-      if (!item.parentId && !this.findChecklistIndentTarget(card, item)) return;
       e.preventDefault(); e.stopPropagation();
       const menu = this.newMenu();
       if (item.parentId) {
@@ -351,12 +349,18 @@ export const cardsBasicMethods = {
           this.pushUndo();
           if (this.outdentChecklistItem(item, row)) this.scheduleSave();
         }));
-      } else {
+        menu.addSeparator();
+      } else if (this.findChecklistIndentTarget(card, item)) {
         menu.addItem(i => i.setTitle('Make subtask').setIcon('indent').onClick(() => {
           this.pushUndo();
           if (this.indentChecklistItem(card, item, row)) this.scheduleSave();
         }));
+        menu.addSeparator();
       }
+      menu.addItem(i => i.setTitle('Delete task').setIcon('trash-2').onClick(() => {
+        this.pushUndo();
+        this.deleteChecklistItem(listEl, card, item, row);
+      }));
       menu.showAtMouseEvent(e);
     });
 
@@ -665,6 +669,15 @@ export const cardsBasicMethods = {
     item.parentId = undefined;
     row.removeClass('is-child');
     return true;
+  },
+
+  deleteChecklistItem(this: FreeformRenderer, listEl: HTMLElement, card: ChecklistCard, item: ChecklistItem, row: HTMLElement): void {
+    const idx = card.items.indexOf(item);
+    if (idx === -1) return;
+    card.items.splice(idx, 1);
+    row.remove();
+    if (item.parentId) this.refreshHeaderCheckbox(listEl, card, item.parentId);
+    this.scheduleSave();
   },
 
   renderCommentContent(this: FreeformRenderer, el: HTMLElement, card: CommentCard): void {
