@@ -1,0 +1,950 @@
+{
+  "nodes": [
+    {
+      "id": "cs-intro",
+      "x": -1340,
+      "y": -820,
+      "width": 2940,
+      "height": 90,
+      "type": "text",
+      "text": "> [!note] 🎬\n> Creative Studio Hub — one board, three workflows: a short-film pipeline, an animation corner, and a study desk. Everything here is a live card: drag, edit, connect.",
+      "color": "#0EA5E9",
+      "ib": {
+        "kind": "callout",
+        "id": "cs-intro",
+        "text": "Creative Studio Hub — one board, three workflows: a short-film pipeline, an animation corner, and a study desk. Everything here is a live card: drag, edit, connect.",
+        "icon": "🎬",
+        "color": "#0EA5E9"
+      }
+    },
+    {
+      "id": "cs-film-title",
+      "x": -1340,
+      "y": -660,
+      "width": 380,
+      "height": 170,
+      "type": "text",
+      "text": "AFTERGLOW\n\na short film",
+      "color": "#D9DDE3",
+      "ib": {
+        "kind": "sticky",
+        "id": "cs-film-title",
+        "text": "AFTERGLOW\n\na short film",
+        "color": "#D9DDE3",
+        "textColor": "#111827",
+        "textScale": "lg",
+        "textAlign": "center",
+        "blank": true,
+        "shape": "rect",
+        "labels": [
+          {
+            "id": "cs-ft-label",
+            "text": "IN PRODUCTION",
+            "color": "#F59E0B"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cs-film-still",
+      "x": -920,
+      "y": -680,
+      "width": 380,
+      "height": 250,
+      "type": "link",
+      "url": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80",
+      "ib": {
+        "kind": "image",
+        "id": "cs-film-still",
+        "source": {
+          "type": "external",
+          "url": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80"
+        },
+        "caption": "Golden-hour grade reference",
+        "captionHidden": false
+      }
+    },
+    {
+      "id": "cs-film-comment",
+      "x": -480,
+      "y": -620,
+      "width": 300,
+      "height": 160,
+      "type": "text",
+      "text": "**Sam** _(16/07/2026)_\nThe sunset take is the keeper — grade the whole film from this still.",
+      "color": "#F8FAFC",
+      "ib": {
+        "kind": "comment",
+        "id": "cs-film-comment",
+        "text": "The sunset take is the keeper — grade the whole film from this still.",
+        "author": "Sam",
+        "createdAt": 1784246400000,
+        "color": "#F8FAFC",
+        "resolved": false,
+        "replies": []
+      }
+    },
+    {
+      "id": "cs-kanban",
+      "x": -1340,
+      "y": -420,
+      "width": 830,
+      "height": 470,
+      "type": "group",
+      "label": "Production pipeline",
+      "ib": {
+        "kind": "kanban-board",
+        "id": "cs-kanban",
+        "title": "Production pipeline",
+        "locked": false,
+        "columns": [
+          {
+            "id": "csk-board",
+            "title": "Storyboard",
+            "color": "#64748B",
+            "bgColor": "#F8FAFC",
+            "items": [
+              {
+                "id": "cski-1",
+                "text": "Board scene 4 — rooftop chase",
+                "done": false,
+                "tags": [
+                  "act-2"
+                ],
+                "icon": "pencil",
+                "iconColor": "#7C3AED"
+              },
+              {
+                "id": "cski-2",
+                "text": "Animatic pass on the opening",
+                "done": false,
+                "subtasks": [
+                  {
+                    "id": "cskis-1",
+                    "text": "Block the timing",
+                    "done": true
+                  },
+                  {
+                    "id": "cskis-2",
+                    "text": "Drop in a temp score",
+                    "done": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "csk-shoot",
+            "title": "Shooting",
+            "color": "#F59E0B",
+            "bgColor": "#FFFBEB",
+            "wipLimit": 2,
+            "items": [
+              {
+                "id": "cski-3",
+                "text": "Golden-hour beach take",
+                "done": false,
+                "dueDate": "2026-07-22",
+                "tags": [
+                  "priority"
+                ],
+                "thumbnail": {
+                  "type": "external",
+                  "url": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=400&q=80"
+                }
+              },
+              {
+                "id": "cski-4",
+                "text": "Record foley — footsteps on sand",
+                "done": false,
+                "icon": "mic",
+                "iconColor": "#0EA5E9",
+                "color": "#E0F2FE"
+              }
+            ]
+          },
+          {
+            "id": "csk-edit",
+            "title": "Edit",
+            "color": "#10B981",
+            "bgColor": "#ECFDF5",
+            "items": [
+              {
+                "id": "cski-5",
+                "text": "Rough cut — act 1",
+                "done": false,
+                "subtasks": [
+                  {
+                    "id": "cskis-3",
+                    "text": "Assemble the selects",
+                    "done": true
+                  },
+                  {
+                    "id": "cskis-4",
+                    "text": "Sync music to picture",
+                    "done": false
+                  }
+                ]
+              },
+              {
+                "id": "cski-6",
+                "text": "Title design",
+                "done": true,
+                "icon": "check-circle-2",
+                "iconColor": "#16A34A"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "cs-kanban::kbhdr::csk-board",
+      "type": "text",
+      "x": -1328,
+      "y": -384,
+      "width": 260.6666666666667,
+      "height": 28,
+      "text": "**Storyboard** (2)",
+      "color": "#64748B"
+    },
+    {
+      "id": "cs-kanban::kbitem::csk-board::cski-1",
+      "type": "text",
+      "x": -1328,
+      "y": -348,
+      "width": 260.6666666666667,
+      "height": 44,
+      "text": "- [ ] Board scene 4 — rooftop chase",
+      "ib": {
+        "id": "cski-1",
+        "text": "Board scene 4 — rooftop chase",
+        "done": false,
+        "tags": [
+          "act-2"
+        ],
+        "icon": "pencil",
+        "iconColor": "#7C3AED"
+      }
+    },
+    {
+      "id": "cs-kanban::kbitem::csk-board::cski-2",
+      "type": "text",
+      "x": -1328,
+      "y": -296,
+      "width": 260.6666666666667,
+      "height": 44,
+      "text": "- [ ] Animatic pass on the opening",
+      "ib": {
+        "id": "cski-2",
+        "text": "Animatic pass on the opening",
+        "done": false,
+        "subtasks": [
+          {
+            "id": "cskis-1",
+            "text": "Block the timing",
+            "done": true
+          },
+          {
+            "id": "cskis-2",
+            "text": "Drop in a temp score",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "cs-kanban::kbhdr::csk-shoot",
+      "type": "text",
+      "x": -1054.6666666666667,
+      "y": -384,
+      "width": 260.6666666666667,
+      "height": 28,
+      "text": "**Shooting** (2)",
+      "color": "#F59E0B"
+    },
+    {
+      "id": "cs-kanban::kbitem::csk-shoot::cski-3",
+      "type": "text",
+      "x": -1054.6666666666667,
+      "y": -348,
+      "width": 260.6666666666667,
+      "height": 44,
+      "text": "- [ ] Golden-hour beach take",
+      "ib": {
+        "id": "cski-3",
+        "text": "Golden-hour beach take",
+        "done": false,
+        "dueDate": "2026-07-22",
+        "tags": [
+          "priority"
+        ],
+        "thumbnail": {
+          "type": "external",
+          "url": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=400&q=80"
+        }
+      }
+    },
+    {
+      "id": "cs-kanban::kbitem::csk-shoot::cski-4",
+      "type": "text",
+      "x": -1054.6666666666667,
+      "y": -296,
+      "width": 260.6666666666667,
+      "height": 44,
+      "text": "- [ ] Record foley — footsteps on sand",
+      "ib": {
+        "id": "cski-4",
+        "text": "Record foley — footsteps on sand",
+        "done": false,
+        "icon": "mic",
+        "iconColor": "#0EA5E9",
+        "color": "#E0F2FE"
+      }
+    },
+    {
+      "id": "cs-kanban::kbhdr::csk-edit",
+      "type": "text",
+      "x": -781.3333333333334,
+      "y": -384,
+      "width": 260.6666666666667,
+      "height": 28,
+      "text": "**Edit** (2)",
+      "color": "#10B981"
+    },
+    {
+      "id": "cs-kanban::kbitem::csk-edit::cski-5",
+      "type": "text",
+      "x": -781.3333333333334,
+      "y": -348,
+      "width": 260.6666666666667,
+      "height": 44,
+      "text": "- [ ] Rough cut — act 1",
+      "ib": {
+        "id": "cski-5",
+        "text": "Rough cut — act 1",
+        "done": false,
+        "subtasks": [
+          {
+            "id": "cskis-3",
+            "text": "Assemble the selects",
+            "done": true
+          },
+          {
+            "id": "cskis-4",
+            "text": "Sync music to picture",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "cs-kanban::kbitem::csk-edit::cski-6",
+      "type": "text",
+      "x": -781.3333333333334,
+      "y": -296,
+      "width": 260.6666666666667,
+      "height": 44,
+      "text": "- [x] Title design",
+      "ib": {
+        "id": "cski-6",
+        "text": "Title design",
+        "done": true,
+        "icon": "check-circle-2",
+        "iconColor": "#16A34A"
+      }
+    },
+    {
+      "id": "cs-script",
+      "x": -480,
+      "y": -400,
+      "width": 260,
+      "height": 120,
+      "type": "file",
+      "file": "_Assets/Docs/Afterglow-script-v3.pdf",
+      "ib": {
+        "kind": "file",
+        "id": "cs-script",
+        "path": "_Assets/Docs/Afterglow-script-v3.pdf"
+      }
+    },
+    {
+      "id": "cs-map",
+      "x": -480,
+      "y": -240,
+      "width": 320,
+      "height": 210,
+      "type": "link",
+      "url": "https://www.google.com/maps?q=Bondi+Beach",
+      "ib": {
+        "kind": "map",
+        "id": "cs-map",
+        "url": "https://www.google.com/maps?q=Bondi+Beach"
+      }
+    },
+    {
+      "id": "cs-anim-column",
+      "x": -60,
+      "y": -680,
+      "width": 400,
+      "height": 580,
+      "type": "group",
+      "label": "Animation refs",
+      "color": "#94A3B8",
+      "ib": {
+        "kind": "column",
+        "id": "cs-anim-column",
+        "title": "Animation refs",
+        "color": "#94A3B8",
+        "bgColor": "#FFFFFF",
+        "trayColor": "#F8FAFC",
+        "borderColor": "#E2E8F0",
+        "locked": false,
+        "children": [
+          {
+            "kind": "image",
+            "id": "cs-anim-ref",
+            "x": 0,
+            "y": 0,
+            "w": 320,
+            "h": 200,
+            "source": {
+              "type": "external",
+              "url": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
+            },
+            "captionHidden": true
+          },
+          {
+            "kind": "sticky",
+            "id": "cs-anim-style",
+            "x": 0,
+            "y": 0,
+            "w": 320,
+            "h": 120,
+            "text": "Style: painterly light, soft rims, held frames on the 2s.",
+            "color": "#FFF7ED"
+          },
+          {
+            "kind": "file",
+            "id": "cs-anim-animatic",
+            "x": 0,
+            "y": 0,
+            "w": 320,
+            "h": 100,
+            "path": "_Assets/Video/animatic-v2.mp4"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cs-swatch-1",
+      "x": -60,
+      "y": -60,
+      "width": 90,
+      "height": 95,
+      "type": "text",
+      "text": "#2E1065 — Midnight Violet",
+      "color": "#2E1065",
+      "ib": {
+        "kind": "swatch",
+        "id": "cs-swatch-1",
+        "color": "#2E1065"
+      }
+    },
+    {
+      "id": "cs-swatch-2",
+      "x": 50,
+      "y": -60,
+      "width": 90,
+      "height": 95,
+      "type": "text",
+      "text": "#7C3AED — Purple Zing",
+      "color": "#7C3AED",
+      "ib": {
+        "kind": "swatch",
+        "id": "cs-swatch-2",
+        "color": "#7C3AED"
+      }
+    },
+    {
+      "id": "cs-swatch-3",
+      "x": 160,
+      "y": -60,
+      "width": 90,
+      "height": 95,
+      "type": "text",
+      "text": "#FB7185 — Coral Blush",
+      "color": "#FB7185",
+      "ib": {
+        "kind": "swatch",
+        "id": "cs-swatch-3",
+        "color": "#FB7185"
+      }
+    },
+    {
+      "id": "cs-swatch-4",
+      "x": 270,
+      "y": -60,
+      "width": 90,
+      "height": 95,
+      "type": "text",
+      "text": "#FDE047 — Lemon Glow",
+      "color": "#FDE047",
+      "ib": {
+        "kind": "swatch",
+        "id": "cs-swatch-4",
+        "color": "#FDE047"
+      }
+    },
+    {
+      "id": "cs-shotlist",
+      "x": -60,
+      "y": 80,
+      "width": 400,
+      "height": 320,
+      "type": "text",
+      "text": "### Shot list\n\n- [ ] **Act 1 — dawn**\n  - [x] sc01 — wide, tide coming in\n  - [ ] sc02 — close on hands\n- [ ] **Act 2 — dusk**\n  - [ ] sc03 — silhouette walk-off",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "checklist",
+        "id": "cs-shotlist",
+        "title": "Shot list",
+        "color": "#FFFFFF",
+        "accentColor": "#7C3AED",
+        "items": [
+          {
+            "id": "cs-sl-h1",
+            "text": "Act 1 — dawn",
+            "done": false,
+            "isHeader": true
+          },
+          {
+            "id": "cs-sl-1",
+            "text": "sc01 — wide, tide coming in",
+            "done": true,
+            "parentId": "cs-sl-h1"
+          },
+          {
+            "id": "cs-sl-2",
+            "text": "sc02 — close on hands",
+            "done": false,
+            "parentId": "cs-sl-h1"
+          },
+          {
+            "id": "cs-sl-h2",
+            "text": "Act 2 — dusk",
+            "done": false,
+            "isHeader": true
+          },
+          {
+            "id": "cs-sl-3",
+            "text": "sc03 — silhouette walk-off",
+            "done": false,
+            "parentId": "cs-sl-h2"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cs-keywords",
+      "x": 440,
+      "y": -120,
+      "width": 210,
+      "height": 170,
+      "type": "text",
+      "text": "12 fps\n\nheld frames\n\npainted light",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "sticky",
+        "id": "cs-keywords",
+        "text": "12 fps\n\nheld frames\n\npainted light",
+        "color": "#FFFFFF",
+        "textColor": "#7C3AED",
+        "blank": true,
+        "textAlign": "center"
+      }
+    },
+    {
+      "id": "cs-tile-storyboards",
+      "x": -60,
+      "y": 460,
+      "width": 190,
+      "height": 200,
+      "type": "file",
+      "file": "Storyboards.canvas",
+      "color": "#7C3AED",
+      "ib": {
+        "kind": "tile",
+        "id": "cs-tile-storyboards",
+        "label": "Storyboards",
+        "subtitle": "8 boards",
+        "icon": "clapperboard",
+        "color": "#7C3AED",
+        "target": {
+          "kind": "board",
+          "path": "Storyboards.canvas"
+        }
+      }
+    },
+    {
+      "id": "cs-tile-assets",
+      "x": 220,
+      "y": 520,
+      "width": 190,
+      "height": 200,
+      "type": "file",
+      "file": "Asset Library.canvas",
+      "color": "#0EA5E9",
+      "ib": {
+        "kind": "tile",
+        "id": "cs-tile-assets",
+        "label": "Asset library",
+        "subtitle": "24 files",
+        "icon": "package",
+        "color": "#0EA5E9",
+        "target": {
+          "kind": "board",
+          "path": "Asset Library.canvas"
+        }
+      }
+    },
+    {
+      "id": "cs-study-group",
+      "x": 700,
+      "y": -700,
+      "width": 900,
+      "height": 1140,
+      "type": "group",
+      "label": "Study desk",
+      "color": "#10B981",
+      "ib": {
+        "kind": "group",
+        "id": "cs-study-group",
+        "label": "Study desk",
+        "color": "#10B981"
+      }
+    },
+    {
+      "id": "cs-courses",
+      "x": 740,
+      "y": -640,
+      "width": 560,
+      "height": 240,
+      "type": "text",
+      "text": "### Course tracker\n\n| Course | Status | Next review | Done |\n| --- | --- | --- | --- |\n| Colour theory | In progress | 2026-07-21 |  |\n| Anatomy — gesture | Planned | 2026-07-27 |  |\n| Film history essay | Done | 2026-07-12 | true |",
+      "color": "#FFFFFF",
+      "ib": {
+        "kind": "table",
+        "id": "cs-courses",
+        "title": "Course tracker",
+        "color": "#FFFFFF",
+        "columns": [
+          {
+            "id": "csc-course",
+            "label": "Course",
+            "type": "text"
+          },
+          {
+            "id": "csc-status",
+            "label": "Status",
+            "type": "select",
+            "options": [
+              {
+                "label": "Planned",
+                "color": "#DBEAFE"
+              },
+              {
+                "label": "In progress",
+                "color": "#FEF3C7"
+              },
+              {
+                "label": "Done",
+                "color": "#DCFCE7"
+              }
+            ]
+          },
+          {
+            "id": "csc-review",
+            "label": "Next review",
+            "type": "date",
+            "align": "center"
+          },
+          {
+            "id": "csc-done",
+            "label": "Done",
+            "type": "checkbox",
+            "align": "center"
+          }
+        ],
+        "rows": [
+          {
+            "id": "cscr-1",
+            "cells": {
+              "csc-course": "Colour theory",
+              "csc-status": "In progress",
+              "csc-review": "2026-07-21",
+              "csc-done": ""
+            }
+          },
+          {
+            "id": "cscr-2",
+            "cells": {
+              "csc-course": "Anatomy — gesture",
+              "csc-status": "Planned",
+              "csc-review": "2026-07-27",
+              "csc-done": ""
+            }
+          },
+          {
+            "id": "cscr-3",
+            "cells": {
+              "csc-course": "Film history essay",
+              "csc-status": "Done",
+              "csc-review": "2026-07-12",
+              "csc-done": "true"
+            },
+            "color": "#F0FDF4"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cs-calendar",
+      "x": 740,
+      "y": -360,
+      "width": 760,
+      "height": 340,
+      "type": "text",
+      "text": "📅 **Study & shoot calendar**\n*(Visual Notes calendar view)*",
+      "ib": {
+        "kind": "calendar",
+        "id": "cs-calendar",
+        "title": "Study & shoot calendar",
+        "mode": "month",
+        "anchor": "2026-07-20",
+        "dayStyles": {
+          "2026-07-22": {
+            "color": "#FEF3C7",
+            "icon": "clapperboard",
+            "importance": "high"
+          },
+          "2026-07-27": {
+            "color": "#DBEAFE",
+            "icon": "book-open",
+            "importance": "medium"
+          }
+        },
+        "notes": [
+          {
+            "id": "cscn-1",
+            "date": "2026-07-22",
+            "text": "Shoot day 1 — golden hour at the beach",
+            "color": "#FEF3C7",
+            "icon": "clapperboard",
+            "importance": "high"
+          },
+          {
+            "id": "cscn-2",
+            "date": "2026-07-27",
+            "text": "Anatomy revision session",
+            "color": "#DBEAFE",
+            "icon": "book-open",
+            "importance": "medium"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cs-lecture",
+      "x": 740,
+      "y": 40,
+      "width": 340,
+      "height": 190,
+      "type": "link",
+      "url": "https://www.youtube.com/watch?v=IlU-zDU6aQ0",
+      "ib": {
+        "kind": "bookmark",
+        "id": "cs-lecture",
+        "url": "https://www.youtube.com/watch?v=IlU-zDU6aQ0",
+        "title": "Lecture: light & colour",
+        "description": "YouTube links play inline — keep video essays next to your notes.",
+        "fetchedAt": 1784246400000,
+        "fetchFailed": false
+      }
+    },
+    {
+      "id": "cs-sticky-idea",
+      "x": 1120,
+      "y": 40,
+      "width": 210,
+      "height": 180,
+      "type": "text",
+      "text": "💡 Turn each subject's lecture notes into its own board",
+      "color": "#FEF3C7",
+      "ib": {
+        "kind": "sticky",
+        "id": "cs-sticky-idea",
+        "text": "💡 Turn each subject's lecture notes into its own board",
+        "color": "#FEF3C7",
+        "topColor": "#F59E0B",
+        "labels": [
+          {
+            "id": "cs-si-label",
+            "text": "IDEA",
+            "color": "#F59E0B"
+          }
+        ],
+        "reactions": [
+          "🔥"
+        ]
+      }
+    },
+    {
+      "id": "cs-sticky-todo",
+      "x": 1350,
+      "y": 90,
+      "width": 210,
+      "height": 180,
+      "type": "text",
+      "text": "Export the colour script as a row of swatch cards",
+      "color": "#E0F2FE",
+      "ib": {
+        "kind": "sticky",
+        "id": "cs-sticky-todo",
+        "text": "Export the colour script as a row of swatch cards",
+        "color": "#E0F2FE",
+        "topColor": "#0EA5E9",
+        "labels": [
+          {
+            "id": "cs-st-label",
+            "text": "TODO",
+            "color": "#0EA5E9"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cs-study-tip",
+      "x": 740,
+      "y": 300,
+      "width": 560,
+      "height": 100,
+      "type": "text",
+      "text": "> [!note] 🧠\n> One board per subject — link each lecture note to a tile so revision is one click away.",
+      "color": "#10B981",
+      "ib": {
+        "kind": "callout",
+        "id": "cs-study-tip",
+        "text": "One board per subject — link each lecture note to a tile so revision is one click away.",
+        "icon": "🧠",
+        "color": "#10B981"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "cs-edge-still",
+      "fromNode": "cs-film-comment",
+      "toNode": "cs-film-still",
+      "color": "#22C55E",
+      "ib": {
+        "routing": "straight",
+        "bend": -45,
+        "style": "solid",
+        "arrowhead": "end",
+        "thickness": 4
+      }
+    },
+    {
+      "id": "cs-edge-schedule",
+      "fromNode": "cs-kanban",
+      "toNode": "cs-calendar",
+      "color": "#7C3AED",
+      "label": "schedule the shoot",
+      "ib": {
+        "labelSize": 14,
+        "routing": "elbow",
+        "elbowOrientation": "horizontal-first",
+        "style": "dashed",
+        "arrowhead": "end",
+        "thickness": 3
+      }
+    },
+    {
+      "id": "cs-edge-palette",
+      "fromNode": "cs-swatch-3",
+      "toNode": "cs-anim-column",
+      "color": "#FB7185",
+      "label": "colour script",
+      "ib": {
+        "labelSize": 13,
+        "routing": "straight",
+        "bend": 35,
+        "style": "solid",
+        "arrowhead": "end",
+        "thickness": 2
+      }
+    },
+    {
+      "id": "cs-edge-tiles",
+      "fromNode": "cs-tile-storyboards",
+      "toNode": "cs-tile-assets",
+      "color": "#94A3B8",
+      "ib": {
+        "routing": "straight",
+        "style": "solid",
+        "arrowhead": "none",
+        "thickness": 2
+      }
+    }
+  ],
+  "ib": {
+    "version": 1,
+    "layout": "freeform",
+    "viewport": {
+      "zoom": 0.32,
+      "x": 940,
+      "y": 700
+    },
+    "drawings": [
+      {
+        "id": "cs-ink-circle",
+        "groupId": "cs-keywords-ink",
+        "points": [
+          { "x": 695, "y": -37 },
+          { "x": 687, "y": 8 },
+          { "x": 661, "y": 44 },
+          { "x": 622, "y": 71 },
+          { "x": 573, "y": 84 },
+          { "x": 520, "y": 82 },
+          { "x": 471, "y": 67 },
+          { "x": 432, "y": 40 },
+          { "x": 405, "y": 2 },
+          { "x": 395, "y": -38 },
+          { "x": 406, "y": -76 },
+          { "x": 434, "y": -112 },
+          { "x": 473, "y": -139 },
+          { "x": 521, "y": -154 },
+          { "x": 572, "y": -152 },
+          { "x": 621, "y": -137 },
+          { "x": 660, "y": -110 },
+          { "x": 688, "y": -74 },
+          { "x": 698, "y": -45 }
+        ],
+        "color": "#3B82F6",
+        "width": 5
+      },
+      {
+        "id": "cs-ink-highlight",
+        "groupId": "cs-study-ink",
+        "points": [
+          { "x": 760, "y": -600 },
+          { "x": 1080, "y": -600 }
+        ],
+        "color": "#FDE047",
+        "width": 22,
+        "opacity": 0.28
+      }
+    ]
+  }
+}
