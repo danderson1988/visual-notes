@@ -27,13 +27,11 @@ class BoardPickerModal extends FuzzySuggestModal<TFile> {
 
 // ── Settings tab ──────────────────────────────────────────────
 //
-// Each setting is built by a small `buildX(setting)` method that fills in
-// an already-created Setting — shared verbatim between display() (the
-// imperative fallback for Obsidian < 1.13, still called on those versions)
-// and getSettingDefinitions() (the declarative form 1.13+ uses to render
-// this tab and to index every setting's name/desc for its settings search).
-// Keeping one body per setting means the two rendering paths can never
-// drift out of sync with each other.
+// Rendered declaratively via getSettingDefinitions() (Obsidian 1.13+, which
+// is the plugin's minAppVersion) — the app renders each definition and
+// indexes every setting's name/desc for its settings search. Each setting's
+// controls are built by a small `buildX(setting)` method that fills in the
+// Setting the app created for it.
 
 export class VisualNotesSettingsTab extends PluginSettingTab {
   plugin: VisualNotesPlugin;
@@ -103,56 +101,11 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
     ];
   }
 
-  // ── Imperative fallback (Obsidian < 1.13) ───────────────────
-
-  override display(): void {
-    this.renderImperative();
-  }
-
   // Re-render after a settings mutation that changes the tab's structure
-  // (reset buttons, board picker's Clear visibility, sticky palette).
+  // (reset buttons, board picker's Clear visibility, sticky palette):
+  // update() re-renders the tab from fresh definitions.
   private refresh(): void {
-    // On 1.13+ the tab renders declaratively from getSettingDefinitions();
-    // update() re-renders it from fresh definitions. Older versions have no
-    // update() and rendered imperatively — re-render the same way.
-    if (typeof this.update === 'function') this.update();
-    else this.renderImperative();
-  }
-
-  private renderImperative(): void {
-    const { containerEl } = this;
-    containerEl.empty();
-
-    this.buildOpenOnStartup(new Setting(containerEl));
-    this.buildDefaultBoard(new Setting(containerEl));
-
-    new Setting(containerEl).setName('Freeform canvas').setHeading();
-    this.buildToolbarPosition(new Setting(containerEl));
-    this.buildDotColor(new Setting(containerEl));
-    this.buildDotSize(new Setting(containerEl));
-    this.buildCanvasBgColor(new Setting(containerEl));
-    this.buildCardDragAnimation(new Setting(containerEl));
-    this.buildCardDragAnimationIntensity(new Setting(containerEl));
-    this.buildSnapToGrid(new Setting(containerEl));
-    this.buildGridSize(new Setting(containerEl));
-    this.buildTrashZoneSize(new Setting(containerEl));
-    this.buildLargeKanbanItems(new Setting(containerEl));
-    this.buildBookmarkCacheDuration(new Setting(containerEl));
-    this.buildDefaultStickyColor(new Setting(containerEl));
-    this.buildCommentAuthorName(new Setting(containerEl));
-
-    new Setting(containerEl).setName('Assets').setHeading();
-    this.buildAutoSortAssets(new Setting(containerEl));
-    this.buildAutoRelinkOnOpen(new Setting(containerEl));
-    this.buildRelinkAllBoardsNow(new Setting(containerEl));
-
-    new Setting(containerEl).setName('Data').setHeading();
-    this.buildExportTilesJson(new Setting(containerEl));
-    this.buildImportDesc(new Setting(containerEl));
-    this.buildImportButton(new Setting(containerEl));
-
-    new Setting(containerEl).setName('Danger zone').setHeading();
-    this.buildResetAllTiles(new Setting(containerEl));
+    this.update();
   }
 
   // ── Per-setting builders ─────────────────────────────────────
@@ -577,13 +530,10 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
     setting
       .setName('Reset all tiles')
       .setDesc('Permanently delete every tile and nested board. This cannot be undone.')
-      .addButton(btn => {
-        // setDestructive() is 1.13+; on older Obsidian apply the same
-        // styling class the deprecated setWarning() would have added.
-        if (typeof btn.setDestructive === 'function') btn.setDestructive();
-        else btn.buttonEl.addClass('mod-warning');
-        return btn
+      .addButton(btn =>
+        btn
           .setButtonText('Reset everything')
+          .setDestructive()
           .onClick(() => {
             new ConfirmModal(
               this.app,
@@ -594,7 +544,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
                 new Notice('All tiles deleted.');
               })(); }
             ).open();
-          });
-      });
+          })
+      );
   }
 }

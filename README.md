@@ -177,7 +177,7 @@ Visual Notes only reads and writes files inside your own vault — it makes no n
 |---|---|
 | Obsidian desktop (Mac, Windows, Linux) | ✅ Supported |
 | Obsidian mobile (iOS, iPadOS) | ✅ Supported |
-| Minimum Obsidian version | 1.7.2 |
+| Minimum Obsidian version | 1.13.0 |
 
 ---
 
