@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.29
+
+### Fixed
+- Multiple toolbar tools (e.g. Pen and Line, or Pen and a placement tool like Column) could show as selected at the same time, with the earlier one stuck active underneath the new one (thanks for the bug report!). Activating any tool now correctly exits the other two first, so only one is ever highlighted.
+
 ## 1.0.28
 
 ### Fixed

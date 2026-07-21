@@ -1358,6 +1358,13 @@ export const canvasMethods = {
 
   activateTool(this: FreeformRenderer, name: string, btn: HTMLElement): void {
     if (this.pendingTool === name) { this.clearPendingTool(); return; }
+    // Only one tool button may ever show as active at a time — Pen and
+    // Line/Connect are separate mode flags from pendingTool, each with
+    // their own toolbar highlight, so activating one of these must tear
+    // the other two down explicitly rather than relying on them to have
+    // cleared themselves already.
+    this.exitConnectMode();
+    this.exitPenMode();
     this.clearPendingTool();
     this.pendingTool = name;
     this.pendingToolBtn = btn;
@@ -2400,6 +2407,10 @@ export const canvasMethods = {
   },
 
   enterConnectMode(this: FreeformRenderer): void {
+    // See activateTool's comment — Pen and any pending placement tool must
+    // be torn down first so only Line ever shows as active.
+    this.exitPenMode();
+    this.clearPendingTool();
     this.connectMode = true;
     this.outer.addClass('is-connect-mode');
     this.connectToolBtn?.addClass('is-active');

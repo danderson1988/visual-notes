@@ -160,6 +160,53 @@ describe('UI smoke: connect two cards', () => {
   });
 });
 
+describe('UI smoke: toolbar tool selection is exclusive', () => {
+  // Regression test for a reported bug: Pen, Line (connect mode), and a
+  // pending placement tool (Note/Sticky/Column/…) are three independent
+  // state flags, each with its own toolbar highlight. Pen mode already
+  // tore down the other two on entry; Line and the placement tools didn't
+  // tear down Pen (or each other), so activating one could leave a
+  // previous tool's button stuck showing "active" underneath it.
+  it('activating a placement tool exits pen mode and connect mode', () => {
+    const { renderer } = setup([]);
+    renderer.togglePenMode();
+    expect(renderer.penModeActive).toBe(true);
+
+    const btn = document.createElement('div');
+    renderer.activateTool('sticky', btn);
+
+    expect(renderer.penModeActive).toBe(false);
+    expect(renderer.connectMode).toBe(false);
+    expect(renderer.pendingTool).toBe('sticky');
+    expect(renderer.penToolBtn?.hasClass('is-active')).toBe(false);
+  });
+
+  it('entering connect mode (Line) exits pen mode and any pending tool', () => {
+    const { renderer } = setup([]);
+    renderer.togglePenMode();
+    expect(renderer.penModeActive).toBe(true);
+
+    renderer.toggleConnectMode();
+
+    expect(renderer.connectMode).toBe(true);
+    expect(renderer.penModeActive).toBe(false);
+    expect(renderer.pendingTool).toBe(null);
+    expect(renderer.penToolBtn?.hasClass('is-active')).toBe(false);
+  });
+
+  it('entering pen mode exits connect mode and any pending tool', () => {
+    const { renderer } = setup([]);
+    renderer.toggleConnectMode();
+    expect(renderer.connectMode).toBe(true);
+
+    renderer.togglePenMode();
+
+    expect(renderer.penModeActive).toBe(true);
+    expect(renderer.connectMode).toBe(false);
+    expect(renderer.connectToolBtn?.hasClass('is-active')).toBe(false);
+  });
+});
+
 describe('UI smoke: edit a table cell', () => {
   it('double-click to edit, typing, then blur writes the new value into the row data', () => {
     const table: TableCard = {
