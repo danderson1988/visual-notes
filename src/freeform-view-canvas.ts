@@ -10,7 +10,9 @@ import {
 } from './file-types';
 import {
   straightAnchors, elbowAnchors, buildStraightPath, buildElbowPath, resolveOrientation, rectExitPoint,
-  buildCurvedPath, curveThroughPoint, perpendicularOffset,
+  buildCurvedPath, curveThroughPoint, perpendicularOffset, curveControlPoint, arrowheadPoints,
+  buildTrimmedStraightPath, buildTrimmedCurvedPath, buildTrimmedElbowPath,
+  type Point,
 } from './canvas/geometry';
 import {
   parseYouTubeId,
@@ -113,6 +115,11 @@ declare module './freeform-view' {
     scheduleCullingRefresh(): void;
     refreshConnectionCulling(): void;
     buildConnectionPath(conn: Connection): string | null;
+    resolveConnectionAnchors(conn: Connection): {
+        src: Point; tgt: Point; srcApproach: Point; tgtApproach: Point;
+        ori?: 'horizontal-first' | 'vertical-first';
+      } | null;
+    buildVisibleConnectionPath(conn: Connection): string | null;
     getCardRect(cardId: string): { x: number; y: number; w: number; h: number } | null;
     getConnEndpointRect(
         cardId: string | undefined, point: { x: number; y: number } | undefined,
@@ -120,7 +127,7 @@ declare module './freeform-view' {
     connectionLabelPos(conn: Connection): { x: number; y: number } | null;
     renderConnectionLabel(conn: Connection): void;
     updateConnectionsForCard(cardId: string): void;
-    getOrCreateMarker(color: string, thickness: number, end: 'end' | 'start'): string;
+    computeArrowheadPolygons(conn: Connection): { end?: [Point, Point, Point]; start?: [Point, Point, Point] } | null;
     enterConnectMode(): void;
     exitConnectMode(): void;
     toggleConnectMode(): void;
@@ -149,6 +156,14 @@ declare module './freeform-view' {
     showConnectionProps(conn: Connection): void;
     hideConnectionProps(): void;
   }
+}
+
+// Shared between computeArrowheadPolygons (draws the arrowhead at this
+// length) and buildVisibleConnectionPath (shortens the line by this same
+// length so its stroke never runs into the arrowhead's tapering tip) —
+// kept in sync in one place rather than duplicating the formula.
+function arrowMarkerLength(thickness: number): number {
+  return 10 + thickness * 2;
 }
 
 export const canvasMethods = {
@@ -1483,8 +1498,6 @@ export const canvasMethods = {
     // Visual layer — behind cards (first child of inner)
     const svg = createSvg('svg');
     svg.classList.add('visual-notes-connections-svg');
-    this.svgDefs = createSvg('defs');
-    svg.appendChild(this.svgDefs);
     if (this.inner.firstChild) this.inner.insertBefore(svg, this.inner.firstChild);
     else this.inner.appendChild(svg);
     this.svgEl = svg;
@@ -2147,6 +2160,8 @@ export const canvasMethods = {
     this.connectionPaths.clear();
     this.connectionHitPaths.forEach(p => p.remove());
     this.connectionHitPaths.clear();
+    this.connectionMarkerPaths.forEach(polys => polys.forEach(p => p.remove()));
+    this.connectionMarkerPaths.clear();
     this.connectionLabelEls.forEach(g => g.remove());
     this.connectionLabelEls.clear();
     this.connectionSelectPath?.remove(); this.connectionSelectPath = null;
@@ -2192,6 +2207,7 @@ export const canvasMethods = {
   removeSingleConnection(this: FreeformRenderer, id: string): void {
     this.connectionPaths.get(id)?.remove(); this.connectionPaths.delete(id);
     this.connectionHitPaths.get(id)?.remove(); this.connectionHitPaths.delete(id);
+    this.connectionMarkerPaths.get(id)?.forEach(p => p.remove()); this.connectionMarkerPaths.delete(id);
     this.connectionLabelEls.get(id)?.remove(); this.connectionLabelEls.delete(id);
     if (this.selectedConnectionId === id) this.deselectConnection();
   },
@@ -2273,9 +2289,15 @@ export const canvasMethods = {
     this.hitSvgEl.appendChild(hit);
     this.connectionHitPaths.set(conn.id, hit);
 
-    // Visible path (pointer-events:none so hit area handles all events)
+    // Visible path (pointer-events:none so hit area handles all events).
+    // Uses the SHORTENED path — see buildVisibleConnectionPath — so the
+    // stroke stops before reaching into an arrowhead's base, rather than
+    // running all the way to its tip and poking out past the narrowing
+    // sides near the point. Empty when the arrowheads alone cover the
+    // whole (very short) connection.
+    const visibleD = this.buildVisibleConnectionPath(conn) ?? '';
     const path = createSvg('path');
-    path.setAttribute('d', d);
+    path.setAttribute('d', visibleD);
     path.setAttribute('stroke', conn.color);
     path.setAttribute('stroke-width', String(conn.thickness));
     path.setAttribute('fill', 'none');
@@ -2285,17 +2307,32 @@ export const canvasMethods = {
     if (conn.style === 'dashed') {
       path.setAttribute('stroke-dasharray', `${conn.thickness * 5} ${conn.thickness * 4}`);
     }
-    if (conn.arrowhead === 'end' || conn.arrowhead === 'both') {
-      path.setAttribute('marker-end', `url(#${this.getOrCreateMarker(conn.color, conn.thickness, 'end')})`);
-    }
-    if (conn.arrowhead === 'both') {
-      path.setAttribute('marker-start', `url(#${this.getOrCreateMarker(conn.color, conn.thickness, 'start')})`);
-    }
     this.svgEl.appendChild(path);
     this.connectionPaths.set(conn.id, path);
+
+    const arrowheads = this.computeArrowheadPolygons(conn);
+    if (arrowheads) {
+      const polys: SVGPolygonElement[] = [];
+      for (const pts of [arrowheads.end, arrowheads.start]) {
+        if (!pts) continue;
+        const poly = createSvg('polygon');
+        poly.setAttribute('points', pts.map(p => `${p.x},${p.y}`).join(' '));
+        poly.setAttribute('fill', conn.color);
+        poly.setAttribute('pointer-events', 'none');
+        this.svgEl.appendChild(poly);
+        polys.push(poly);
+      }
+      this.connectionMarkerPaths.set(conn.id, polys);
+    }
     this.renderConnectionLabel(conn);
   },
 
+  // The connection's true geometry — endpoints exactly at the card edges
+  // or free points, whatever the routing mode. Used for hit-testing, the
+  // selection halo, the bend/endpoint drag handles, and label placement,
+  // and (see buildVisibleConnectionPath's comment) for anchoring arrowhead
+  // markers, since all of those need the connection's REAL endpoints, not
+  // a shortened stand-in.
   buildConnectionPath(this: FreeformRenderer, conn: Connection): string | null {
     const from = this.getConnEndpointRect(conn.fromCardId, conn.fromPoint);
     const to   = this.getConnEndpointRect(conn.toCardId, conn.toPoint);
@@ -2308,6 +2345,99 @@ export const canvasMethods = {
     const { src, tgt } = straightAnchors(from, to);
     if (conn.bend) return buildCurvedPath(src, tgt, conn.bend);
     return buildStraightPath(src, tgt);
+  },
+
+  // Resolves a connection's true endpoints AND, for each end, the
+  // adjacent "approach" point one step back along the path (src/ctrl/an
+  // elbow's own axis-aligned corner, whichever routing applies) — i.e.
+  // the reference needed to know which DIRECTION each endpoint is
+  // approached from. Shared by buildVisibleConnectionPath (shortens the
+  // line by moving each arrowhead-bearing endpoint toward its approach
+  // point) and computeArrowheadPolygons (points the arrowhead's base
+  // away from its approach point, toward the true endpoint), so both
+  // agree on exactly the same direction and neither can drift out of
+  // sync with the other.
+  resolveConnectionAnchors(this: FreeformRenderer, conn: Connection): {
+    src: Point; tgt: Point; srcApproach: Point; tgtApproach: Point;
+    ori?: 'horizontal-first' | 'vertical-first';
+  } | null {
+    const from = this.getConnEndpointRect(conn.fromCardId, conn.fromPoint);
+    const to   = this.getConnEndpointRect(conn.toCardId, conn.toPoint);
+    if (!from || !to) return null;
+
+    if (conn.routing === 'elbow') {
+      const ori = resolveOrientation(from, to, conn.elbowOrientation ?? 'auto');
+      const { src, tgt } = elbowAnchors(from, to, ori);
+      // The segment arriving at/leaving each endpoint is purely
+      // horizontal or vertical (matching `ori`), so the adjacent corner
+      // one axis-aligned step back is exact, not an approximation.
+      const midX = (src.x + tgt.x) / 2, midY = (src.y + tgt.y) / 2;
+      const srcApproach = ori === 'horizontal-first' ? { x: midX, y: src.y } : { x: src.x, y: midY };
+      const tgtApproach = ori === 'horizontal-first' ? { x: midX, y: tgt.y } : { x: tgt.x, y: midY };
+      return { src, tgt, srcApproach, tgtApproach, ori };
+    }
+
+    const { src, tgt } = straightAnchors(from, to);
+    if (conn.bend) {
+      // Both ends' tangents reference the same quadratic-bezier control
+      // point — only the direction (ctrl→tgt vs ctrl→src) differs.
+      const ctrl = curveControlPoint(src, tgt, conn.bend);
+      return { src, tgt, srcApproach: ctrl, tgtApproach: ctrl };
+    }
+    return { src, tgt, srcApproach: tgt, tgtApproach: src };
+  },
+
+  // The path used ONLY for the visible colored stroke, trimmed so the
+  // shaft never reaches into an arrowhead's tapering tip. Hard-won
+  // constraints, each from a shipped-wrong iteration of this fix:
+  //  1. Never shorten buildConnectionPath itself — hit-testing, the
+  //     selection outline, label placement, and the bend handle all need
+  //     the true endpoints (and an SVG <marker> attached to a shortened
+  //     path just relocates the arrowhead instead of fixing the overlap;
+  //     arrowheads are directly-computed polygons now, see
+  //     computeArrowheadPolygons).
+  //  2. The trimmed stroke must be an EXACT SUB-SEGMENT of the true path
+  //     (buildTrimmed*Path in geometry.ts) — rebuilding a curve from
+  //     pulled-back endpoints with the same bend, or an elbow from moved
+  //     endpoints, yields a different shape whose middle visibly separates
+  //     from the hit path/selection outline and breaks clicking near the
+  //     center of extreme bends (reported after the first polygon fix).
+  // Returns null when the trims consume the whole path (connection shorter
+  // than its arrowheads) — callers render no stroke at all then.
+  buildVisibleConnectionPath(this: FreeformRenderer, conn: Connection): string | null {
+    const pullEnd = conn.arrowhead === 'end' || conn.arrowhead === 'both';
+    const pullStart = conn.arrowhead === 'both';
+    if (!pullEnd && !pullStart) return this.buildConnectionPath(conn);
+
+    const anchors = this.resolveConnectionAnchors(conn);
+    if (!anchors) return null;
+    const pull = arrowMarkerLength(conn.thickness);
+    const trimStart = pullStart ? pull : 0;
+    const trimEnd = pullEnd ? pull : 0;
+
+    if (conn.routing === 'elbow') return buildTrimmedElbowPath(anchors.src, anchors.tgt, anchors.ori!, trimStart, trimEnd);
+    if (conn.bend) return buildTrimmedCurvedPath(anchors.src, anchors.tgt, conn.bend, trimStart, trimEnd);
+    return buildTrimmedStraightPath(anchors.src, anchors.tgt, trimStart, trimEnd);
+  },
+
+  // Arrowhead triangle(s) for a connection, computed directly rather than
+  // via SVG marker auto-orientation (see buildVisibleConnectionPath's
+  // comment for why) — each is [tip, baseCorner1, baseCorner2], with the
+  // tip exactly at the connection's true endpoint.
+  computeArrowheadPolygons(this: FreeformRenderer, conn: Connection): { end?: [Point, Point, Point]; start?: [Point, Point, Point] } | null {
+    if (conn.arrowhead === 'none') return null;
+    const anchors = this.resolveConnectionAnchors(conn);
+    if (!anchors) return null;
+    const length = arrowMarkerLength(conn.thickness);
+    const halfWidth = Math.round(length * 0.42);
+    const result: { end?: [Point, Point, Point]; start?: [Point, Point, Point] } = {};
+    if (conn.arrowhead === 'end' || conn.arrowhead === 'both') {
+      result.end = arrowheadPoints(anchors.tgt, anchors.tgtApproach, length, halfWidth);
+    }
+    if (conn.arrowhead === 'both') {
+      result.start = arrowheadPoints(anchors.src, anchors.srcApproach, length, halfWidth);
+    }
+    return result;
   },
 
   getCardRect(this: FreeformRenderer, cardId: string): { x: number; y: number; w: number; h: number } | null {
@@ -2366,8 +2496,18 @@ export const canvasMethods = {
       // path gets rebuilt correctly if/when it's promoted back into view.
       if (!this.connectionPaths.has(conn.id)) continue;
       const d = this.buildConnectionPath(conn); if (!d) continue;
-      this.connectionPaths.get(conn.id)?.setAttribute('d', d);
       this.connectionHitPaths.get(conn.id)?.setAttribute('d', d);
+      this.connectionPaths.get(conn.id)?.setAttribute('d', this.buildVisibleConnectionPath(conn) ?? '');
+      const polys = this.connectionMarkerPaths.get(conn.id);
+      if (polys) {
+        // Same creation order as renderSingleConnection: [end, start].
+        const arrowheads = this.computeArrowheadPolygons(conn);
+        const ptsList = [arrowheads?.end, arrowheads?.start];
+        polys.forEach((poly, i) => {
+          const pts = ptsList[i];
+          if (pts) poly.setAttribute('points', pts.map(p => `${p.x},${p.y}`).join(' '));
+        });
+      }
       if (this.selectedConnectionId === conn.id && this.connectionSelectPath) {
         this.connectionSelectPath.setAttribute('d', d);
         this.showConnectionBendHandle(conn);
@@ -2381,29 +2521,6 @@ export const canvasMethods = {
         });
       }
     }
-  },
-
-  getOrCreateMarker(this: FreeformRenderer, color: string, thickness: number, end: 'end' | 'start'): string {
-    const id = `ibm-${end === 'end' ? 'e' : 's'}-${color.replace('#', '')}-${thickness}`;
-    if (!this.svgDefs.querySelector(`#${id}`)) {
-      const size = 10 + thickness * 2;
-      const mid  = Math.round(size * 0.42);
-      const h    = mid * 2;
-      const marker = createSvg('marker');
-      marker.setAttribute('id', id);
-      marker.setAttribute('markerUnits', 'userSpaceOnUse');
-      marker.setAttribute('markerWidth', String(size));
-      marker.setAttribute('markerHeight', String(h));
-      marker.setAttribute('refX', end === 'end' ? String(size) : '0');
-      marker.setAttribute('refY', String(mid));
-      marker.setAttribute('orient', end === 'end' ? 'auto' : 'auto-start-reverse');
-      const poly = createSvg('polygon');
-      poly.setAttribute('points', `0 0, ${size} ${mid}, 0 ${h}`);
-      poly.setAttribute('fill', color);
-      marker.appendChild(poly);
-      this.svgDefs.appendChild(marker);
-    }
-    return id;
   },
 
   enterConnectMode(this: FreeformRenderer): void {
@@ -2788,8 +2905,10 @@ export const canvasMethods = {
   rerenderConnection(this: FreeformRenderer, conn: Connection): void {
     this.connectionPaths.get(conn.id)?.remove();
     this.connectionHitPaths.get(conn.id)?.remove();
+    this.connectionMarkerPaths.get(conn.id)?.forEach(p => p.remove());
     this.connectionPaths.delete(conn.id);
     this.connectionHitPaths.delete(conn.id);
+    this.connectionMarkerPaths.delete(conn.id);
     this.connectionLabelEls.get(conn.id)?.remove();
     this.connectionLabelEls.delete(conn.id);
     this.renderSingleConnection(conn);
@@ -2813,6 +2932,7 @@ export const canvasMethods = {
     this.board.connections = this.board.connections.filter(c => c.id !== id);
     this.connectionPaths.get(id)?.remove(); this.connectionPaths.delete(id);
     this.connectionHitPaths.get(id)?.remove(); this.connectionHitPaths.delete(id);
+    this.connectionMarkerPaths.get(id)?.forEach(p => p.remove()); this.connectionMarkerPaths.delete(id);
     this.connectionLabelEls.get(id)?.remove(); this.connectionLabelEls.delete(id);
     this.scheduleSave();
   },

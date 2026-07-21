@@ -160,6 +160,165 @@ describe('UI smoke: connect two cards', () => {
   });
 });
 
+describe('UI smoke: connection arrowhead pull-back (bug #6)', () => {
+  // A filled arrowhead triangle's tip sits exactly at the connection's raw
+  // endpoint, but tapers to zero width right there — a line as thick as
+  // the shaft pokes out past the triangle's narrowing sides unless the
+  // VISIBLE stroke (not the true geometry other things rely on) is
+  // shortened first. buildConnectionPath (hit-testing, selection halo,
+  // labels, bend handle) must stay exactly at the true endpoints;
+  // buildVisibleConnectionPath (the colored stroke only) is what shortens;
+  // computeArrowheadPolygons draws the triangle with its tip at the true
+  // endpoint regardless of how short the visible stroke is.
+  const from = { x: -300, y: -300 };
+  const to = { x: 300, y: 300 }; // length 600√2 ≈ 848.5, comfortably longer than any arrowhead
+
+  it('buildConnectionPath always returns the true, unshortened endpoints', () => {
+    const { renderer } = setup([]);
+    for (const arrowhead of ['none', 'end', 'both'] as const) {
+      const d = renderer.buildConnectionPath({
+        id: `t-${arrowhead}`, fromPoint: from, toPoint: to,
+        routing: 'straight' as const, color: '#fff', style: 'solid' as const,
+        arrowhead, thickness: 4 as const,
+      });
+      expect(d).toBe(`M ${from.x} ${from.y} L ${to.x} ${to.y}`);
+    }
+  });
+
+  it('buildVisibleConnectionPath shortens the end with an arrowhead, leaves a no-arrowhead end untouched', () => {
+    const { renderer } = setup([]);
+    const conn = {
+      id: 'c1', fromPoint: from, toPoint: to,
+      routing: 'straight' as const, color: '#fff', style: 'solid' as const,
+      arrowhead: 'end' as const, thickness: 4 as const,
+    };
+    const d = renderer.buildVisibleConnectionPath(conn)!;
+    const [, x1, y1, x2, y2] = d.match(/M ([\d.-]+) ([\d.-]+) L ([\d.-]+) ([\d.-]+)/)!.map(Number);
+
+    expect(x1).toBe(from.x); expect(y1).toBe(from.y); // start (no arrowhead): untouched
+    // end (has the arrowhead): pulled back toward `from`, not sitting at `to`
+    expect(x2).toBeLessThan(to.x);
+    expect(y2).toBeLessThan(to.y);
+  });
+
+  it('buildVisibleConnectionPath shortens both ends when arrowhead is "both"', () => {
+    const { renderer } = setup([]);
+    const conn = {
+      id: 'c2', fromPoint: from, toPoint: to,
+      routing: 'straight' as const, color: '#fff', style: 'solid' as const,
+      arrowhead: 'both' as const, thickness: 4 as const,
+    };
+    const d = renderer.buildVisibleConnectionPath(conn)!;
+    const [, x1, y1, x2, y2] = d.match(/M ([\d.-]+) ([\d.-]+) L ([\d.-]+) ([\d.-]+)/)!.map(Number);
+
+    expect(x1).toBeGreaterThan(from.x); expect(y1).toBeGreaterThan(from.y);
+    expect(x2).toBeLessThan(to.x); expect(y2).toBeLessThan(to.y);
+  });
+
+  it('buildVisibleConnectionPath leaves both ends untouched when there is no arrowhead at all', () => {
+    const { renderer } = setup([]);
+    const conn = {
+      id: 'c3', fromPoint: from, toPoint: to,
+      routing: 'straight' as const, color: '#fff', style: 'solid' as const,
+      arrowhead: 'none' as const, thickness: 4 as const,
+    };
+    const d = renderer.buildVisibleConnectionPath(conn)!;
+    expect(d).toBe(`M ${from.x} ${from.y} L ${to.x} ${to.y}`);
+  });
+
+  it('buildVisibleConnectionPath pulls back further for a thicker line', () => {
+    const { renderer } = setup([]);
+    const thin = renderer.buildVisibleConnectionPath({
+      id: 'c4', fromPoint: from, toPoint: to,
+      routing: 'straight' as const, color: '#fff', style: 'solid' as const,
+      arrowhead: 'end' as const, thickness: 2 as const,
+    })!;
+    const thick = renderer.buildVisibleConnectionPath({
+      id: 'c5', fromPoint: from, toPoint: to,
+      routing: 'straight' as const, color: '#fff', style: 'solid' as const,
+      arrowhead: 'end' as const, thickness: 6 as const,
+    })!;
+    const endX = (d: string) => Number(d.match(/L ([\d.-]+)/)![1]);
+    // Thicker line -> longer arrowhead -> pulled back further from `to`.
+    expect(to.x - endX(thick)).toBeGreaterThan(to.x - endX(thin));
+  });
+
+  it('computeArrowheadPolygons puts the tip exactly at the true endpoint, base pulled back toward the approach point', () => {
+    const { renderer } = setup([]);
+    const conn = {
+      id: 'c6', fromPoint: from, toPoint: to,
+      routing: 'straight' as const, color: '#fff', style: 'solid' as const,
+      arrowhead: 'both' as const, thickness: 4 as const,
+    };
+    const arrows = renderer.computeArrowheadPolygons(conn)!;
+    expect(arrows.end).toBeTruthy();
+    expect(arrows.start).toBeTruthy();
+    const [endTip] = arrows.end!;
+    const [startTip] = arrows.start!;
+    // Tips land exactly on the connection's real endpoints...
+    expect(endTip).toEqual(to);
+    expect(startTip).toEqual(from);
+    // ...while the two base corners (indices 1 and 2) sit strictly inside
+    // the segment, not on top of the tip.
+    expect(arrows.end![1]).not.toEqual(to);
+    expect(arrows.end![2]).not.toEqual(to);
+  });
+
+  it('computeArrowheadPolygons returns null when there is no arrowhead', () => {
+    const { renderer } = setup([]);
+    const conn = {
+      id: 'c7', fromPoint: from, toPoint: to,
+      routing: 'straight' as const, color: '#fff', style: 'solid' as const,
+      arrowhead: 'none' as const, thickness: 4 as const,
+    };
+    expect(renderer.computeArrowheadPolygons(conn)).toBeNull();
+  });
+
+  it('a bent connection\'s visible stroke lies exactly on the true curve (no separation from the hit path)', () => {
+    // Regression: the first polygon-arrowhead fix rebuilt the shortened
+    // stroke as a NEW curve from pulled-back endpoints with the same bend
+    // value — a different curve, whose middle drifted away from the true
+    // geometry that the hit area, selection outline, and bend handle all
+    // follow. Reported as "the outline no longer follows the line, and
+    // clicking the center at extreme bends misses". The visible stroke
+    // must be an exact sub-segment of the true curve.
+    const { renderer } = setup([]);
+    const conn = {
+      id: 'c8', fromPoint: from, toPoint: to,
+      routing: 'straight' as const, bend: 250, color: '#fff', style: 'solid' as const,
+      arrowhead: 'both' as const, thickness: 6 as const,
+    };
+    const quad = (d: string) => {
+      const m = d.match(/M ([\d.-]+) ([\d.-]+) Q ([\d.-]+) ([\d.-]+) ([\d.-]+) ([\d.-]+)/)!;
+      const n = m.slice(1).map(Number);
+      return [{ x: n[0], y: n[1] }, { x: n[2], y: n[3] }, { x: n[4], y: n[5] }] as const;
+    };
+    const bez = (p: readonly { x: number; y: number }[], t: number) => {
+      const mt = 1 - t;
+      return {
+        x: mt * mt * p[0].x + 2 * mt * t * p[1].x + t * t * p[2].x,
+        y: mt * mt * p[0].y + 2 * mt * t * p[1].y + t * t * p[2].y,
+      };
+    };
+    const truePts = quad(renderer.buildConnectionPath(conn)!);
+    const visPts = quad(renderer.buildVisibleConnectionPath(conn)!);
+    // Every sampled point of the visible stroke must sit on the true
+    // curve (within rounding), including its exact middle — the spot the
+    // user aims at to select the connection.
+    for (const u of [0, 0.25, 0.5, 0.75, 1]) {
+      const p = bez(visPts, u);
+      let minDist = Infinity;
+      // Dense sampling so the measured distance reflects the geometry,
+      // not the gap between adjacent samples on this ~1100px curve.
+      for (let t = 0; t <= 1.0001; t += 1 / 8000) {
+        const b = bez(truePts, t);
+        minDist = Math.min(minDist, Math.hypot(p.x - b.x, p.y - b.y));
+      }
+      expect(minDist).toBeLessThan(0.5);
+    }
+  });
+});
+
 describe('UI smoke: toolbar tool selection is exclusive', () => {
   // Regression test for a reported bug: Pen, Line (connect mode), and a
   // pending placement tool (Note/Sticky/Column/…) are three independent

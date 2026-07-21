@@ -83,8 +83,12 @@ export class FreeformRenderer extends Component {
   filterPanelEl: HTMLElement | null = null;
   filterCountEl: HTMLElement | null = null;
   svgEl!: SVGSVGElement;
-  svgDefs!: SVGDefsElement;
   connectionPaths = new Map<string, SVGPathElement>();
+  // Directly-computed arrowhead triangle(s) per connection (1 for 'end'
+  // or 'start' only, 2 for 'both') — see computeArrowheadPolygons. Lives
+  // in svgEl (not hitSvgEl) so arrowheads keep the same z-order (behind
+  // cards) as the connection line itself.
+  connectionMarkerPaths = new Map<string, SVGPolygonElement[]>();
 
   connectMode = false;
   connectSourceId: string | null = null;

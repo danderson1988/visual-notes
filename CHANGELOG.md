@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.31
+
+### Fixed
+- Connection arrowheads no longer let the line's shaft poke out past the tip (bug #6). Arrowheads are now drawn as directly-computed triangles anchored to the connection's true endpoint, and the visible line is trimmed to an exact sub-segment of the true path so it stops cleanly at the arrowhead's base — for straight, bent, and elbow-routed connections alike. (An interim build had a regression on bent connections where the trimmed line could visibly separate from the selection outline and made clicking the middle of a hard bend unreliable; that's fixed here too.)
+
 ## 1.0.30
 
 ### Fixed
