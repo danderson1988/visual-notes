@@ -3088,10 +3088,21 @@ input.visual-notes-checklist-title {
   padding-left: 20px;
 }
 
+/* Deliberately NOT setting appearance here (previously forced to
+   `checkbox`, i.e. native OS rendering) — every other checkbox in
+   Obsidian, including plain markdown task-list checkboxes, gets its
+   checkmark from Obsidian's own base styling (appearance: none + a
+   theme-drawn mark). Forcing native rendering on top of that meant the
+   browser drew its own OS checkmark *underneath* the theme's own,
+   producing a double checkmark — invisible on themes where both happen
+   to render the same color, obvious on themes where they don't (reported
+   as bug #4). Leaving appearance alone lets this checkbox match every
+   other checkbox in the app, in every theme, with only one mark drawn. */
 input.visual-notes-checklist-cb {
-  appearance: checkbox;
-  -webkit-appearance: checkbox;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   opacity: 1;
   flex-shrink: 0;
   width: 14px;
@@ -3102,7 +3113,6 @@ input.visual-notes-checklist-cb {
   cursor: pointer;
   accent-color: var(--interactive-accent);
   border-radius: 3px;
-  background: revert;
 }
 
 .visual-notes-checklist-item-input {

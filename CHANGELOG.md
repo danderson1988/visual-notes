@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.30
+
+### Fixed
+- Checklist checkbox: fixed a double checkmark caused by the plugin forcing native OS checkbox rendering on top of Obsidian's own theme-drawn checkmark (bug #4) — visible on themes where the two didn't happen to match colour. Also centred the checkmark within the box.
+
 ## 1.0.29
 
 ### Fixed
