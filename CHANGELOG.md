@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.32
+
+### Fixed
+- Removed the "Oval" shape option from a blank Note card's right-click menu — it was a dead duplicate of "Circle" (both set the exact same underlying shape), and only Oval showed a checkmark for it, so neither item reflected the current shape correctly. Circle now shows the checkmark itself.
+
 ## 1.0.31
 
 ### Fixed

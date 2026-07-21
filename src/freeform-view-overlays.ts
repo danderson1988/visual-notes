@@ -99,7 +99,7 @@ export const overlaysMethods = {
         menu.addItem(i => i.setTitle('Rectangle').setIcon('square').setChecked(!card.shape || card.shape === 'rect').onClick(() => {
           this.pushUndo(); applyShape('rect'); this.scheduleSave();
         }));
-        menu.addItem(i => i.setTitle('Circle').setIcon('circle').onClick(() => {
+        menu.addItem(i => i.setTitle('Circle').setIcon('circle').setChecked(card.shape === 'round').onClick(() => {
           this.pushUndo();
           const side = Math.max(card.w ?? STICKY_DEFAULT_W, card.h ?? STICKY_DEFAULT_W);
           card.w = side; card.h = side;
@@ -107,9 +107,6 @@ export const overlaysMethods = {
           applyShape('round');
           this.updateConnectionsForCard(card.id);
           this.scheduleSave();
-        }));
-        menu.addItem(i => i.setTitle('Oval').setIcon('circle').setChecked(card.shape === 'round').onClick(() => {
-          this.pushUndo(); applyShape('round'); this.scheduleSave();
         }));
       }
     }
