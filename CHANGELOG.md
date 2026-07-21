@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.28
+
+### Fixed
+- Dragging a card, releasing the mouse just off the card without moving far enough to count as a real drag, and later just hovering back over it could start moving the card again with no button held ("stuck" drag). Pointer capture is now acquired immediately on press (matching every other drag/resize in the app) instead of only after the drag threshold was crossed, so a release is always delivered correctly no matter where the cursor ends up.
+
 ## 1.0.27
 
 ### Changed

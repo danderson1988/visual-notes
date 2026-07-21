@@ -759,6 +759,15 @@ export const canvasMethods = {
       // card on every pointermove frame during the drag.
       const dragCardsById = new Map<string, SupportedCard>();
       const captureId = e.pointerId;
+      // Captured immediately (not gated behind the drag-threshold check
+      // below) so pointerup/pointercancel are guaranteed to reach `el`
+      // wherever the button is released. Without this, a small below-
+      // threshold nudge that ends off the card leaves onUp never firing —
+      // its pointermove/pointerup listeners stay attached, and the next
+      // plain hover over the card (pointermove fires on hover regardless
+      // of button state) replays into the stale onMove and starts a
+      // "drag" with no button held at all.
+      el.setPointerCapture(captureId);
       for (const id of this.selection.getIds()) {
         const c = this.board.cards.find(c => c.id === id);
         if (c) { startPos.set(id, { x: c.x ?? 0, y: c.y ?? 0 }); dragCardsById.set(id, c); }
@@ -888,11 +897,16 @@ export const canvasMethods = {
       };
 
       const onMove = (e: PointerEvent) => {
+        // Defensive: with capture already held (see above), a genuine
+        // release always arrives as pointerup/pointercancel — but if the
+        // button is somehow already up by the time a move event lands
+        // (e.g. it was released while the window was unfocused), clean up
+        // instead of starting a drag with nothing held down.
+        if (e.buttons === 0) { onUp(e); return; }
         const dx = e.clientX - sc.x, dy = e.clientY - sc.y;
         if (!dragMoved) {
           if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
           dragMoved = true; this.pushUndo();
-          el.setPointerCapture(captureId);
           startLift();
         }
         // Update smoothed velocity from instantaneous pointer speed — kept
@@ -912,7 +926,9 @@ export const canvasMethods = {
         }
       };
       const onUp = (ue: PointerEvent) => {
-        el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerup', onUp);
+        el.removeEventListener('pointermove', onMove);
+        el.removeEventListener('pointerup', onUp);
+        el.removeEventListener('pointercancel', onUp);
         if (moveFramePending) { window.cancelAnimationFrame(moveFrameId); latestX = ue.clientX; latestY = ue.clientY; flushMoveFrame(); }
         if (hoveredCardId) this.cardEls.get(hoveredCardId)?.removeClass('is-kanban-drop-target');
         this.clearTrashHover();
@@ -994,7 +1010,9 @@ export const canvasMethods = {
         }
         if (dragMoved) this.scheduleSave();
       };
-      el.addEventListener('pointermove', onMove); el.addEventListener('pointerup', onUp);
+      el.addEventListener('pointermove', onMove);
+      el.addEventListener('pointerup', onUp);
+      el.addEventListener('pointercancel', onUp);
     });
 
     this.inner.addEventListener('dblclick', (e) => { void (async () => {
@@ -1125,13 +1143,17 @@ export const canvasMethods = {
       moveFrameId = window.requestAnimationFrame(() => { moveFramePending = false; applyResize(latestEv); });
     };
     const onUp = () => {
-      el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('pointercancel', onUp);
       if (moveFramePending) { window.cancelAnimationFrame(moveFrameId); moveFramePending = false; applyResize(latestEv); }
       this.renderCardContent(el, card);
       this.updateConnectionsForCard(card.id);
       this.scheduleSave();
     };
-    el.addEventListener('pointermove', onMove); el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onUp);
   },
 
   onKeyDown(this: FreeformRenderer, e: KeyboardEvent): void {

@@ -38,7 +38,11 @@ function setup(cards: VisualNotesFile['cards'], connections: VisualNotesFile['co
 }
 
 function pointer(type: string, x: number, y: number, extra: Partial<PointerEventInit> = {}): PointerEvent {
-  return new PointerEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0, pointerId: 1, ...extra });
+  // buttons: 1 (primary button held) on every event by default — matches a
+  // real drag, where the button stays down for pointerdown/pointermove and
+  // pointerup fires while it's still logically "the button that's releasing".
+  // Tests simulating a release with nothing held can override via `extra`.
+  return new PointerEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0, buttons: 1, pointerId: 1, ...extra });
 }
 
 afterEach(() => {
@@ -70,6 +74,36 @@ describe('UI smoke: drag a card', () => {
     el.dispatchEvent(pointer('pointerdown', 50, 50));
     el.dispatchEvent(pointer('pointermove', 52, 52)); // 2.8px — under the 5px threshold
     el.dispatchEvent(pointer('pointerup', 52, 52));
+
+    expect((board.cards[0] as StickyCard).x).toBe(0);
+    expect((board.cards[0] as StickyCard).y).toBe(0);
+  });
+
+  it('releasing off the card below the drag threshold does not leave it stuck dragging on the next hover', () => {
+    // Regression test for a reported bug: pointer capture used to be
+    // acquired only after the drag threshold was crossed, so a small
+    // below-threshold nudge released off the card left its pointerup
+    // listener never firing (never attached to `el` if the release lands
+    // elsewhere). The stale pointermove listener then replayed on the very
+    // next hover — no button held — and started a "drag" with nothing
+    // pressed at all.
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { board, container } = setup([sticky]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+
+    el.dispatchEvent(pointer('pointerdown', 50, 50));
+    el.dispatchEvent(pointer('pointermove', 52, 52)); // under threshold — no drag started
+    // Released somewhere that is not `el` itself.
+    container.dispatchEvent(pointer('pointerup', 300, 300));
+
+    // Hovering back over the card afterward, with no button held, must not
+    // move it. A trailing pointerup forces the position write (normally
+    // rAF-deferred) to flush synchronously so the assertion below can see
+    // whether a drag was wrongly started, regardless of this test's own
+    // timing — matching how the "past the drag threshold" test above
+    // observes its result.
+    el.dispatchEvent(pointer('pointermove', 500, 500, { buttons: 0 }));
+    el.dispatchEvent(pointer('pointerup', 500, 500, { buttons: 0 }));
 
     expect((board.cards[0] as StickyCard).x).toBe(0);
     expect((board.cards[0] as StickyCard).y).toBe(0);
