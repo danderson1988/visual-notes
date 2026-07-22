@@ -36,6 +36,7 @@ export interface VisualNotesSettings {
   snapToGrid?: boolean;             // snap dragged/resized/newly-placed cards to a grid on the freeform canvas; default true
   snapGridSize?: number;            // grid size in px used by snapToGrid; default 32 (matches the dot-grid spacing)
   trashZoneSize?: number;           // diameter in px of the bottom-left trash drop zone; default 42
+  mobileFabPosition?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'; // corner of the phone-width "+" FAB; default bottom-right
 }
 
 export const DEFAULT_SETTINGS: VisualNotesSettings = {

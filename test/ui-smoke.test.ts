@@ -13,7 +13,7 @@
 // card data + write inline styles, not measure the DOM) except the
 // connection test, which explicitly mocks elementsFromPoint — see its own
 // comment.
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FreeformRenderer } from '../src/freeform-view';
@@ -24,7 +24,10 @@ import type {
   CalloutCard, GroupCard, CalendarCard, ColumnCard, KanbanColumnCard,
 } from '../src/file-types';
 
-function setup(cards: VisualNotesFile['cards'], connections: VisualNotesFile['connections'] = []) {
+function setup(
+  cards: VisualNotesFile['cards'], connections: VisualNotesFile['connections'] = [],
+  mobileFabPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' = 'bottom-right',
+) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const board: VisualNotesFile = {
@@ -38,6 +41,7 @@ function setup(cards: VisualNotesFile['cards'], connections: VisualNotesFile['co
     false, // cardDragAnimationEnabled — skip the tilt rAF loop, irrelevant to data assertions
     1, false,
     false, // snapToGridEnabled — off, so drag/resize deltas below are exact rather than grid-snapped
+    32, undefined, mobileFabPosition,
   );
   renderer.render();
   return { renderer, board, container };
@@ -874,5 +878,112 @@ describe('UI smoke: touch action sheet replaces desktop Menu on phone (mobile UX
 
     expect(document.querySelector('.visual-notes-touch-sheet-backdrop')).toBeNull();
     expect(board.cards).toHaveLength(1); // untouched
+  });
+});
+
+describe('UI smoke: one-finger touch pan (canvas navigation)', () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('a one-finger touch drag on empty canvas pans the viewport, after the 60ms no-second-finger debounce', async () => {
+    const { renderer } = setup([]);
+    const startX = renderer.vp.x, startY = renderer.vp.y;
+
+    renderer.outer.dispatchEvent(pointer('pointerdown', 100, 100, { pointerType: 'touch' }));
+    await vi.advanceTimersByTimeAsync(70); // past the 60ms debounce, no 2nd finger joined
+    window.dispatchEvent(pointer('pointermove', 140, 130, { pointerType: 'touch' }));
+
+    expect(renderer.vp.x).toBe(startX + 40);
+    expect(renderer.vp.y).toBe(startY + 30);
+  });
+
+  it('does not start panning if a second finger joins within the 60ms debounce window (leaves room for pinch-zoom)', async () => {
+    const { renderer } = setup([]);
+    const startX = renderer.vp.x;
+
+    renderer.outer.dispatchEvent(pointer('pointerdown', 100, 100, { pointerType: 'touch' }));
+    renderer.activeTouches = 2; // normally set by the real touchstart handler
+    await vi.advanceTimersByTimeAsync(70);
+    window.dispatchEvent(pointer('pointermove', 200, 100, { pointerType: 'touch' }));
+
+    expect(renderer.vp.x).toBe(startX); // pan never started
+  });
+
+  it('cancelActiveTouchPan (invoked when a 2nd finger lands mid-pan) stops further movement from panning', async () => {
+    const { renderer } = setup([]);
+    renderer.outer.dispatchEvent(pointer('pointerdown', 100, 100, { pointerType: 'touch' }));
+    await vi.advanceTimersByTimeAsync(70);
+    expect(renderer.cancelActiveTouchPan).not.toBeNull();
+
+    const xAtCancel = renderer.vp.x;
+    renderer.cancelActiveTouchPan!();
+    expect(renderer.cancelActiveTouchPan).toBeNull();
+
+    window.dispatchEvent(pointer('pointermove', 300, 100, { pointerType: 'touch' }));
+    expect(renderer.vp.x).toBe(xAtCancel); // no longer tracking this finger
+  });
+
+  it('a mouse drag on empty canvas still rubber-band selects (marquee), not panning', () => {
+    const { renderer } = setup([]);
+    const startX = renderer.vp.x;
+
+    // No pointerType — pointer() defaults to a plain mouse-style event.
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0));
+    renderer.outer.dispatchEvent(pointer('pointermove', 100, 100));
+
+    expect(renderer.vp.x).toBe(startX); // unchanged — a marquee doesn't pan
+    // jsdom has no real layout engine (every getBoundingClientRect() is
+    // zeros), so overlap-based selection can't be asserted here — but the
+    // marquee box itself becoming visible confirms this went through
+    // startMarquee, not startTouchPan.
+    expect(renderer.marqueeEl.style.display).not.toBe('none');
+
+    renderer.outer.dispatchEvent(pointer('pointerup', 100, 100));
+  });
+});
+
+describe('UI smoke: mobile FAB position (settings-driven corner)', () => {
+  it('defaults to bottom-right when no setting is configured', () => {
+    const { renderer } = setup([]);
+    expect(renderer.toolbarEl.hasClass('fab-corner-bottom-right')).toBe(true);
+    expect(renderer.container.hasClass('mobile-fab-bottom-right')).toBe(true);
+  });
+
+  it('applies a configured corner to both the toolbar and the container', () => {
+    const { renderer } = setup([], [], 'top-left');
+    expect(renderer.toolbarEl.hasClass('fab-corner-top-left')).toBe(true);
+    expect(renderer.container.hasClass('mobile-fab-top-left')).toBe(true);
+    expect(renderer.toolbarEl.hasClass('fab-corner-bottom-right')).toBe(false);
+  });
+});
+
+describe('UI smoke: minimap/zoom/snap hide while the phone context bar is active', () => {
+  it('hides when a single card is selected, and shows again once deselected', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 100, h: 60, text: 'hi', color: '#fff' };
+    const { renderer } = setup([sticky]);
+    expect(renderer.zoomPill!.hasClass('is-hidden-for-ctx-bar')).toBe(false);
+    expect(renderer.snapToggleBtn!.hasClass('is-hidden-for-ctx-bar')).toBe(false);
+    expect(renderer.minimapEl!.hasClass('is-hidden-for-ctx-bar')).toBe(false);
+
+    renderer.selection.select('s1');
+    renderer.refreshSelectionVisuals();
+    expect(renderer.zoomPill!.hasClass('is-hidden-for-ctx-bar')).toBe(true);
+    expect(renderer.snapToggleBtn!.hasClass('is-hidden-for-ctx-bar')).toBe(true);
+    expect(renderer.minimapEl!.hasClass('is-hidden-for-ctx-bar')).toBe(true);
+
+    renderer.selection.clear();
+    renderer.refreshSelectionVisuals();
+    expect(renderer.zoomPill!.hasClass('is-hidden-for-ctx-bar')).toBe(false);
+    expect(renderer.snapToggleBtn!.hasClass('is-hidden-for-ctx-bar')).toBe(false);
+    expect(renderer.minimapEl!.hasClass('is-hidden-for-ctx-bar')).toBe(false);
+  });
+
+  it('stays visible when multiple cards are selected (no single-card context bar to conflict with)', () => {
+    const a: StickyCard = { id: 'a', kind: 'sticky', x: 0, y: 0, w: 100, h: 60, text: 'A', color: '#fff' };
+    const b: StickyCard = { id: 'b', kind: 'sticky', x: 200, y: 0, w: 100, h: 60, text: 'B', color: '#fff' };
+    const { renderer } = setup([a, b]);
+    renderer.selection.select('a'); renderer.selection.add('b');
+    renderer.refreshSelectionVisuals();
+    expect(renderer.zoomPill!.hasClass('is-hidden-for-ctx-bar')).toBe(false);
   });
 });

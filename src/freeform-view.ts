@@ -192,10 +192,11 @@ export class FreeformRenderer extends Component {
   // Tracks how many fingers are currently touching the canvas (Pointer
   // Events don't expose "are there other active touches" directly — only
   // the touch* events give a live count via e.touches.length). Used so a
-  // pinch's first-finger-down doesn't briefly start a marquee before the
-  // second finger arrives — see maybeStartTouchMarquee.
+  // pinch's first-finger-down doesn't briefly start a one-finger pan before
+  // the second finger arrives — see maybeStartTouchPan.
   activeTouches = 0;
   cancelActiveMarquee: (() => void) | null = null;
+  cancelActiveTouchPan: (() => void) | null = null;
 
   // Manual long-press-to-contextmenu detection. Every card/item's own
   // pointerdown handler calls preventDefault() (needed to stop iOS from
@@ -226,7 +227,8 @@ export class FreeformRenderer extends Component {
     public largeKanbanItems = false,
     public snapToGridEnabled = true,
     public snapGridSize = 32,
-    public onToggleSnapToGrid?: (value: boolean) => void
+    public onToggleSnapToGrid?: (value: boolean) => void,
+    public mobileFabPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' = 'bottom-right',
   ) {
     super();
     this.vp = { ...(board.viewport ?? { x: 0, y: 0, zoom: 1 }) };

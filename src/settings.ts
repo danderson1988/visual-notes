@@ -58,6 +58,8 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
       { type: 'group', heading: 'Freeform canvas', items: [
         { name: 'Toolbar position', desc: 'Where the card-creation toolbar appears on the canvas. Takes effect when you next open a board.',
           render: (s) => this.buildToolbarPosition(s) },
+        { name: 'Mobile "+" button position', desc: 'Corner the phone-width add-card button sits in. Move it if it overlaps the minimap/zoom/snap controls. Takes effect when you next open a board.',
+          render: (s) => this.buildMobileFabPosition(s) },
         { name: 'Grid dot color', desc: 'Color of the dot grid on the freeform canvas background. Updates any open board live.',
           render: (s) => this.buildDotColor(s) },
         { name: 'Grid dot size', desc: 'Radius of each dot in pixels. Updates any open board live.',
@@ -131,6 +133,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
 
     new Setting(containerEl).setName('Freeform canvas').setHeading();
     this.buildToolbarPosition(new Setting(containerEl));
+    this.buildMobileFabPosition(new Setting(containerEl));
     this.buildDotColor(new Setting(containerEl));
     this.buildDotSize(new Setting(containerEl));
     this.buildCanvasBgColor(new Setting(containerEl));
@@ -219,6 +222,24 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           .setValue(this.plugin.settings.toolbarPosition ?? 'left')
           .onChange(async (value) => {
             this.plugin.settings.toolbarPosition = value as 'left' | 'right' | 'top' | 'bottom';
+            await this.plugin.saveSettings();
+          })
+      );
+  }
+
+  private buildMobileFabPosition(setting: Setting): void {
+    setting
+      .setName('Mobile "+" button position')
+      .setDesc('Corner the phone-width add-card button sits in. Move it if it overlaps the minimap/zoom/snap controls. Takes effect when you next open a board.')
+      .addDropdown(dd =>
+        dd
+          .addOption('bottom-right', 'Bottom right')
+          .addOption('bottom-left', 'Bottom left')
+          .addOption('top-right', 'Top right')
+          .addOption('top-left', 'Top left')
+          .setValue(this.plugin.settings.mobileFabPosition ?? 'bottom-right')
+          .onChange(async (value) => {
+            this.plugin.settings.mobileFabPosition = value as 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
             await this.plugin.saveSettings();
           })
       );

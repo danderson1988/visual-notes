@@ -54,7 +54,8 @@ declare module './freeform-view' {
     bindCanvasEvents(): void;
     startPan(e: PointerEvent): void;
     cancelLongPress(): void;
-    maybeStartTouchMarquee(e: PointerEvent): void;
+    maybeStartTouchPan(e: PointerEvent): void;
+    startTouchPan(e: PointerEvent): void;
     startMarquee(e: PointerEvent): void;
     clearMarqueeConnections(): void;
     refreshSelectionVisuals(keepMarqueeConnections?: boolean): void;
@@ -212,7 +213,7 @@ export const canvasMethods = {
       // A second finger landing mid-drag means what looked like a one-
       // finger marquee gesture just became a pinch — abort the marquee so
       // it doesn't stick around fighting with the pinch-zoom transform.
-      if (this.activeTouches >= 2) { this.cancelActiveMarquee?.(); this.cancelLongPress(); }
+      if (this.activeTouches >= 2) { this.cancelActiveMarquee?.(); this.cancelActiveTouchPan?.(); this.cancelLongPress(); }
     }, { passive: true });
 
     // On-screen-keyboard tracking: when iOS's keyboard opens it shrinks
@@ -373,7 +374,10 @@ export const canvasMethods = {
       } else if (e.button === 0) {
         this.closeOverflow();
         if (!e.shiftKey) { this.selection.clear(); this.refreshSelectionVisuals(); }
-        if (e.pointerType === 'touch') this.maybeStartTouchMarquee(e);
+        // One finger pans the canvas (two-finger pinch still zooms — see
+        // the touchmove handler above); a mouse drag on empty canvas still
+        // rubber-band selects, since a mouse has no competing pinch gesture.
+        if (e.pointerType === 'touch') this.maybeStartTouchPan(e);
         else this.startMarquee(e);
       }
     });
@@ -640,7 +644,12 @@ export const canvasMethods = {
     this.longPressPointerId = null;
   },
 
-  maybeStartTouchMarquee(this: FreeformRenderer, e: PointerEvent): void {
+  // Same 60ms "wait to see if a second finger joins" debounce
+  // maybeStartTouchMarquee used to use — without it, panning would start
+  // moving the view for the first ~60ms of every two-finger pinch, before
+  // the second touch point is even reported, producing a visible jump/fight
+  // with the pinch-zoom transform once it takes over.
+  maybeStartTouchPan(this: FreeformRenderer, e: PointerEvent): void {
     const pointerId = e.pointerId;
     let released = false;
     const onEarlyUp = (ue: PointerEvent) => { if (ue.pointerId === pointerId) released = true; };
@@ -650,8 +659,34 @@ export const canvasMethods = {
       this.outer.removeEventListener('pointerup', onEarlyUp);
       this.outer.removeEventListener('pointercancel', onEarlyUp);
       if (released || this.activeTouches >= 2) return;
-      this.startMarquee(e);
+      this.startTouchPan(e);
     }, 60);
+  },
+
+  // One-finger pan for touch — separate from startPan (used for desktop
+  // space+drag / middle-click) because a second finger landing mid-pan
+  // needs to cancel it cleanly and hand off to pinch-zoom, which desktop
+  // panning never has to worry about.
+  startTouchPan(this: FreeformRenderer, e: PointerEvent): void {
+    const pid = e.pointerId;
+    const sx = e.clientX, sy = e.clientY, svx = this.vp.x, svy = this.vp.y;
+    this.isPanning = true;
+    const onMove = (me: PointerEvent) => {
+      if (me.pointerId !== pid) return;
+      this.vp = { ...this.vp, x: svx + (me.clientX - sx), y: svy + (me.clientY - sy) };
+      this.applyViewport();
+    };
+    const cleanup = () => {
+      window.removeEventListener('pointermove', onMove, true);
+      window.removeEventListener('pointerup', onUp, true);
+      this.cancelActiveTouchPan = null;
+      this.isPanning = false;
+      this.scheduleSave();
+    };
+    const onUp = (ue: PointerEvent) => { if (ue.pointerId === pid) cleanup(); };
+    window.addEventListener('pointermove', onMove, true);
+    window.addEventListener('pointerup', onUp, true);
+    this.cancelActiveTouchPan = cleanup;
   },
 
   startMarquee(this: FreeformRenderer, e: PointerEvent): void {
@@ -719,6 +754,7 @@ export const canvasMethods = {
     // phone add-sheet was open, drop its is-open state now so it doesn't
     // silently pop back open the moment the card is deselected.
     if (ids.length > 0) this.closeFab();
+    const ctxBarActive = ids.length === 1 && !!this.board.cards.find(c => c.id === ids[0]);
     if (ids.length === 1) {
       const card = this.board.cards.find(c => c.id === ids[0]);
       if (card) this.contextBar?.show(card);
@@ -726,6 +762,12 @@ export const canvasMethods = {
     } else {
       this.contextBar?.hide();
     }
+    // The phone context bar is a full-width bottom bar that would otherwise
+    // sit on top of the minimap/zoom-pill/snap-toggle stack (only a concern
+    // at phone widths — the CSS these classes drive is scoped there).
+    this.zoomPill?.toggleClass('is-hidden-for-ctx-bar', ctxBarActive);
+    this.snapToggleBtn?.toggleClass('is-hidden-for-ctx-bar', ctxBarActive);
+    this.minimapEl?.toggleClass('is-hidden-for-ctx-bar', ctxBarActive);
   },
 
   // Single delegated listener set on the canvas content container instead

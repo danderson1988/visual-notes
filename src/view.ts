@@ -152,7 +152,8 @@ export class VisualNotesView extends FileView {
         this.plugin.settings.largeKanbanItems ?? false,
         this.plugin.settings.snapToGrid ?? true,
         this.plugin.settings.snapGridSize ?? 32,
-        (value) => { this.plugin.settings.snapToGrid = value; void this.plugin.saveSettings(); }
+        (value) => { this.plugin.settings.snapToGrid = value; void this.plugin.saveSettings(); },
+        this.plugin.settings.mobileFabPosition ?? 'bottom-right',
       );
     } else {
       this.renderer = new GridRenderer(

@@ -787,7 +787,6 @@ path.is-marquee-selected {
     right: 0;
     bottom: 0;
     top: auto;
-    transform: none;
     flex-direction: row;
     justify-content: center;
     width: auto;
@@ -799,8 +798,9 @@ path.is-marquee-selected {
     border-bottom: none;
     padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
     gap: 2px;
-    /* Ride above the on-screen keyboard while editing (see the
-       visualViewport handler that maintains --ib-kb-offset). */
+    /* Replaces (not just cancels) the desktop tb-pos-*'s centering
+       translate — also rides above the on-screen keyboard while editing
+       (see the visualViewport handler that maintains --ib-kb-offset). */
     transform: translateY(calc(-1 * var(--ib-kb-offset, 0px)));
   }
   /* More buttons than fit a phone width (e.g. sticky's Edit + 4 format +
@@ -831,10 +831,10 @@ path.is-marquee-selected {
      regardless of the desktop toolbarPosition setting (thumb-reachable,
      standard mobile placement). */
   .visual-notes-freeform-toolbar:not(.ib-ctx-active) {
-    left: auto;
-    right: 12px;
     top: auto;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    bottom: auto;
+    left: auto;
+    right: auto;
     transform: none;
     width: auto;
     height: auto;
@@ -843,6 +843,20 @@ path.is-marquee-selected {
     border: none;
     box-shadow: none;
     border-radius: 0;
+  }
+  /* Corner is user-configurable (Settings → Mobile "+" button position) —
+     default matches the old hard-coded bottom-right. */
+  .visual-notes-freeform-toolbar.fab-corner-bottom-right:not(.ib-ctx-active) {
+    right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .visual-notes-freeform-toolbar.fab-corner-bottom-left:not(.ib-ctx-active) {
+    left: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .visual-notes-freeform-toolbar.fab-corner-top-right:not(.ib-ctx-active) {
+    right: 12px; top: calc(12px + env(safe-area-inset-top, 0px));
+  }
+  .visual-notes-freeform-toolbar.fab-corner-top-left:not(.ib-ctx-active) {
+    left: 12px; top: calc(12px + env(safe-area-inset-top, 0px));
   }
   .visual-notes-freeform-toolbar:not(.ib-ctx-active) .ib-add-panel {
     display: none;
@@ -872,6 +886,43 @@ path.is-marquee-selected {
   }
   .visual-notes-freeform-toolbar:not(.ib-ctx-active) .visual-notes-freeform-toolbar-fab {
     display: flex;
+  }
+
+  /* ── Minimap / zoom-pill / snap-toggle: avoid the FAB and the context bar ──
+     These three default to a bottom-right stack that the FAB (also
+     bottom-right by default) now lands right on top of. Shift them to
+     whichever bottom corner the FAB *isn't* using; a top-anchored FAB
+     doesn't conflict, so they keep their normal bottom-right spot. They're
+     also hidden outright while the context bar is showing (is-hidden-for-
+     ctx-bar, toggled from refreshSelectionVisuals) since the context bar
+     becomes a full-width bottom bar that would otherwise sit right on top
+     of them regardless of which corner they're in. */
+  .visual-notes-content.mobile-fab-bottom-right .visual-notes-zoom-pill,
+  .visual-notes-content.mobile-fab-top-right .visual-notes-zoom-pill,
+  .visual-notes-content.mobile-fab-top-left .visual-notes-zoom-pill {
+    right: auto; left: 24px;
+  }
+  .visual-notes-content.mobile-fab-bottom-right .visual-notes-snap-toggle-btn,
+  .visual-notes-content.mobile-fab-top-right .visual-notes-snap-toggle-btn,
+  .visual-notes-content.mobile-fab-top-left .visual-notes-snap-toggle-btn {
+    right: auto; left: 24px;
+  }
+  .visual-notes-content.mobile-fab-bottom-right .visual-notes-zoom-pill ~ .visual-notes-snap-toggle-btn,
+  .visual-notes-content.mobile-fab-top-right .visual-notes-zoom-pill ~ .visual-notes-snap-toggle-btn,
+  .visual-notes-content.mobile-fab-top-left .visual-notes-zoom-pill ~ .visual-notes-snap-toggle-btn {
+    left: 88px;
+  }
+  .visual-notes-content.mobile-fab-bottom-right .visual-notes-minimap,
+  .visual-notes-content.mobile-fab-top-right .visual-notes-minimap,
+  .visual-notes-content.mobile-fab-top-left .visual-notes-minimap {
+    right: auto; left: 24px;
+    align-items: flex-start;
+  }
+
+  .visual-notes-zoom-pill.is-hidden-for-ctx-bar,
+  .visual-notes-snap-toggle-btn.is-hidden-for-ctx-bar,
+  .visual-notes-minimap.is-hidden-for-ctx-bar {
+    display: none;
   }
 }
 

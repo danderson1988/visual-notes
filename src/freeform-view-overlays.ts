@@ -623,6 +623,14 @@ export const overlaysMethods = {
     });
 
     // ── Mobile FAB ──
+    // Corner is user-configurable (mobileFabPosition) since the default
+    // bottom-right spot is also where the minimap/zoom/snap controls live.
+    // The class goes on `tb` itself (that's what's actually positioned in
+    // the phone media query) and again on `this.container` so those other
+    // widgets — separate DOM siblings, not descendants of `tb` — can shift
+    // to whichever bottom corner the FAB *isn't* in (see styles.css).
+    tb.addClass(`fab-corner-${this.mobileFabPosition}`);
+    this.container.addClass(`mobile-fab-${this.mobileFabPosition}`);
     const fab = this.fabEl = tb.createDiv('visual-notes-freeform-toolbar-fab');
     fab.setAttribute('aria-label', 'Add card');
     setIcon(fab, 'plus');

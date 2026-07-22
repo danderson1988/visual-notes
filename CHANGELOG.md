@@ -2,6 +2,16 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.40
+
+### Fixed
+- CSS build warning: a duplicate `transform` declaration in the phone context-bar rule (introduced in 1.0.39).
+- The mobile "+" button overlapped the minimap/zoom/snap controls, and both overlapped the bottom context bar when a card was selected. The minimap/zoom/snap stack now shifts to whichever bottom corner the "+" button isn't using, and hides outright while the context bar is showing (it becomes a full-width bar that would otherwise sit on top of them either way).
+
+### Added
+- Canvas navigation on touch devices: pan with one finger, pinch with two to zoom — previously one finger only rubber-band-selected, with no way to pan without a mouse.
+- Settings → Freeform canvas → "Mobile '+' button position": choose which corner (bottom right/left, top right/left) the phone add-card button sits in, in case the default still overlaps something on your device.
+
 ## 1.0.39
 
 ### Fixed
