@@ -173,6 +173,23 @@ export const canvasMethods = {
   },
 
   bindCanvasEvents(this: FreeformRenderer): void {
+    // Right-click never blurs a focused input/contenteditable (unlike
+    // left-click), so opening a context menu while still editing a card's
+    // inline text leaves that editor focused underneath the menu. If the
+    // chosen menu item then deletes the card/item, removing its element
+    // from the DOM force-blurs the still-focused editor, which reentrantly
+    // runs its blur-commit handler mid-deletion — against a card already
+    // spliced out of the board. That reentrant commit (undo push, markdown
+    // re-render, etc.) can throw, and Obsidian's Menu only calls hide()
+    // *after* the clicked item's callback returns, so a throw there leaves
+    // the menu stuck open. Capture-phase so this runs before any bubble-
+    // phase per-card/per-item contextmenu handler builds its menu —
+    // committing the edit here, while the card is still fully valid, is
+    // the same thing a normal left-click-away would have done.
+    this.container.addEventListener('contextmenu', () => {
+      (activeDocument.activeElement as HTMLElement | null)?.blur();
+    }, { capture: true });
+
     // Passive position tracking so "/" quick-add can drop the new card
     // under the cursor rather than always at the viewport center.
     this.outer.addEventListener('pointermove', (e) => {
@@ -1351,6 +1368,7 @@ export const canvasMethods = {
       connectionIds.clear();
     }
     this.selection.clear();
+    this.refreshSelectionVisuals();
     this.refreshAllConnections();
     this.scheduleSave();
   },

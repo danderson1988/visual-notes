@@ -396,6 +396,65 @@ describe('UI smoke: edit a table cell', () => {
   });
 });
 
+describe('UI smoke: context menu commits pending inline edits (bug #5)', () => {
+  it('opening a context menu blurs whatever is currently focused, before any menu builds', () => {
+    // Regression test for a reported bug: right-click (unlike left-click)
+    // never blurs a focused input/contenteditable, so a card could still be
+    // mid-edit when its context menu opens. Choosing "Delete" then removed
+    // the card's element from the DOM, which force-blurred the still-focused
+    // editor — reentrantly running its blur-commit handler against a card
+    // already spliced out of the board, deep enough in the call stack
+    // (undo push, markdown re-render) to throw. Obsidian's Menu only calls
+    // hide() *after* the clicked item's callback returns, so a throw there
+    // left the menu stuck open — reportedly for other cards' menus too,
+    // since the same inline-edit-then-blur-commit pattern is used
+    // throughout (checklist items, kanban items, table cells, …).
+    //
+    // jsdom doesn't support focus() on contenteditable elements (real
+    // sticky/checklist/kanban editors), so a plain <input> stands in here
+    // to prove the actual mechanism under test: a capture-phase listener
+    // blurs activeElement before any bubble-phase per-card contextmenu
+    // handler runs, so by the time a menu item's onClick can remove a
+    // card's DOM, any pending edit has already committed safely — no
+    // reentrant blur during the removal itself.
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { container } = setup([sticky]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+
+    const input = document.createElement('input');
+    el.appendChild(input);
+    input.focus();
+    expect(document.activeElement).toBe(input);
+
+    el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+
+    expect(document.activeElement).not.toBe(input);
+  });
+});
+
+describe('UI smoke: deleting a card resets the floating format bar (bug #5)', () => {
+  it('the context bar deactivates immediately on delete, without needing a click on the canvas', () => {
+    // Regression test: archiveSelected() and duplicateSelected() both call
+    // refreshSelectionVisuals() after clearing the selection, which is what
+    // tells the floating per-card format bar (Bold/Italic/…) to hide itself
+    // — but deleteSelected() cleared the selection directly and skipped that
+    // call, so the bar (and its now-stale Bold/Italic buttons for the
+    // just-deleted card) stayed visible until something else — e.g. clicking
+    // the empty canvas — happened to refresh it.
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { renderer, board } = setup([sticky]);
+
+    renderer.selection.select('s1');
+    renderer.refreshSelectionVisuals();
+    expect(renderer.toolbarEl.hasClass('ib-ctx-active')).toBe(true);
+
+    renderer.deleteSelected();
+
+    expect(board.cards).toHaveLength(0);
+    expect(renderer.toolbarEl.hasClass('ib-ctx-active')).toBe(false);
+  });
+});
+
 describe('UI smoke: keyboard shortcut', () => {
   it('Delete removes the selected card from board data', () => {
     const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };

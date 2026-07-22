@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.33
+
+### Fixed
+- Deleting a selected card left the floating format bar (Bold/Italic/etc.) showing stale options for the just-deleted card until you clicked the canvas (bug #5) — the delete action cleared the selection but skipped the refresh step that tells the bar to hide, unlike Archive/Duplicate. The bar now resets immediately.
+
 ## 1.0.32
 
 ### Fixed
