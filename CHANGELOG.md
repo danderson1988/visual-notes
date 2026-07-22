@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.34
+
+### Fixed
+- Comments stayed visually faded (0.6 opacity) even after un-marking them "Resolved" (bug #9) — the resolved styling was applied with a one-way toggle that added the class but never removed it. Un-resolving a comment now restores full opacity immediately.
+
 ## 1.0.33
 
 ### Fixed

@@ -16,7 +16,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { FreeformRenderer } from '../src/freeform-view';
 import { fakeApp } from './fake-app';
-import type { VisualNotesFile, StickyCard, TileCard, TableCard } from '../src/file-types';
+import type { VisualNotesFile, StickyCard, TileCard, TableCard, CommentCard } from '../src/file-types';
 
 function setup(cards: VisualNotesFile['cards'], connections: VisualNotesFile['connections'] = []) {
   const container = document.createElement('div');
@@ -393,6 +393,29 @@ describe('UI smoke: edit a table cell', () => {
     const row = (board.cards[0] as TableCard).rows[0];
     expect(row.cells.c1).toBe('new value');
     expect(cellText.contentEditable).toBe('false'); // demoted back on blur
+  });
+});
+
+describe('UI smoke: un-resolving a comment restores full opacity (bug #9)', () => {
+  it('toggling resolved off removes the is-resolved class, not just skips adding it', () => {
+    // Regression test: renderCommentContent only ever did
+    // `if (card.resolved) el.addClass('is-resolved')` — a one-way toggle
+    // that added the class (driving the 0.6 opacity in styles.css) but
+    // never removed it, so once a comment was marked resolved it stayed
+    // visually transparent forever, even after toggling "Resolved" back off.
+    const comment: CommentCard = {
+      id: 'c1', kind: 'comment', x: 0, y: 0, w: 240, h: 160,
+      text: 'hi', createdAt: Date.now(), replies: [], resolved: true,
+    };
+    const { renderer, container } = setup([comment]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="c1"]')!;
+    expect(el.hasClass('is-resolved')).toBe(true);
+
+    renderer.selection.select('c1');
+    (renderer as any).handleCtxEvent({ type: 'comment-resolve' });
+
+    expect((comment as CommentCard).resolved).toBe(false);
+    expect(el.hasClass('is-resolved')).toBe(false);
   });
 });
 

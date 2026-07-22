@@ -682,7 +682,7 @@ export const cardsBasicMethods = {
 
   renderCommentContent(this: FreeformRenderer, el: HTMLElement, card: CommentCard): void {
     el.addClass('visual-notes-freeform-comment-card');
-    if (card.resolved) el.addClass('is-resolved');
+    el.toggleClass('is-resolved', !!card.resolved);
     el.style.setProperty('--ib-comment-accent', card.color ?? '#eab308');
 
     const header = el.createDiv('visual-notes-comment-header');
