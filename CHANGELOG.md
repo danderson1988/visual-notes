@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.36
+
+### Added
+- Export the board as a PNG or PDF — right-click empty canvas space and choose "Export as PNG…" or "Export as PDF…". Captures the whole board (not just the current view), including connections and pen drawings. Known limitation: bookmark/map cards with live embeds export as an empty gap rather than a thumbnail.
+
 ## 1.0.35
 
 ### Fixed

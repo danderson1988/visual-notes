@@ -421,6 +421,42 @@ describe('UI smoke: un-resolving a comment restores full opacity (bug #9)', () =
   });
 });
 
+describe('UI smoke: board export bbox', () => {
+  it('returns null for an empty board', () => {
+    const { renderer } = setup([]);
+    expect((renderer as any).computeExportBBox()).toBeNull();
+  });
+
+  it('matches the plain card bounding box when there are no drawings or free connection points', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 10, y: 20, w: 100, h: 50, text: 'hi', color: '#fff' };
+    const { renderer } = setup([sticky]);
+    expect((renderer as any).computeExportBBox()).toEqual({ minX: 10, minY: 20, maxX: 110, maxY: 70 });
+  });
+
+  it('extends the bbox to cover ink drawing points outside every card', () => {
+    // computeBoardBBox (used by the minimap / zoom-to-fit) only looks at
+    // cards — fine for those callers, but a board export needs the full
+    // extent, or a pen stroke off to the side would get cropped out.
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 100, h: 50, text: 'hi', color: '#fff' };
+    const { renderer, board } = setup([sticky]);
+    board.drawings.push({ id: 'd1', groupId: 'g1', color: '#000', width: 2, points: [{ x: -50, y: 300 }, { x: 10, y: 10 }] });
+    const bbox = (renderer as any).computeExportBBox();
+    expect(bbox).toEqual({ minX: -50, minY: 0, maxX: 100, maxY: 300 });
+  });
+
+  it('extends the bbox to cover a free-floating connection endpoint (not anchored to any card)', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 100, h: 50, text: 'hi', color: '#fff' };
+    const conn = {
+      id: 'c1', toCardId: 's1', fromPoint: { x: -300, y: -300 },
+      routing: 'straight', color: '#000', style: 'solid', arrowhead: 'end',
+    };
+    const { renderer } = setup([sticky], [conn as any]);
+    const bbox = (renderer as any).computeExportBBox();
+    expect(bbox.minX).toBe(-300);
+    expect(bbox.minY).toBe(-300);
+  });
+});
+
 describe('UI smoke: note top strip color (bug #8)', () => {
   it('setting a top strip color on a note inserts the strip after the shape-fill layer', () => {
     // Regression test: the shape-fill layer (.visual-notes-sticky-shape-fill)

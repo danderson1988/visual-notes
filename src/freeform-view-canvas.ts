@@ -413,6 +413,8 @@ export const canvasMethods = {
       menu.addItem(i => i.setTitle('Reset view').setIcon('maximize').onClick(() => {
         this.vp = { x: 0, y: 0, zoom: 1 }; this.applyViewport(); this.scheduleSave();
       }));
+      menu.addItem(i => i.setTitle('Export as PNG…').setIcon('image-down').onClick(() => void this.exportBoard('png')));
+      menu.addItem(i => i.setTitle('Export as PDF…').setIcon('file-down').onClick(() => void this.exportBoard('pdf')));
       menu.showAtMouseEvent(e);
     });
 

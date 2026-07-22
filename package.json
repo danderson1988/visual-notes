@@ -1,6 +1,6 @@
 {
   "name": "visual-notes",
-  "version": "1.0.35",
+  "version": "1.0.36",
   "description": "Visual Notes — a visual workspace for Obsidian",
   "main": "main.js",
   "scripts": {
@@ -37,6 +37,7 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
+    "html-to-image": "^1.11.13",
     "sortablejs": "^1.15.7"
   }
 }

@@ -17,6 +17,8 @@ import {
 import { ContextBar, CtxEvent } from './context-bar';
 import { sortAssetFile, saveNewAsset } from './asset-manager';
 import { CropImageModal } from './crop-modal';
+import { toPng } from 'html-to-image';
+import { buildSingleImagePdf, dataUrlToBytes } from './pdf-export';
 import {
   TILE_DEFAULT_W, TILE_DEFAULT_H, STICKY_DEFAULT_W,
   BOOKMARK_DEFAULT_W,
@@ -43,6 +45,8 @@ declare module './freeform-view' {
     renderZoomPill(): void;
     renderMinimap(): void;
     computeBoardBBox(): { minX: number; minY: number; maxX: number; maxY: number } | null;
+    computeExportBBox(): { minX: number; minY: number; maxX: number; maxY: number } | null;
+    exportBoard(format: 'png' | 'pdf'): Promise<void>;
     zoomToFit(): void;
     updateMinimapCards(): void;
     updateMinimapViewportRect(): void;
@@ -62,6 +66,33 @@ declare module './freeform-view' {
     renderAlignBar(): void;
     handleCtxEvent(e: CtxEvent): void;
   }
+}
+
+// ── Board export (PNG / PDF) ────────────────────────────────────────────
+//
+// Interactive-only chrome that lives inside `this.inner` alongside the real
+// board content — resize handles, the (invisible-but-present) connection
+// hit-testing SVG layer, connection endpoint/bend handles, and the drawing
+// selection box — none of which should show up in an exported snapshot.
+// Everything else overlay-ish (toolbar, minimap, search, zoom pill, …) is
+// already a sibling of `this.inner`, not a descendant, so capturing just
+// `this.inner` excludes it for free.
+const EXPORT_EXCLUDED_CLASSES = [
+  'visual-notes-card-resize-handle',
+  'visual-notes-connections-hit-svg',
+  'visual-notes-drawing-select-box',
+  'visual-notes-drawing-resize-handle',
+  'visual-notes-connection-handle',
+  'visual-notes-connection-bend-handle',
+];
+
+function exportNodeFilter(node: HTMLElement): boolean {
+  if (node.nodeType !== 1) return true;
+  const el = node as Element;
+  if (el.tagName === 'IFRAME') return false; // live embeds (YouTube/Maps/file) can't be rasterized
+  const cl = el.classList;
+  if (cl) for (const c of EXPORT_EXCLUDED_CLASSES) if (cl.contains(c)) return false;
+  return true;
 }
 
 export const overlaysMethods = {
@@ -805,6 +836,111 @@ export const overlaysMethods = {
       maxX = Math.max(maxX, x + w); maxY = Math.max(maxY, y + h);
     }
     return { minX, minY, maxX, maxY };
+  },
+
+  // Like computeBoardBBox, but also unions in ink drawing points and any
+  // free-floating connection endpoints (fromPoint/toPoint, unset when that
+  // end is anchored to a card instead) — content computeBoardBBox's callers
+  // (minimap, zoom-to-fit) don't need, but a board export must include so a
+  // pen stroke or dangling arrow off to the side doesn't get cropped out.
+  computeExportBBox(this: FreeformRenderer): { minX: number; minY: number; maxX: number; maxY: number } | null {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    let any = false;
+    for (const c of this.board.cards) {
+      const x = c.x ?? 0, y = c.y ?? 0;
+      const w = c.w ?? TILE_DEFAULT_W, h = c.h ?? TILE_DEFAULT_H;
+      minX = Math.min(minX, x); minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x + w); maxY = Math.max(maxY, y + h);
+      any = true;
+    }
+    for (const d of this.board.drawings) {
+      for (const p of d.points) {
+        minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
+        any = true;
+      }
+    }
+    for (const conn of this.board.connections) {
+      if (!conn.fromCardId && conn.fromPoint) {
+        minX = Math.min(minX, conn.fromPoint.x); minY = Math.min(minY, conn.fromPoint.y);
+        maxX = Math.max(maxX, conn.fromPoint.x); maxY = Math.max(maxY, conn.fromPoint.y);
+        any = true;
+      }
+      if (!conn.toCardId && conn.toPoint) {
+        minX = Math.min(minX, conn.toPoint.x); minY = Math.min(minY, conn.toPoint.y);
+        maxX = Math.max(maxX, conn.toPoint.x); maxY = Math.max(maxY, conn.toPoint.y);
+        any = true;
+      }
+    }
+    return any ? { minX, minY, maxX, maxY } : null;
+  },
+
+  async exportBoard(this: FreeformRenderer, format: 'png' | 'pdf'): Promise<void> {
+    const bbox = this.computeExportBBox();
+    if (!bbox) { new Notice('Nothing to export — the board is empty.'); return; }
+
+    const notice = new Notice('Exporting board…', 0);
+    try {
+      const PAD = 40;
+      const rawW = Math.max(1, bbox.maxX - bbox.minX) + PAD * 2;
+      const rawH = Math.max(1, bbox.maxY - bbox.minY) + PAD * 2;
+      // Render at 2x for a crisp export, but back off if that would produce
+      // an unreasonably large canvas for a big board (memory scales with
+      // width*height*4 bytes*pixelRatio^2).
+      const MAX_CANVAS_DIM = 8000;
+      let pixelRatio = 2;
+      if (rawW * pixelRatio > MAX_CANVAS_DIM || rawH * pixelRatio > MAX_CANVAS_DIM) {
+        pixelRatio = Math.max(1, Math.floor(MAX_CANVAS_DIM / Math.max(rawW, rawH)));
+      }
+      const width = Math.round(rawW), height = Math.round(rawH);
+      const bg = getComputedStyle(this.outer).backgroundColor || '#e6e6e6';
+
+      const dataUrl = await toPng(this.inner, {
+        width, height, pixelRatio, backgroundColor: bg,
+        style: {
+          transform: `translate(${PAD - bbox.minX}px, ${PAD - bbox.minY}px)`,
+          transformOrigin: '0 0',
+        },
+        filter: exportNodeFilter,
+      });
+
+      const base = this.file.basename || 'Board';
+      if (format === 'png') {
+        const a = document.createElement('a');
+        a.href = dataUrl; a.download = `${base}.png`;
+        document.body.appendChild(a); a.click(); a.remove();
+      } else {
+        // Re-render as JPEG (not the PNG already captured above) so the raw
+        // bytes can be dropped straight into the PDF's DCTDecode image
+        // stream with no re-encoding — see pdf-export.ts for why that beats
+        // a full PDF library here.
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(width * pixelRatio);
+        canvas.height = Math.round(height * pixelRatio);
+        const ctx = canvas.getContext('2d')!;
+        const img = new Image();
+        img.src = dataUrl;
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error('Failed to decode rendered board image'));
+        });
+        ctx.drawImage(img, 0, 0);
+        const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        const jpegBytes = dataUrlToBytes(jpegDataUrl);
+        const pdfBytes = buildSingleImagePdf(jpegBytes, canvas.width, canvas.height);
+        const blob = new Blob([pdfBytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${base}.pdf`;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+    } catch (err) {
+      console.error('Visual Notes: board export failed', err);
+      new Notice('Board export failed — see console for details.');
+    } finally {
+      notice.hide();
+    }
   },
 
   zoomToFit(this: FreeformRenderer): void {
