@@ -151,6 +151,23 @@ body.theme-dark {
   padding: 2px 4px;
 }
 
+/* Board-type badge next to the board name — grid and canvas boards look
+   identical everywhere else (same .canvas extension, icon and tab), so the
+   header names which one you're in. */
+.visual-notes-layout-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+  margin-left: 6px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
 /* ── Grid ───────────────────────────────────────────────────── */
 .visual-notes-grid {
   display: grid;

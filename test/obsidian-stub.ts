@@ -29,6 +29,64 @@ export class Notice {
 
 export function setIcon(_el: HTMLElement, _iconId: string): void {}
 
+export function getIconIds(): string[] { return []; }
+
+// Just enough of Obsidian's Setting for modules that build settings UIs
+// (tile-modal.ts) to load and render without crashing — chainable methods,
+// real child elements, no visual fidelity.
+export class Setting {
+  settingEl: HTMLElement;
+  controlEl: HTMLElement;
+  descEl: HTMLElement;
+  constructor(containerEl: HTMLElement) {
+    this.settingEl = containerEl.createDiv('setting-item');
+    this.descEl = this.settingEl.createDiv('setting-item-description');
+    this.controlEl = this.settingEl.createDiv('setting-item-control');
+  }
+  setName(_n: string): this { return this; }
+  setDesc(d: string): this { this.descEl.setText(d); return this; }
+  setHeading(): this { return this; }
+  addText(cb: (t: any) => void): this {
+    const inputEl = this.controlEl.createEl('input');
+    const t = {
+      inputEl,
+      setPlaceholder: () => t, setValue: (v: string) => { inputEl.value = v; return t; },
+      onChange: (fn: (v: string) => void) => { inputEl.addEventListener('input', () => fn(inputEl.value)); return t; },
+    };
+    cb(t);
+    return this;
+  }
+  addButton(cb: (b: any) => void): this {
+    const buttonEl = this.controlEl.createEl('button');
+    const b = {
+      buttonEl,
+      setButtonText: (txt: string) => { buttonEl.setText(txt); return b; },
+      setCta: () => b, setWarning: () => b,
+      onClick: (fn: () => void) => { buttonEl.addEventListener('click', fn); return b; },
+    };
+    cb(b);
+    return this;
+  }
+  addDropdown(cb: (d: any) => void): this {
+    const selectEl = this.controlEl.createEl('select');
+    const d = {
+      selectEl,
+      addOption: (value: string, text: string) => {
+        const o = selectEl.createEl('option'); o.value = value; o.setText(text); return d;
+      },
+      setValue: (v: string) => { selectEl.value = v; return d; },
+      onChange: (fn: (v: string) => void) => { selectEl.addEventListener('change', () => fn(selectEl.value)); return d; },
+    };
+    cb(d);
+    return this;
+  }
+  addToggle(cb: (t: any) => void): this {
+    const t = { setValue: () => t, onChange: () => t };
+    cb(t);
+    return this;
+  }
+}
+
 export async function requestUrl(_opts: unknown): Promise<{ status: number; text: string; json: unknown; arrayBuffer: ArrayBuffer }> {
   return { status: 200, text: '', json: {}, arrayBuffer: new ArrayBuffer(0) };
 }

@@ -44,7 +44,11 @@ export class TemplatePickerModal extends FuzzySuggestModal<TemplateChoice> {
 // ── Create board modal ────────────────────────────────────────
 
 export class CreateBoardModal extends Modal {
-  private layout: 'grid' | 'freeform' = 'grid';
+  // Canvas is the default: it's the layout most users mean by "a Visual
+  // Notes board". Defaulting to grid led users who wanted a canvas to
+  // create a tile-launcher grid without realizing (bug report: "cannot get
+  // into their canvas").
+  private layout: 'grid' | 'freeform' = 'freeform';
   private boardName = 'New Visual Notes board';
   private targetFolder: TFolder | null = null;
   private onCreated: (file: TFile) => void;
@@ -75,16 +79,16 @@ export class CreateBoardModal extends Modal {
     const layoutRow = contentEl.createDiv('visual-notes-layout-row');
     for (const opt of [
       {
-        value: 'grid' as const,
-        label: 'Grid',
-        icon: '⊞',
-        desc: 'Ordered tiles in a responsive grid — clean and fast.',
+        value: 'freeform' as const,
+        label: 'Canvas',
+        icon: '✦',
+        desc: 'An infinite canvas with free-placed notes, images, drawings and connections — the full Visual Notes experience.',
       },
       {
-        value: 'freeform' as const,
-        label: 'Freeform',
-        icon: '✦',
-        desc: 'Infinite canvas with free-placed cards, pan and zoom.',
+        value: 'grid' as const,
+        label: 'Tile grid',
+        icon: '⊞',
+        desc: 'A launcher page of tiles that link to your canvases, notes and folders — like a home screen, not a canvas itself.',
       },
     ]) {
       const card = layoutRow.createDiv(

@@ -91,6 +91,16 @@ export class VisualNotesView extends FileView {
   // ── Public navigation API (called by GridRenderer) ───────────
 
   async navigateToBoard(targetPath: string): Promise<void> {
+    // A tile pointing at the very board it lives on used to "navigate" to
+    // itself: the same board re-rendered, nothing visibly changed, and a
+    // bogus history entry piled up — reported as "cannot get into my
+    // canvas". Creating such a tile is now blocked in TileModal, but boards
+    // saved before that (or edited by hand) can still carry one — explain
+    // instead of silently doing nothing.
+    if (this.file && targetPath === this.file.path) {
+      new Notice('This tile links to the board it\'s on, so it has nowhere to go. Right-click the tile and choose Edit to point it at a different board.', 8000);
+      return;
+    }
     const targetFile = this.app.vault.getAbstractFileByPath(targetPath);
     if (!(targetFile instanceof TFile)) {
       new Notice(`Board file not found: ${targetPath}`);
@@ -121,7 +131,7 @@ export class VisualNotesView extends FileView {
     container.empty();
     container.addClass('visual-notes-container');
 
-    this.renderHeader(container, file);
+    this.renderHeader(container, file, board.layout);
 
     const content = container.createDiv('visual-notes-content');
 
@@ -157,7 +167,7 @@ export class VisualNotesView extends FileView {
     this.renderer.render();
   }
 
-  private renderHeader(container: HTMLElement, file: TFile): void {
+  private renderHeader(container: HTMLElement, file: TFile, layout: VisualNotesFile['layout']): void {
     const header = container.createDiv('visual-notes-view-header');
 
     // Back button (visible when we have history)
@@ -203,6 +213,15 @@ export class VisualNotesView extends FileView {
       });
       breadcrumb.createSpan({ text: file.basename, cls: 'visual-notes-breadcrumb-current' });
     }
+
+    // Board-type badge — grid and canvas boards are otherwise visually
+    // identical in the file explorer and tab bar (same .canvas extension,
+    // same icon), which let users mix the two up ("expected a canvas, got a
+    // grid"). Name the layout right in the header.
+    breadcrumb.createSpan({
+      text: layout === 'freeform' ? 'Canvas' : 'Tile grid',
+      cls: 'visual-notes-layout-badge',
+    });
   }
 
   private renderEmpty(): void {

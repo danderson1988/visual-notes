@@ -80,6 +80,10 @@ export class FakeVault {
         return file;
       },
       createFolder: async (path: string) => { this.folders.add(path); },
+      getAllLoadedFiles: () => [
+        ...Array.from(this.entries.values()).map(e => e.file),
+        ...Array.from(this.folders).map(p => makeFolder(p)),
+      ],
     };
     const fileManager = {
       renameFile: async (file: FakeFile, newPath: string) => {

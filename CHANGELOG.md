@@ -2,6 +2,15 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.38
+
+### Fixed
+- A tile could link to the board it lives on, creating a "dead end" tile that appeared to do nothing when clicked — most likely to happen in a fresh vault, where the current board was often the only entry in the target picker. The picker now excludes the current board, saving a self-linked tile is refused with an explanation, and clicking an already-saved self-linked tile (from before this fix) now explains the problem instead of silently doing nothing.
+
+### Changed
+- The New Board dialog now labels the two layouts "Canvas" and "Tile grid" (previously "Freeform"/"Grid") with clearer descriptions, and defaults to Canvas — the grid default was contributing to users ending up with a tile-launcher page when they expected a canvas.
+- Every open board now shows a small "Canvas" or "Tile grid" badge next to its name in the header, since the two look identical otherwise (same file extension, same icon).
+
 ## 1.0.37
 
 ### Changed

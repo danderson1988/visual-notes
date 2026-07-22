@@ -323,7 +323,7 @@ export class TileModal extends Modal {
         dd
           .addOption('note', 'Note')
           .addOption('folder', 'Folder')
-          .addOption('board', 'Nested board')
+          .addOption('board', 'Visual Notes board (canvas or grid)')
           .setValue(this.targetKind)
           .onChange(v => {
             this.targetKind = v as TargetKind;
@@ -429,15 +429,16 @@ export class TileModal extends Modal {
     } else {
       // Board target: pick an existing .canvas board file or create a new
       // nested one.
-      const boardPaths = this.app.vault
-        .getAllLoadedFiles()
-        .filter((f): f is TFile => f instanceof TFile && f.extension === 'canvas')
-        .map(f => f.path)
-        .sort();
+      const boardPaths = this.getBoardPaths();
 
       const pathSetting = new Setting(contentEl)
         .setName('Target board')
-        .setDesc('Choose an existing board or create a new nested one');
+        .setDesc(boardPaths.length > 0
+          ? 'Choose an existing board or create a new nested one'
+          // The board this tile lives on is deliberately not offered (a tile
+          // linking to its own board would have nowhere to go) — in a fresh
+          // vault that can leave nothing to browse, which needs saying.
+          : 'No other boards exist yet — create a new nested one below');
 
       const pathDisplay = pathSetting.controlEl.createSpan('visual-notes-modal-path-display' + (this.targetPath ? '' : ' is-empty'));
       pathDisplay.setText(this.targetPath || 'None selected');
@@ -482,23 +483,46 @@ export class TileModal extends Modal {
       .addEventListener('click', () => this.close());
 
     const saveBtn = btnRow.createEl('button', { text: 'Save', cls: 'mod-cta visual-notes-modal-save' });
-    saveBtn.addEventListener('click', () => {
-      if (!this.tile.label?.trim()) { new Notice('Please enter a label.'); return; }
-      if (!this.targetPath) { new Notice('Please select a target.'); return; }
+    saveBtn.addEventListener('click', () => { this.trySave(); });
+  }
 
-      const saved: TileCard = {
-        ...(this.tile as TileCard),
-        target: { kind: this.targetKind, path: this.targetPath },
-      };
-      this.onSave(saved);
-      this.close();
-    });
+  // Validation + save, extracted from the button handler so the self-link
+  // guard is directly testable. Returns whether the tile was saved.
+  private trySave(): boolean {
+    if (!this.tile.label?.trim()) { new Notice('Please enter a label.'); return false; }
+    if (!this.targetPath) { new Notice('Please select a target.'); return false; }
+    // The picker lists already exclude the current board, but an edited
+    // pre-existing tile (or one created before this guard) can still carry
+    // a self-link — refuse to save it rather than recreate the "tile that
+    // goes nowhere" confusion.
+    if (this.currentFile && this.targetPath === this.currentFile.path) {
+      new Notice('A tile can\'t link to the board it\'s on — pick a different target.');
+      return false;
+    }
+
+    const saved: TileCard = {
+      ...(this.tile as TileCard),
+      target: { kind: this.targetKind, path: this.targetPath },
+    };
+    this.onSave(saved);
+    this.close();
+    return true;
+  }
+
+  // A tile linking to the board it lives on can never go anywhere, so the
+  // current board is excluded from every board/canvas picker list.
+  private getBoardPaths(): string[] {
+    return this.app.vault
+      .getAllLoadedFiles()
+      .filter((f): f is TFile => f instanceof TFile && f.extension === 'canvas' && f.path !== this.currentFile?.path)
+      .map(f => f.path)
+      .sort();
   }
 
   private getPathsForKind(kind: 'folder' | 'canvas' | 'note'): string[] {
     const all = this.app.vault.getAllLoadedFiles();
     if (kind === 'folder') return all.filter(f => f instanceof TFolder).map(f => f.path).sort();
-    if (kind === 'canvas') return all.filter((f): f is TFile => f instanceof TFile && f.extension === 'canvas').map(f => f.path).sort();
+    if (kind === 'canvas') return this.getBoardPaths();
     return all.filter((f): f is TFile => f instanceof TFile && f.extension === 'md').map(f => f.path).sort();
   }
 
