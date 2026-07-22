@@ -906,15 +906,16 @@ export const overlaysMethods = {
 
       const base = this.file.basename || 'Board';
       if (format === 'png') {
-        const a = document.createElement('a');
-        a.href = dataUrl; a.download = `${base}.png`;
-        document.body.appendChild(a); a.click(); a.remove();
+        // Deliberately not attached to the document — Chromium/Electron
+        // trigger the download from a plain click() regardless, and an
+        // unattached element sidesteps ever needing to remove it again.
+        createEl('a', { href: dataUrl, attr: { download: `${base}.png` } }).click();
       } else {
         // Re-render as JPEG (not the PNG already captured above) so the raw
         // bytes can be dropped straight into the PDF's DCTDecode image
         // stream with no re-encoding — see pdf-export.ts for why that beats
         // a full PDF library here.
-        const canvas = document.createElement('canvas');
+        const canvas = createEl('canvas');
         canvas.width = Math.round(width * pixelRatio);
         canvas.height = Math.round(height * pixelRatio);
         const ctx = canvas.getContext('2d')!;
@@ -930,10 +931,8 @@ export const overlaysMethods = {
         const pdfBytes = buildSingleImagePdf(jpegBytes, canvas.width, canvas.height);
         const blob = new Blob([pdfBytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `${base}.pdf`;
-        document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        createEl('a', { href: url, attr: { download: `${base}.pdf` } }).click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
     } catch (err) {
       console.error('Visual Notes: board export failed', err);

@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.37
+
+### Changed
+- Internal: board export now creates its download-trigger/canvas elements via Obsidian's `createEl` helper instead of `document.createElement`, and uses `window.setTimeout` for popout-window compatibility (plugin-review compliance). No behaviour change.
+
 ## 1.0.36
 
 ### Added
