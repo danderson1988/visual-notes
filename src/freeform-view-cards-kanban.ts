@@ -1,5 +1,5 @@
 import {
-  TFile, Notice, setIcon,
+  TFile, Notice, setIcon, Platform,
   MarkdownRenderer, sanitizeHTMLToDom,
 } from 'obsidian';
 import {
@@ -962,7 +962,19 @@ export const cardsKanbanMethods = {
       const onUp = () => {
         activeDocument.removeEventListener('pointermove', onMove);
         activeDocument.removeEventListener('pointerup', onUp);
-        if (!wasDragged) itemEl.focus();
+        if (!wasDragged) {
+          // On a phone, a plain tap (no drag) opens the item's editor
+          // directly — dblclick, the only other route in, is unreliable on
+          // touch. Desktop/tablet keep the focus-only behavior since a
+          // focused item drives keyboard shortcuts (Space toggles, Enter
+          // edits, Delete removes) that an auto-opened editor would eat.
+          // Same image/audio guard as the dblclick handler below.
+          if (Platform.isPhone && !item.imagePath && !item.audioPath) {
+            this.editKanbanItemInline(owner, item, itemEl);
+          } else {
+            itemEl.focus();
+          }
+        }
       };
       activeDocument.addEventListener('pointermove', onMove);
       activeDocument.addEventListener('pointerup', onUp);

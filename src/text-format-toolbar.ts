@@ -5,7 +5,7 @@
 // card's HTML field. Obsidian's MarkdownRenderer passes inline HTML through on render.
 // Same-type wrappers are always flattened before a new one is applied (no nesting).
 
-import { setIcon } from 'obsidian';
+import { setIcon, Platform } from 'obsidian';
 
 const TEXT_COLORS: (string | null)[] = [
   null,      // Default — removes colour
@@ -42,6 +42,13 @@ export class TextFormatToolbar {
   // ── Selection check ────────────────────────────────────────────
 
   private scheduleCheck(): void {
+    // On a phone, this floating popover has nowhere good to go — no
+    // phone-specific sizing/positioning/keyboard-awareness exists for it,
+    // and it was the leading suspect for a report of editing taking over
+    // the whole screen with a white popup. iPad (isMobile && !isPhone) and
+    // desktop are unaffected; a phone-appropriate replacement (routed
+    // through the bottom context bar) is a separate follow-up.
+    if (Platform.isPhone) return;
     if (this.debounce !== null) window.clearTimeout(this.debounce);
     this.debounce = window.setTimeout(() => {
       this.debounce = null;

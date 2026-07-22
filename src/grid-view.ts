@@ -1,4 +1,5 @@
-import { App, setIcon, Menu, Notice, TFile, TFolder } from 'obsidian';
+import { App, setIcon, Menu, Notice, TFile, TFolder, Platform } from 'obsidian';
+import { TouchActionSheet } from './touch-action-sheet';
 import Sortable from 'sortablejs';
 import { VisualNotesFile, TileCard, TILE_DRAG_MIME, DraggedTilePayload } from './file-types';
 import { writeBoardFile } from './file-io';
@@ -162,7 +163,9 @@ export class GridRenderer {
     wrapper.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       suppressClick = true;
-      const menu = new Menu();
+      // Same phone gating as FreeformRenderer.newMenu — see
+      // touch-action-sheet.ts for why Menu isn't used on phones.
+      const menu = Platform.isPhone ? (new TouchActionSheet() as unknown as Menu) : new Menu();
       menu.addItem(item =>
         item.setTitle('Edit').setIcon('pencil').onClick(() => {
           new TileModal(this.app, tile, (updated) => { void (async () => {

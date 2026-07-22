@@ -4,6 +4,11 @@ import { Card } from './file-types';
 export type CtxEvent =
   | { type: 'delete' }
   | { type: 'tile-edit' }
+  // Generic "start inline-editing this card's text/title" — the handler
+  // branches on card.kind. Added so single-tap-select + one visible button
+  // reaches edit mode on touch devices, where the dblclick that normally
+  // starts these editors is unreliable/undiscoverable.
+  | { type: 'edit-card' }
   | { type: 'sticky-format'; cmd: string }
   | { type: 'sticky-color'; hex: string }
   | { type: 'sticky-top-color'; hex: string | null }
@@ -92,6 +97,9 @@ export class ContextBar {
         break;
 
       case 'sticky':
+        // Explicit entry into edit mode — dblclick (the only other way in)
+        // is unreliable on touch devices.
+        this.mkBtn(p, 'Edit', 'edit-2', () => this.emit({ type: 'edit-card' }));
         this.mkFmtBtn(p, 'Bold',   'bold',          'strong');
         this.mkFmtBtn(p, 'Italic', 'italic',         'em');
         this.mkFmtBtn(p, 'Under',  'underline',      'u');
@@ -167,6 +175,21 @@ export class ContextBar {
 
       case 'checkers':
         this.mkBtn(p, 'New game', 'rotate-ccw', () => this.emit({ type: 'checkers-reset' }));
+        break;
+
+      // Text-bearing kinds that previously had no context-bar case at all
+      // (only Back + Delete) and whose editors were dblclick-only.
+      case 'callout':
+        this.mkBtn(p, 'Edit', 'edit-2', () => this.emit({ type: 'edit-card' }));
+        break;
+
+      case 'group':
+        this.mkBtn(p, 'Rename', 'edit-2', () => this.emit({ type: 'edit-card' }));
+        break;
+
+      case 'calendar':
+      case 'column':
+        this.mkBtn(p, 'Title', 'heading', () => this.emit({ type: 'edit-card' }));
         break;
     }
 

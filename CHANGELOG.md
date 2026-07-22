@@ -2,6 +2,18 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.39
+
+### Fixed
+- Major mobile/touch UX overhaul, aimed at iPhone in particular (iPad was largely fine already):
+  - The rich-text formatting popover no longer appears on phones at all — it had no phone-specific sizing or positioning and was very likely the cause of editing taking over the whole screen with a large white popup. It's unaffected on iPad/desktop.
+  - Long-press now opens a proper bottom action sheet with your card's actions, instead of feeding a synthetic touch event into a desktop-style context menu — the likely reason menus weren't appearing at all on iPhone.
+  - The bottom toolbar no longer crams 9+ tool buttons into a tiny horizontally-scrolling strip on phone widths. It now collapses to a single "+" button (bottom-right, thumb-reachable); tapping it opens a full labeled tool sheet.
+  - Bottom-anchored UI now avoids the iPhone's home-indicator safe area, and shifts up out of the way of the on-screen keyboard while you're editing.
+
+### Added
+- Sticky notes, callouts, group labels, calendar titles, and column titles can now be edited with a single tap: select the card, then tap "Edit"/"Rename"/"Title" in the bottom bar — no more relying on double-tap, which is unreliable on touch. Kanban items open their editor on a single tap on phones too.
+
 ## 1.0.38
 
 ### Fixed

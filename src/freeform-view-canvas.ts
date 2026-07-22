@@ -215,6 +215,30 @@ export const canvasMethods = {
       if (this.activeTouches >= 2) { this.cancelActiveMarquee?.(); this.cancelLongPress(); }
     }, { passive: true });
 
+    // On-screen-keyboard tracking: when iOS's keyboard opens it shrinks
+    // visualViewport but NOT the layout viewport, so bottom-anchored UI
+    // (the phone context bar with its Edit/format buttons — exactly what
+    // you need mid-edit) ends up hidden underneath it. Publish the
+    // keyboard's height as a custom property; the phone-width CSS
+    // translates the bottom bar up by it. ~0 whenever no keyboard is up,
+    // so this is inert on desktop.
+    {
+      const vv = window.visualViewport;
+      if (vv) {
+        const onVVChange = () => {
+          const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+          this.container.setCssProps({ '--ib-kb-offset': `${Math.round(kb)}px` });
+        };
+        vv.addEventListener('resize', onVVChange);
+        vv.addEventListener('scroll', onVVChange);
+        this.register(() => {
+          vv.removeEventListener('resize', onVVChange);
+          vv.removeEventListener('scroll', onVVChange);
+        });
+        onVVChange();
+      }
+    }
+
     // Manual long-press-to-contextmenu (see the field comments above for
     // why the native gesture doesn't fire here). Capture phase so this runs
     // before any card/item's own bubble-phase pointerdown handler — meaning
@@ -691,6 +715,10 @@ export const canvasMethods = {
     this.alignBarEl?.toggleClass('is-visible', this.selection.getIds().length > 1);
 
     const ids = this.selection.getIds();
+    // Selecting a card swaps the toolbar into context-bar mode; if the
+    // phone add-sheet was open, drop its is-open state now so it doesn't
+    // silently pop back open the moment the card is deselected.
+    if (ids.length > 0) this.closeFab();
     if (ids.length === 1) {
       const card = this.board.cards.find(c => c.id === ids[0]);
       if (card) this.contextBar?.show(card);

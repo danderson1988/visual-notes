@@ -1,6 +1,7 @@
 import {
-  TFile, Menu, Notice, setIcon,
+  TFile, Menu, Notice, setIcon, Platform,
 } from 'obsidian';
+import { TouchActionSheet } from './touch-action-sheet';
 import {
   ChecklistCard, ChecklistItem,
 } from './file-types';
@@ -97,6 +98,12 @@ function exportNodeFilter(node: HTMLElement): boolean {
 
 export const overlaysMethods = {
   newMenu(this: FreeformRenderer): Menu {
+    // Phones get a custom bottom action sheet instead of Obsidian's
+    // desktop-positioned Menu — the long-press → synthetic contextmenu →
+    // showAtMouseEvent chain didn't reliably produce a visible menu on the
+    // iPhone app. TouchActionSheet mirrors the Menu surface every call
+    // site here uses, so the cast is safe (see its header comment).
+    if (Platform.isPhone) return new TouchActionSheet() as unknown as Menu;
     const menu = new Menu();
     (menu as unknown as { dom?: HTMLElement }).dom?.addClass('visual-notes-ctx-menu');
     return menu;
@@ -552,8 +559,11 @@ export const overlaysMethods = {
       const labelSpan = btn.createSpan('visual-notes-tb-btn-label');
       labelSpan.setText(label);
       const handler = onClick ?? (() => this.activateTool(tool, btn));
-      btn.addEventListener('click', handler);
-      btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
+      // closeFab: picking a tool from the phone bottom sheet dismisses the
+      // sheet so the canvas is immediately tappable to place the card
+      // (no-op everywhere else — the sheet only opens on phone widths).
+      btn.addEventListener('click', () => { handler(); this.closeFab(); });
+      btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); this.closeFab(); } });
 
       // ── Drag to place ──
       {
@@ -644,7 +654,7 @@ export const overlaysMethods = {
       const iconEl = btn.createDiv('visual-notes-tb-overflow-icon');
       setIcon(iconEl, icon);
       btn.createSpan({ text: label });
-      const handler = () => { this.closeOverflow(); this.activateTool(tool, btn); };
+      const handler = () => { this.closeOverflow(); this.closeFab(); this.activateTool(tool, btn); };
       btn.addEventListener('click', handler);
       btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
     };
@@ -1366,6 +1376,28 @@ export const overlaysMethods = {
           if (idx !== -1) this.board.cards[idx] = updated;
           this.renderCardContent(el, updated); this.scheduleSave();
         }, this.file).open();
+        break;
+      }
+      case 'edit-card': {
+        // Single-tap-friendly entry into the same inline editors that
+        // dblclick starts — branch per kind, resolving any kind-specific
+        // child element from `el` (same pattern as 'kanban-title' below).
+        if (!card || !el) return;
+        switch (card.kind) {
+          case 'sticky':  this.editStickyInline(el, card); break;
+          case 'callout': this.editCalloutInline(el, card); break;
+          case 'group':   this.editGroupLabel(el, card); break;
+          case 'calendar': {
+            const titleEl = el.querySelector<HTMLElement>('.visual-notes-dataview-title');
+            if (titleEl) this.editSimpleTitle(titleEl, card.title, v => { card.title = v; }, el, card);
+            break;
+          }
+          case 'column': {
+            const titleEl = el.querySelector<HTMLElement>('.visual-notes-column-title');
+            if (titleEl) this.editColumnTitle(card, titleEl);
+            break;
+          }
+        }
         break;
       }
       case 'sticky-format': {

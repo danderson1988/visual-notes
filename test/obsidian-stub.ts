@@ -31,6 +31,16 @@ export function setIcon(_el: HTMLElement, _iconId: string): void {}
 
 export function getIconIds(): string[] { return []; }
 
+// Real Obsidian's Platform is a plain (non-readonly-typed) object of
+// booleans — mutable here too, so tests can flip `Platform.isPhone` to
+// exercise phone-specific branches without needing a class or a mock.
+export const Platform = {
+  isDesktop: true,
+  isMobile: false,
+  isPhone: false,
+  isTablet: false,
+};
+
 // Just enough of Obsidian's Setting for modules that build settings UIs
 // (tile-modal.ts) to load and render without crashing — chainable methods,
 // real child elements, no visual fidelity.

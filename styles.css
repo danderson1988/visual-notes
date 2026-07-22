@@ -781,10 +781,8 @@ path.is-marquee-selected {
 .visual-notes-freeform-toolbar-fab svg { width: 22px; height: 22px; }
 
 @media (max-width: 540px) {
-  .visual-notes-freeform-toolbar.tb-pos-left,
-  .visual-notes-freeform-toolbar.tb-pos-right,
-  .visual-notes-freeform-toolbar.tb-pos-top,
-  .visual-notes-freeform-toolbar.tb-pos-bottom {
+  /* ── Card selected: the context bar rides a full-width bottom bar ── */
+  .visual-notes-freeform-toolbar.ib-ctx-active {
     left: 0;
     right: 0;
     bottom: 0;
@@ -793,40 +791,186 @@ path.is-marquee-selected {
     flex-direction: row;
     justify-content: center;
     width: auto;
-    height: 64px;
+    height: auto;
+    min-height: 64px;
     border-radius: 0;
     border-left: none;
     border-right: none;
     border-bottom: none;
-    padding: 6px 8px;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
     gap: 2px;
-    overflow-x: auto;
+    /* Ride above the on-screen keyboard while editing (see the
+       visualViewport handler that maintains --ib-kb-offset). */
+    transform: translateY(calc(-1 * var(--ib-kb-offset, 0px)));
   }
-
-  .visual-notes-freeform-toolbar .ib-add-panel {
+  /* More buttons than fit a phone width (e.g. sticky's Edit + 4 format +
+     Color + trash) scroll sideways instead of clipping. Row direction
+     forced: the desktop tb-pos-left/right rules stack the panel into a
+     column, which is wrong for the phone bottom bar regardless of the
+     configured toolbar side. */
+  .ib-ctx-active .ib-ctx-panel {
     flex-direction: row;
     width: auto;
-    height: 100%;
+    overflow-x: auto;
+    max-width: 100%;
   }
-
-  .visual-notes-freeform-toolbar .visual-notes-tb-overflow-sep {
-    width: 1px;
-    height: 32px;
-    margin: 0 4px;
-  }
-
-  .visual-notes-tb-btn {
+  .ib-ctx-active .visual-notes-tb-btn {
     width: 48px;
     height: 48px;
   }
-
-  .visual-notes-tb-btn-label {
+  .ib-ctx-active .visual-notes-tb-btn-label {
     display: none;
   }
 
-  .visual-notes-freeform-toolbar-fab {
+  /* ── No selection: everything collapses to a FAB bottom-right ──────
+     The old design squeezed all 9 tool buttons + "···" into a 64px
+     horizontally-scrolling strip — ~500px of controls in a ~375px
+     viewport. The FAB (built in JS from the start, but display:none'd
+     until now) is the only always-visible control; tapping it opens the
+     add panel as a labeled bottom-sheet grid. Always bottom-right
+     regardless of the desktop toolbarPosition setting (thumb-reachable,
+     standard mobile placement). */
+  .visual-notes-freeform-toolbar:not(.ib-ctx-active) {
+    left: auto;
+    right: 12px;
+    top: auto;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    transform: none;
+    width: auto;
+    height: auto;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .visual-notes-freeform-toolbar:not(.ib-ctx-active) .ib-add-panel {
     display: none;
   }
+  .visual-notes-freeform-toolbar:not(.ib-ctx-active).is-open .ib-add-panel {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow: var(--ib-shadow-high);
+    z-index: 250;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .visual-notes-freeform-toolbar:not(.ib-ctx-active).is-open .ib-add-panel .visual-notes-tb-btn {
+    width: auto;
+  }
+  .visual-notes-freeform-toolbar:not(.ib-ctx-active) .visual-notes-tb-overflow-sep {
+    display: none;
+  }
+  .visual-notes-freeform-toolbar:not(.ib-ctx-active) .visual-notes-freeform-toolbar-fab {
+    display: flex;
+  }
+}
+
+/* ── Touch action sheet (phone replacement for context menus) ── */
+
+.visual-notes-touch-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.visual-notes-touch-sheet {
+  background: var(--background-primary);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  box-shadow: var(--ib-shadow-high);
+  padding: 4px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+  max-height: 70vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.visual-notes-touch-sheet-grabber {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--background-modifier-border);
+  margin: 6px auto 8px;
+}
+
+.visual-notes-touch-sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-normal);
+  font-size: 15px;
+}
+
+.visual-notes-touch-sheet-row:active {
+  background: var(--background-modifier-hover);
+}
+
+.visual-notes-touch-sheet-row-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.visual-notes-touch-sheet-row-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.visual-notes-touch-sheet-row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visual-notes-touch-sheet-row-check {
+  display: flex;
+  align-items: center;
+  color: var(--interactive-accent);
+  flex-shrink: 0;
+}
+
+.visual-notes-touch-sheet-row-check svg {
+  width: 16px;
+  height: 16px;
+}
+
+.visual-notes-touch-sheet-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  padding: 10px 10px 2px;
+  user-select: none;
+}
+
+.visual-notes-touch-sheet-sep {
+  height: 1px;
+  background: var(--background-modifier-border);
+  margin: 4px 6px;
 }
 
 /* ── Context bar slot ────────────────────────────────────────── */
@@ -2837,6 +2981,12 @@ input.visual-notes-table-date-input {
   box-shadow: var(--ib-shadow-high);
   z-index: 300;
   user-select: none;
+  /* Defensive cap even where the Platform.isPhone gate doesn't apply
+     (iPad, a narrow desktop window) — this popover's content (format row
+     + two swatch-grid sections) has no inherent size limit otherwise. */
+  max-width: min(320px, calc(100% - 16px));
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .visual-notes-text-fmt-divider {

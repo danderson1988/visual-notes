@@ -18,7 +18,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FreeformRenderer } from '../src/freeform-view';
 import { fakeApp } from './fake-app';
-import type { VisualNotesFile, StickyCard, TileCard, TableCard, CommentCard } from '../src/file-types';
+import { Platform } from 'obsidian';
+import type {
+  VisualNotesFile, StickyCard, TileCard, TableCard, CommentCard,
+  CalloutCard, GroupCard, CalendarCard, ColumnCard, KanbanColumnCard,
+} from '../src/file-types';
 
 function setup(cards: VisualNotesFile['cards'], connections: VisualNotesFile['connections'] = []) {
   const container = document.createElement('div');
@@ -689,5 +693,186 @@ describe('UI smoke: connection culling on large boards', () => {
 
     expect(() => renderer.updateConnectionsForCard('a')).not.toThrow();
     expect(renderer.connectionPaths.has('c1')).toBe(false); // still not (re-)created
+  });
+});
+
+describe('UI smoke: single-tap "Edit" for dblclick-gated card kinds (mobile UX phase 2)', () => {
+  afterEach(() => { Platform.isPhone = false; });
+
+  it('edit-card on a callout makes its text contentEditable and focuses it', () => {
+    const callout: CalloutCard = { id: 'k1', kind: 'callout', x: 0, y: 0, w: 300, h: 100, text: 'hi', color: '#3b82f6' };
+    const { renderer, container } = setup([callout]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="k1"]')!;
+    const textEl = el.querySelector<HTMLElement>('.visual-notes-callout-text')!;
+    // renderCalloutContent never sets contentEditable up front (only
+    // editCalloutInline does, lazily, on first entry) — so the attribute
+    // starts unset rather than explicitly 'false'.
+    expect(textEl.contentEditable).not.toBe('true');
+
+    renderer.selection.select('k1');
+    (renderer as any).handleCtxEvent({ type: 'edit-card' });
+
+    expect(textEl.contentEditable).toBe('true');
+  });
+
+  it('edit-card on a group swaps the label for a text input', () => {
+    const group: GroupCard = { id: 'g1', kind: 'group', x: 0, y: 0, w: 300, h: 200, label: 'My Group' };
+    const { renderer, container } = setup([group]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="g1"]')!;
+    expect(el.querySelector('input')).toBeNull();
+
+    renderer.selection.select('g1');
+    (renderer as any).handleCtxEvent({ type: 'edit-card' });
+
+    expect(el.querySelector('input.visual-notes-group-label-input')).not.toBeNull();
+  });
+
+  it('edit-card on a calendar card swaps its title span for a text input', () => {
+    const cal: CalendarCard = { id: 'c1', kind: 'calendar', x: 0, y: 0, w: 400, h: 300, title: 'My Calendar' };
+    const { renderer, container } = setup([cal]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="c1"]')!;
+    expect(el.querySelector('input')).toBeNull();
+
+    renderer.selection.select('c1');
+    (renderer as any).handleCtxEvent({ type: 'edit-card' });
+
+    expect(el.querySelector('input.visual-notes-dataview-title-input')).not.toBeNull();
+  });
+
+  it('edit-card on a column card swaps its title for a text input', () => {
+    const col: ColumnCard = { id: 'co1', kind: 'column', x: 0, y: 0, w: 300, h: 400, title: 'My Column', children: [] };
+    const { renderer, container } = setup([col]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="co1"]')!;
+    expect(el.querySelector('input')).toBeNull();
+
+    renderer.selection.select('co1');
+    (renderer as any).handleCtxEvent({ type: 'edit-card' });
+
+    expect(el.querySelector('input.visual-notes-kanban-title-input')).not.toBeNull();
+  });
+
+  it('a plain tap (no drag) on a kanban item opens its editor only when Platform.isPhone is true', () => {
+    const kb: KanbanColumnCard = {
+      id: 'kb1', kind: 'kanban-column', x: 0, y: 0, w: 260, h: 300, color: '#fff',
+      items: [{ id: 'it1', text: 'Buy milk', done: false }],
+    };
+    const { container } = setup([kb]);
+    const itemEl = container.querySelector<HTMLElement>('.visual-notes-kanban-item[data-item-id="it1"]')!;
+    expect(itemEl).toBeTruthy();
+
+    Platform.isPhone = false;
+    itemEl.dispatchEvent(pointer('pointerdown', 50, 50));
+    itemEl.dispatchEvent(pointer('pointerup', 50, 50));
+    expect(itemEl.querySelector('.visual-notes-kanban-item-editor')).toBeNull();
+
+    Platform.isPhone = true;
+    itemEl.dispatchEvent(pointer('pointerdown', 50, 50));
+    itemEl.dispatchEvent(pointer('pointerup', 50, 50));
+    expect(itemEl.querySelector('.visual-notes-kanban-item-editor')).not.toBeNull();
+  });
+});
+
+describe('UI smoke: mobile FAB (mobile UX phase 3)', () => {
+  it('clicking the FAB toggles is-open on the toolbar and the icon between plus/x', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#fff' };
+    const { renderer } = setup([sticky]);
+    const fab = renderer.fabEl!;
+    expect(fab).toBeTruthy();
+    expect(renderer.toolbarEl.hasClass('is-open')).toBe(false);
+
+    fab.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(renderer.toolbarEl.hasClass('is-open')).toBe(true);
+
+    fab.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(renderer.toolbarEl.hasClass('is-open')).toBe(false);
+  });
+
+  it('selecting a card closes the FAB sheet (closeFab runs from refreshSelectionVisuals)', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#fff' };
+    const { renderer } = setup([sticky]);
+    renderer.fabEl!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(renderer.toolbarEl.hasClass('is-open')).toBe(true);
+
+    renderer.selection.select('s1');
+    renderer.refreshSelectionVisuals();
+
+    expect(renderer.toolbarEl.hasClass('is-open')).toBe(false);
+  });
+
+  it('picking a tool from the sheet closes it (closeFab runs alongside activateTool)', () => {
+    const { renderer, container } = setup([]);
+    renderer.fabEl!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(renderer.toolbarEl.hasClass('is-open')).toBe(true);
+
+    const stickyBtn = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-tb-btn'))
+      .find(b => b.getAttribute('aria-label') === 'Sticky')!;
+    expect(stickyBtn).toBeTruthy();
+    stickyBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(renderer.toolbarEl.hasClass('is-open')).toBe(false);
+  });
+});
+
+describe('UI smoke: touch action sheet replaces desktop Menu on phone (mobile UX phase 5)', () => {
+  afterEach(() => { Platform.isPhone = false; document.body.innerHTML = ''; });
+
+  it('newMenu() returns a real desktop Menu when Platform.isPhone is false', () => {
+    Platform.isPhone = false;
+    const { renderer } = setup([]);
+    const menu = (renderer as any).newMenu();
+    expect(menu.constructor.name).toBe('Menu');
+  });
+
+  it('newMenu() returns a TouchActionSheet on phone, and showAtMouseEvent renders a bottom sheet with the added items', () => {
+    Platform.isPhone = true;
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#fff' };
+    const { renderer } = setup([sticky]);
+    const el = document.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+
+    const menu = (renderer as any).newMenu();
+    (renderer as any).populateCardMenu(menu, el, sticky);
+    menu.showAtMouseEvent(new MouseEvent('contextmenu'));
+
+    const sheet = document.querySelector('.visual-notes-touch-sheet');
+    expect(sheet).not.toBeNull();
+    const rowTitles = Array.from(sheet!.querySelectorAll('.visual-notes-touch-sheet-row-title')).map(n => n.textContent);
+    expect(rowTitles).toContain('Delete');
+    expect(rowTitles).toContain('Duplicate');
+  });
+
+  it('tapping a sheet row closes the sheet and runs the item\'s action', () => {
+    Platform.isPhone = true;
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#fff' };
+    const { renderer, board } = setup([sticky]);
+    const el = document.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+    renderer.selection.select('s1');
+
+    const menu = (renderer as any).newMenu();
+    (renderer as any).populateCardMenu(menu, el, sticky);
+    menu.showAtMouseEvent(new MouseEvent('contextmenu'));
+
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('.visual-notes-touch-sheet-row-title'));
+    const deleteRow = rows.find(r => r.textContent === 'Delete')!.closest<HTMLElement>('.visual-notes-touch-sheet-row')!;
+    deleteRow.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(document.querySelector('.visual-notes-touch-sheet-backdrop')).toBeNull();
+    expect(board.cards).toHaveLength(0);
+  });
+
+  it('tapping the backdrop (outside the sheet) dismisses it without running any action', () => {
+    Platform.isPhone = true;
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#fff' };
+    const { renderer, board } = setup([sticky]);
+    const el = document.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+
+    const menu = (renderer as any).newMenu();
+    (renderer as any).populateCardMenu(menu, el, sticky);
+    menu.showAtMouseEvent(new MouseEvent('contextmenu'));
+
+    const backdrop = document.querySelector<HTMLElement>('.visual-notes-touch-sheet-backdrop')!;
+    backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(document.querySelector('.visual-notes-touch-sheet-backdrop')).toBeNull();
+    expect(board.cards).toHaveLength(1); // untouched
   });
 });
