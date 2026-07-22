@@ -204,6 +204,13 @@ export const cardsBasicMethods = {
 
     editor.addEventListener('pointerdown', e => e.stopPropagation());
 
+    // Selection-triggered Bold/Italic/Strike/Underline + text Color/Highlight
+    // bubble menu — every other inline text editor (checklist item, kanban
+    // item, …) already gets this; the note editor only had its own separate
+    // persistent-toolbar bold/italic/underline/strike wiring below (via
+    // activeStickyApplyTag) and no font colour option at all.
+    const fmtToolbar = new TextFormatToolbar(editor, el, this.container);
+
     // ── Inline tag toggle ─────────────────────────────────────────
     let savedRange: Range | null = null;
 
@@ -280,6 +287,7 @@ export const cardsBasicMethods = {
       activeDocument.removeEventListener('selectionchange', onSelChange);
       window.removeEventListener('keydown', onFormatKey, true);
       this.activeStickyApplyTag = null;
+      fmtToolbar.destroy();
     };
 
     const commit = () => {

@@ -2,6 +2,14 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.35
+
+### Fixed
+- Picking a "Top strip" color for a Note had no visible effect (bug #8) — the note's background fill layer sat in its own stacking context that always painted above the strip, regardless of DOM order. The strip is now visible as soon as you pick a color.
+
+### Added
+- Notes now get the same selection-triggered formatting popup as checklist/kanban item text (Bold/Italic/Underline/Strikethrough plus, new, a font Color and Highlight option) — select some text in a Note to see it (bug #8).
+
 ## 1.0.34
 
 ### Fixed

@@ -14,6 +14,8 @@
 // connection test, which explicitly mocks elementsFromPoint — see its own
 // comment.
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { FreeformRenderer } from '../src/freeform-view';
 import { fakeApp } from './fake-app';
 import type { VisualNotesFile, StickyCard, TileCard, TableCard, CommentCard } from '../src/file-types';
@@ -416,6 +418,67 @@ describe('UI smoke: un-resolving a comment restores full opacity (bug #9)', () =
 
     expect((comment as CommentCard).resolved).toBe(false);
     expect(el.hasClass('is-resolved')).toBe(false);
+  });
+});
+
+describe('UI smoke: note top strip color (bug #8)', () => {
+  it('setting a top strip color on a note inserts the strip after the shape-fill layer', () => {
+    // Regression test: the shape-fill layer (.visual-notes-sticky-shape-fill)
+    // is position:absolute with z-index:0, which establishes a stacking
+    // context that paints above any plain in-flow sibling regardless of DOM
+    // order — so a top strip with no stacking context of its own was
+    // invisible no matter where it sat in the DOM (fixed with a CSS rule
+    // giving the strip position:relative + a higher z-index inside notes).
+    // The handler that creates the strip on first pick still inserted it as
+    // el's very first child (before the shape-fill), inconsistent with the
+    // initial-render order (shape-fill, then strip, then inner) — this test
+    // locks in the now-consistent insertion point.
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { renderer, board, container } = setup([sticky]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+    expect(el.querySelector('.ib-card-top-strip')).toBeNull();
+
+    renderer.selection.select('s1');
+    (renderer as any).handleCtxEvent({ type: 'sticky-top-color', hex: '#ef4444' });
+
+    expect((board.cards[0] as StickyCard).topColor).toBe('#ef4444');
+    const children = Array.from(el.children).map(c => c.className);
+    const fillIdx = children.findIndex(c => c.includes('visual-notes-sticky-shape-fill'));
+    const stripIdx = children.findIndex(c => c.includes('ib-card-top-strip'));
+    const innerIdx = children.findIndex(c => c.includes('visual-notes-sticky-inner'));
+    expect(fillIdx).toBeGreaterThanOrEqual(0);
+    expect(stripIdx).toBeGreaterThan(fillIdx);
+    expect(stripIdx).toBeLessThan(innerIdx);
+  });
+
+  it('the shape-fill layer no longer outranks the top strip in the stylesheet', () => {
+    const css = readFileSync(join(__dirname, '..', 'styles.css'), 'utf8');
+    expect(css).toMatch(/\.visual-notes-freeform-sticky-card \.ib-card-top-strip\s*\{[^}]*z-index:\s*1/);
+  });
+});
+
+describe('UI smoke: note editor gets the text-format bubble menu (bug #8)', () => {
+  it('wiring in TextFormatToolbar does not break editing or its blur-commit teardown', () => {
+    // Every other inline text editor (checklist item, kanban item, …) shows
+    // a selection-triggered Bold/Italic/Color/Highlight popup; the note
+    // editor never did, and had no font-colour option at all. jsdom can't
+    // simulate a real contenteditable selection to trigger the popup itself
+    // (confirmed separately — focus()/activeElement don't work on
+    // contenteditable here), so this just locks in that wiring
+    // TextFormatToolbar into editStickyInline doesn't break editing or its
+    // existing blur-commit flow.
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { renderer, board, container } = setup([sticky]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+
+    expect(() => (renderer as any).editStickyInline(el, sticky)).not.toThrow();
+    const editor = el.querySelector<HTMLElement>('.visual-notes-sticky-editor');
+    expect(editor).toBeTruthy();
+    editor!.innerHTML = 'edited';
+
+    expect(() => editor!.dispatchEvent(new FocusEvent('blur'))).not.toThrow();
+    expect((board.cards[0] as StickyCard).text).toBe('edited');
+    expect(el.querySelector('.visual-notes-sticky-editor')).toBeNull();
   });
 });
 

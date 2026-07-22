@@ -1254,7 +1254,7 @@ export const overlaysMethods = {
         if (card.topColor) {
           if (!strip) {
             strip = el.createDiv('ib-card-top-strip');
-            el.insertBefore(strip, el.firstChild);
+            el.insertBefore(strip, el.querySelector('.visual-notes-sticky-inner'));
           }
           strip.style.backgroundColor = card.topColor;
         } else {

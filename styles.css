@@ -4944,6 +4944,16 @@ input.visual-notes-accent-pop-hex {
   border-radius: 50%;
 }
 
+/* The shape-fill layer above is position:absolute with z-index:0, which
+   establishes a stacking context that paints above any plain in-flow
+   sibling regardless of DOM order — including the top strip, which is
+   just a static flex child. Without its own stacking context the strip
+   is invisible on notes no matter where it's inserted in the DOM. */
+.visual-notes-freeform-sticky-card .ib-card-top-strip {
+  position: relative;
+  z-index: 1;
+}
+
 .visual-notes-freeform-sticky-card.is-shape-round {
   box-shadow: none;
 }
