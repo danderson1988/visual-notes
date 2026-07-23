@@ -1768,7 +1768,16 @@ export const canvasMethods = {
       // multi-selection survives a plain click-and-drag on one of its
       // members, matching card behavior.
       const groupIds: string[] = [...this.selectedDrawingIds];
-      const groupStrokes: DrawingStroke[] = groupIds.flatMap((id): DrawingStroke[] => this.groupStrokes(id));
+      // A plain loop (not .flatMap) — some type checkers lose track of
+      // `this` inside an arrow callback passed to a generic Array method
+      // like flatMap, flagging the call as unsafe even though the return
+      // type is pinned explicitly; a for..of over a plain method call
+      // (same shape as the working loop in rerenderGroup) sidesteps it.
+      const groupStrokes: DrawingStroke[] = [];
+      for (const id of groupIds) {
+        const strokesInGroup: DrawingStroke[] = this.groupStrokes(id);
+        groupStrokes.push(...strokesInGroup);
+      }
       const startPoints: { x: number; y: number }[][] = groupStrokes.map(s => s.points.map(p => ({ ...p })));
       const sx = e.clientX, sy = e.clientY;
       let moved = false;
@@ -1996,7 +2005,13 @@ export const canvasMethods = {
   },
 
   showDrawingMenu(this: FreeformRenderer, e: MouseEvent, groupIds: string[]): void {
-    const strokes: DrawingStroke[] = groupIds.flatMap((id): DrawingStroke[] => this.groupStrokes(id));
+    // Plain loop, not .flatMap — see the comment on the matching pattern in
+    // the drag handler above.
+    const strokes: DrawingStroke[] = [];
+    for (const id of groupIds) {
+      const strokesInGroup: DrawingStroke[] = this.groupStrokes(id);
+      strokes.push(...strokesInGroup);
+    }
     if (!strokes.length) return;
     const menu = this.newMenu();
     menu.addItem(i => i.setTitle('Change color…').setIcon('palette').onClick(() => {

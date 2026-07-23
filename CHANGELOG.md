@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.46
+
+### Changed
+- Internal: replaced two `.flatMap(id => this.groupStrokes(id))` calls in the drawing multi-select code with plain loops (plugin-review compliance — 1.0.45's explicit typing cleared most of the reported ESLint warnings but the review site's checker still flagged these two calls themselves as unsafe). No behaviour change.
+
 ## 1.0.45
 
 ### Changed
