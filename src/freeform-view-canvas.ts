@@ -105,7 +105,6 @@ declare module './freeform-view' {
     rerenderGroup(groupId: string): void;
     showDrawingMenu(e: MouseEvent, groupIds: string[]): void;
     startInkStroke(startEvent: PointerEvent): void;
-    autoStraighten(stroke: DrawingStroke): void;
     startEraseScrub(startEvent: PointerEvent): void;
     togglePenMode(): void;
     enterPenMode(): void;
@@ -1693,6 +1692,19 @@ export const canvasMethods = {
     // perfect-freehand fake pressure from drawing speed (mouse input and
     // strokes saved before pressure capture existed).
     const hasPressure = pts.some(p => p.p != null && p.p !== 0.5);
+    // perfect-freehand's outline construction becomes unstable — the
+    // ribbon can collapse to a near-zero-width sliver across its entire
+    // length, not just gracefully thin out — once a stroke's taper
+    // distance gets close to its total path length. Scaling the taper down
+    // to fit still lands inside that unstable range for short strokes, so
+    // instead: only taper at all once the stroke is comfortably (4x) longer
+    // than the desired taper distance; shorter strokes/dots get a plain
+    // full-width round cap (see the `cap: true` below), which is stable
+    // and reads fine on something that short anyway.
+    let pathLen = 0;
+    for (let i = 1; i < pts.length; i++) pathLen += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+    const desiredTaper = stroke.width * 3;
+    const taper = pathLen > desiredTaper * 4 ? desiredTaper : 0;
     const outline = getStroke(
       pts.map(p => [p.x, p.y, p.p ?? 0.5]),
       {
@@ -1707,12 +1719,12 @@ export const canvasMethods = {
         // thing standing between real jitter and the drawn line.
         streamline: 0.5,
         simulatePressure: !hasPressure,
-        // Taper the tips in over a short distance — without this the ends
-        // get a full-width round cap, which on a pressure-heavy first/last
-        // sample (a stylus pressed down before moving) reads as a fat dot
-        // stamped on each end of the line.
-        start: { taper: stroke.width * 3, cap: true },
-        end: { taper: stroke.width * 3, cap: true },
+        // Taper the tips in — without this the ends get a full-width round
+        // cap, which on a pressure-heavy first/last sample (a stylus
+        // pressed down before moving) reads as a fat dot stamped on each
+        // end of the line.
+        start: { taper, cap: true },
+        end: { taper, cap: true },
         last: true,
       },
     );
@@ -2268,7 +2280,6 @@ export const canvasMethods = {
       }
       livePath.remove();
       if (stroke.points.length < 2) return;
-      if (!shiftLine) this.autoStraighten(stroke);
       this.pushUndo();
       this.board.drawings.push(stroke);
       this.renderSingleDrawing(stroke);
@@ -2279,23 +2290,6 @@ export const canvasMethods = {
     activeDocument.addEventListener('pointercancel', onCancel);
   },
 
-  autoStraighten(this: FreeformRenderer, stroke: DrawingStroke): void {
-    const pts = stroke.points;
-    if (pts.length < 3) return;
-    const a = pts[0], b = pts[pts.length - 1];
-    const chordLen = Math.hypot(b.x - a.x, b.y - a.y);
-    // Too short to judge intent — a small squiggle isn't a failed line.
-    if (chordLen < 40) return;
-    let maxDev = 0;
-    for (const p of pts) {
-      // Perpendicular distance from p to the infinite line through a→b.
-      const dev = Math.abs((b.x - a.x) * (a.y - p.y) - (a.x - p.x) * (b.y - a.y)) / chordLen;
-      if (dev > maxDev) maxDev = dev;
-    }
-    if (maxDev <= Math.max(4, chordLen * 0.035)) {
-      stroke.points = [{ ...a }, { ...b }];
-    }
-  },
 
   startEraseScrub(this: FreeformRenderer, startEvent: PointerEvent): void {
     const rect = this.outer.getBoundingClientRect();

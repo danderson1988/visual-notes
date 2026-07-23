@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.53
+
+### Fixed
+- Pen strokes rendered as a thin, sterile tapered bar instead of a natural handwritten line — most noticeable on straight-ish strokes like "I" or "T". A leftover auto-straighten step from the old renderer was snapping any stroke over 40px with low wobble down to just its two endpoints before the pressure-tapered outline ever saw it, discarding all the hand-drawn detail and pressure samples in between. Removed; Shift-drag still gives a deliberate straight line.
+- Very short pen strokes/dots (a quick tap or flick) could render as a near-invisible hairline instead of a proper mark — perfect-freehand's tip-taper becomes unstable once the taper distance approaches the stroke's own length. Short strokes now get a plain full-width round cap instead of a taper.
+
 ## 1.0.52
 
 ### Fixed

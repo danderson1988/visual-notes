@@ -1394,6 +1394,27 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     expect(path.getAttribute('d')).toMatch(/Z$/);
   });
 
+  it('a short stroke/dot renders at full width instead of collapsing to a hairline', () => {
+    // perfect-freehand's outline construction goes unstable — the ribbon
+    // collapses to a near-zero-width sliver across its *entire* length,
+    // not a gradual thin-out — once a stroke's taper distance is close to
+    // (not even necessarily longer than) its own total path length. A
+    // short tap/dot with a fixed taper reliably collapses this way; the
+    // fix skips tapering entirely for strokes that short.
+    const { renderer, board, container } = setup([]);
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 0, 3, 0); // short, straight, horizontal — default width 3
+    expect(board.drawings).toHaveLength(1);
+    const d = container.querySelector<SVGPathElement>('.visual-notes-ink-svg path')!.getAttribute('d')!;
+    const nums = d.match(/-?\d+\.?\d*/g)!.map(Number);
+    const ys: number[] = [];
+    for (let i = 1; i < nums.length; i += 2) ys.push(nums[i]);
+    const perpendicularSpread = Math.max(...ys) - Math.min(...ys);
+    // Intended full diameter is ~4.8 (width 3 * 1.6); collapsed comes out
+    // at ~0.02 — practically invisible.
+    expect(perpendicularSpread).toBeGreaterThan(3);
+  });
+
   it('preserves stylus pressure when a drawing is moved or resized', () => {
     const { renderer, board } = setup([]);
     const stroke: DrawingStroke = {
