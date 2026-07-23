@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.52
+
+### Fixed
+- Moving or resizing a pen stroke stripped its stylus pressure data, so the pressure-tapered outline reverted to a uniform/simulated shape as soon as you dragged or resized it. Drag and resize now carry each point's pressure through unchanged.
+- Internal: use `window.requestAnimationFrame`/`window.cancelAnimationFrame` (not the bare global) for the pen tool's live-stroke redraw batching, for popout-window compatibility. No behavior change.
+
 ## 1.0.51
 
 ### Fixed

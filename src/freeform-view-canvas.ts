@@ -1837,7 +1837,7 @@ export const canvasMethods = {
         const strokesInGroup: DrawingStroke[] = this.groupStrokes(id);
         groupStrokes.push(...strokesInGroup);
       }
-      const startPoints: { x: number; y: number }[][] = groupStrokes.map(s => s.points.map(p => ({ ...p })));
+      const startPoints: DrawingStroke['points'][] = groupStrokes.map(s => s.points.map(p => ({ ...p })));
       const sx = e.clientX, sy = e.clientY;
       let moved = false;
 
@@ -1847,7 +1847,11 @@ export const canvasMethods = {
         const dx = (e2.clientX - sx) / this.vp.zoom;
         const dy = (e2.clientY - sy) / this.vp.zoom;
         groupStrokes.forEach((s, i) => {
-          s.points = startPoints[i].map(p => ({ x: p.x + dx, y: p.y + dy }));
+          s.points = startPoints[i].map(p =>
+            p.p != null
+              ? { x: p.x + dx, y: p.y + dy, p: p.p }
+              : { x: p.x + dx, y: p.y + dy },
+          );
           this.inkPaths.get(s.id)?.setAttribute('d', this.buildStrokePathD(s));
           this.inkHitPaths.get(s.id)?.setAttribute('d', this.buildInkPathD(s.points));
         });
@@ -2032,10 +2036,18 @@ export const canvasMethods = {
       const widthScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
       strokes.forEach((s, i) => {
-        s.points = startPoints[i].map(p => ({
-          x: anchorX + (p.x - anchorX) * scaleX,
-          y: anchorY + (p.y - anchorY) * scaleY,
-        }));
+        s.points = startPoints[i].map(p =>
+          p.p != null
+            ? {
+                x: anchorX + (p.x - anchorX) * scaleX,
+                y: anchorY + (p.y - anchorY) * scaleY,
+                p: p.p,
+              }
+            : {
+                x: anchorX + (p.x - anchorX) * scaleX,
+                y: anchorY + (p.y - anchorY) * scaleY,
+              },
+        );
         s.width = Math.max(1, startWidths[i] * widthScale);
         // Highlight strokes bake the width into their filled outline, so
         // regenerating d covers them; stroke-width only matters for pen ink.
@@ -2228,13 +2240,13 @@ export const canvasMethods = {
         shiftLine = false;
         addPoint(e2.clientX, e2.clientY, e2.pressure);
       }
-      if (!rafId) rafId = requestAnimationFrame(redrawLive);
+      if (!rafId) rafId = window.requestAnimationFrame(redrawLive);
     };
     const removeListeners = () => {
       activeDocument.removeEventListener('pointermove', onMove);
       activeDocument.removeEventListener('pointerup', onUp);
       activeDocument.removeEventListener('pointercancel', onCancel);
-      if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+      if (rafId) { window.cancelAnimationFrame(rafId); rafId = 0; }
     };
     // iOS fires pointercancel (not pointerup) when the OS takes the touch
     // over — palm rejection, a pinch, a system gesture. Without handling

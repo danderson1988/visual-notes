@@ -22,7 +22,7 @@ import { Platform, Menu } from 'obsidian';
 import type {
   VisualNotesFile, StickyCard, TileCard, TableCard, CommentCard,
   CalloutCard, GroupCard, CalendarCard, ColumnCard, KanbanColumnCard,
-  KanbanBoardCard,
+  KanbanBoardCard, DrawingStroke,
 } from '../src/file-types';
 
 function setup(
@@ -1392,6 +1392,27 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     expect(path.getAttribute('stroke')).toBe('none');
     // Closed outline path — the ribbon shape, not an open centerline.
     expect(path.getAttribute('d')).toMatch(/Z$/);
+  });
+
+  it('preserves stylus pressure when a drawing is moved or resized', () => {
+    const { renderer, board } = setup([]);
+    const stroke: DrawingStroke = {
+      id: 'pressure-stroke', groupId: 'pressure-group', color: '#000', width: 4,
+      points: [{ x: 0, y: 0, p: 0.2 }, { x: 40, y: 20, p: 0.8 }],
+    };
+    board.drawings.push(stroke);
+    renderer.renderSingleDrawing(stroke);
+
+    const hit = renderer.inkHitPaths.get(stroke.id)!;
+    hit.dispatchEvent(pointer('pointerdown', 0, 0));
+    document.dispatchEvent(pointer('pointermove', 20, 10));
+    document.dispatchEvent(pointer('pointerup', 20, 10));
+    expect(stroke.points.map(p => p.p)).toEqual([0.2, 0.8]);
+
+    renderer.startDrawingResize(pointer('pointerdown', 60, 30), stroke.groupId, 'se');
+    document.dispatchEvent(pointer('pointermove', 80, 50));
+    document.dispatchEvent(pointer('pointerup', 80, 50));
+    expect(stroke.points.map(p => p.p)).toEqual([0.2, 0.8]);
   });
 });
 
