@@ -53,7 +53,10 @@ function pointer(type: string, x: number, y: number, extra: Partial<PointerEvent
   // real drag, where the button stays down for pointerdown/pointermove and
   // pointerup fires while it's still logically "the button that's releasing".
   // Tests simulating a release with nothing held can override via `extra`.
-  return new PointerEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0, buttons: 1, pointerId: 1, ...extra });
+  // isPrimary: true — real events from the primary pointer (the mouse, the
+  // first touch) always carry it; jsdom's constructor defaults it to false,
+  // which would trip the pen tool's secondary-touch (pinch-finger) guard.
+  return new PointerEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0, buttons: 1, pointerId: 1, isPrimary: true, ...extra });
 }
 
 afterEach(() => {
@@ -1362,6 +1365,21 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     drawStroke(renderer, 450, 50, 480, 60); // inside A's bbox, ~450px from the actual line
     expect(board.drawings).toHaveLength(2);
     expect(board.drawings[1].groupId).not.toBe(board.drawings[0].groupId);
+  });
+
+  it('eraser swiped across the middle of a straight line erases it (segment hit, not just stored points)', () => {
+    // A straight line is stored as only its two endpoints — the old eraser
+    // measured distance to stored *points*, so criss-crossing its middle
+    // (nowhere near either endpoint) never erased it.
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 100, 400, 100);
+    expect(board.drawings).toHaveLength(1);
+    renderer.penTool = 'eraser';
+    renderer.outer.dispatchEvent(pointer('pointerdown', 200, 50));
+    document.dispatchEvent(pointer('pointermove', 200, 150));
+    document.dispatchEvent(pointer('pointerup', 200, 150));
+    expect(board.drawings).toHaveLength(0);
   });
 
   it('pen strokes render as a filled tapered outline (perfect-freehand), not a stroked polyline', () => {

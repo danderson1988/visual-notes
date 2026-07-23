@@ -306,6 +306,13 @@ export const canvasMethods = {
     this.outer.addEventListener('keydown', (e) => this.onKeyDown(e));
 
     this.docKeyDown = (e: KeyboardEvent) => {
+      // Pen-mode exit must work document-wide, not just while the canvas
+      // itself has focus — clicking any pen-picker control (color swatch,
+      // width, instrument) moves focus onto that control, and the outer
+      // element's own keydown handler then never hears the Enter/Escape.
+      if (this.penModeActive && (e.key === 'Escape' || e.key === 'Enter')) {
+        e.preventDefault(); this.exitPenMode(); return;
+      }
       if (e.code === 'Space' && activeDocument.activeElement === this.outer) {
         e.preventDefault(); this.spaceDown = true;
         if (!this.isPanning) this.setCursor('grab');
@@ -1700,6 +1707,12 @@ export const canvasMethods = {
         // thing standing between real jitter and the drawn line.
         streamline: 0.5,
         simulatePressure: !hasPressure,
+        // Taper the tips in over a short distance — without this the ends
+        // get a full-width round cap, which on a pressure-heavy first/last
+        // sample (a stylus pressed down before moving) reads as a fat dot
+        // stamped on each end of the line.
+        start: { taper: stroke.width * 3, cap: true },
+        end: { taper: stroke.width * 3, cap: true },
         last: true,
       },
     );
@@ -2107,6 +2120,11 @@ export const canvasMethods = {
     // top rather than being re-checked at each call site.
     if (this.penTool === 'eraser') { this.startEraseScrub(startEvent); return; }
 
+    // Never start a stroke from a secondary touch — the second finger of a
+    // pinch-zoom gesture fires its own pointerdown, which used to draw a
+    // line while zooming.
+    if (!startEvent.isPrimary || this.activeTouches >= 2) return;
+
     const isHighlighter = this.penTool === 'highlighter';
     const rect = this.outer.getBoundingClientRect();
     // Pen strokes drawn close together share a group so a multi-stroke
@@ -2188,7 +2206,15 @@ export const canvasMethods = {
     this.inkSvgEl.appendChild(livePath);
 
     let shiftLine = false;
+    // Batch live-outline recomputes to one per animation frame — on a
+    // 120Hz stylus (iPad) getStroke over the whole growing point array on
+    // every single pointermove was heavy enough to visibly lag the line.
+    let rafId = 0;
+    const redrawLive = () => { rafId = 0; livePath.setAttribute('d', this.buildStrokePathD(stroke)); };
     const onMove = (e2: PointerEvent) => {
+      // A second finger landing mid-stroke means this "stroke" is really a
+      // pinch — abort it entirely rather than committing a stray line.
+      if (this.activeTouches >= 2) { onCancel(); return; }
       if (e2.shiftKey) {
         // Ruler mode: while Shift is held the stroke is just anchor →
         // pointer, redrawn live as a perfectly straight segment. Releasing
@@ -2202,11 +2228,21 @@ export const canvasMethods = {
         shiftLine = false;
         addPoint(e2.clientX, e2.clientY, e2.pressure);
       }
-      livePath.setAttribute('d', this.buildStrokePathD(stroke));
+      if (!rafId) rafId = requestAnimationFrame(redrawLive);
     };
-    const onUp = (e2: PointerEvent) => {
+    const removeListeners = () => {
       activeDocument.removeEventListener('pointermove', onMove);
       activeDocument.removeEventListener('pointerup', onUp);
+      activeDocument.removeEventListener('pointercancel', onCancel);
+      if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+    };
+    // iOS fires pointercancel (not pointerup) when the OS takes the touch
+    // over — palm rejection, a pinch, a system gesture. Without handling
+    // it, the move/up listeners above stayed attached and the next stroke
+    // fought them — the "can't draw again for a second" symptom.
+    const onCancel = () => { removeListeners(); livePath.remove(); };
+    const onUp = (e2: PointerEvent) => {
+      removeListeners();
       // Snap the very last point to the true release position — highlighter
       // strokes still run through addPoint's trailing smoothing, which
       // intentionally lags a bit behind the live pointer for a fluid line,
@@ -2228,6 +2264,7 @@ export const canvasMethods = {
     };
     activeDocument.addEventListener('pointermove', onMove);
     activeDocument.addEventListener('pointerup', onUp);
+    activeDocument.addEventListener('pointercancel', onCancel);
   },
 
   autoStraighten(this: FreeformRenderer, stroke: DrawingStroke): void {
@@ -2251,13 +2288,64 @@ export const canvasMethods = {
   startEraseScrub(this: FreeformRenderer, startEvent: PointerEvent): void {
     const rect = this.outer.getBoundingClientRect();
     let erasedAny = false;
+    type Pt = { x: number; y: number };
 
-    const eraseAt = (clientX: number, clientY: number) => {
-      const cp = screenToCanvas(clientX - rect.left, clientY - rect.top, this.vp);
+    // Distance-based checks against sampled *points* alone made straight
+    // lines nearly impossible to erase mid-span — a straight segment is
+    // stored as just its two endpoints, so criss-crossing its middle never
+    // came near any stored point. The scrub is treated as a moving line
+    // segment instead: a stroke is hit when the eraser's movement vector
+    // intersects one of its segments, or passes within reach of one
+    // (point-to-segment distance, covering slow scrubs and endpoints).
+    const segSegIntersect = (a: Pt, b: Pt, c: Pt, d: Pt): boolean => {
+      const cross = (o: Pt, p: Pt, q: Pt) => (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
+      const d1 = cross(c, d, a), d2 = cross(c, d, b), d3 = cross(a, b, c), d4 = cross(a, b, d);
+      return ((d1 > 0) !== (d2 > 0)) && ((d3 > 0) !== (d4 > 0));
+    };
+    const pointSegDist = (p: Pt, a: Pt, b: Pt): number => {
+      const abx = b.x - a.x, aby = b.y - a.y;
+      const len2 = abx * abx + aby * aby;
+      const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * abx + (p.y - a.y) * aby) / len2));
+      return Math.hypot(p.x - (a.x + abx * t), p.y - (a.y + aby * t));
+    };
+
+    // Per-stroke AABBs, cached once at scrub start — a cheap rect test
+    // rejects far-away strokes before any per-segment math runs.
+    const aabbs = new Map<string, { minX: number; minY: number; maxX: number; maxY: number }>();
+    for (const s of this.board.drawings) {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      const pad = s.width / 2;
+      for (const p of s.points) {
+        if (p.x - pad < minX) minX = p.x - pad; if (p.x + pad > maxX) maxX = p.x + pad;
+        if (p.y - pad < minY) minY = p.y - pad; if (p.y + pad > maxY) maxY = p.y + pad;
+      }
+      aabbs.set(s.id, { minX, minY, maxX, maxY });
+    }
+
+    let prev: Pt | null = null;
+    const eraseAlong = (clientX: number, clientY: number) => {
+      const cur = screenToCanvas(clientX - rect.left, clientY - rect.top, this.vp);
+      const from = prev ?? cur;
+      prev = cur;
       const radius = 10 / this.vp.zoom;
+      const moveMinX = Math.min(from.x, cur.x), moveMaxX = Math.max(from.x, cur.x);
+      const moveMinY = Math.min(from.y, cur.y), moveMaxY = Math.max(from.y, cur.y);
       const hits = this.board.drawings.filter(s => {
         const reach = radius + s.width / 2;
-        return s.points.some(p => Math.hypot(p.x - cp.x, p.y - cp.y) <= reach);
+        const bb = aabbs.get(s.id);
+        if (bb && (moveMaxX < bb.minX - radius || moveMinX > bb.maxX + radius
+          || moveMaxY < bb.minY - radius || moveMinY > bb.maxY + radius)) return false;
+        for (let i = 0; i < s.points.length; i++) {
+          const p1 = s.points[i];
+          if (i + 1 < s.points.length) {
+            const p2 = s.points[i + 1];
+            if (segSegIntersect(from, cur, p1, p2)) return true;
+            if (pointSegDist(cur, p1, p2) <= reach) return true;
+          } else if (Math.hypot(p1.x - cur.x, p1.y - cur.y) <= reach) {
+            return true;
+          }
+        }
+        return false;
       });
       if (!hits.length) return;
       if (!erasedAny) { erasedAny = true; this.pushUndo(); }
@@ -2268,16 +2356,18 @@ export const canvasMethods = {
         this.inkHitPaths.get(s.id)?.remove(); this.inkHitPaths.delete(s.id);
       }
     };
-    eraseAt(startEvent.clientX, startEvent.clientY);
+    eraseAlong(startEvent.clientX, startEvent.clientY);
 
-    const onMove = (e2: PointerEvent) => eraseAt(e2.clientX, e2.clientY);
+    const onMove = (e2: PointerEvent) => eraseAlong(e2.clientX, e2.clientY);
     const onUp = () => {
       activeDocument.removeEventListener('pointermove', onMove);
       activeDocument.removeEventListener('pointerup', onUp);
+      activeDocument.removeEventListener('pointercancel', onUp);
       if (erasedAny) this.scheduleSave();
     };
     activeDocument.addEventListener('pointermove', onMove);
     activeDocument.addEventListener('pointerup', onUp);
+    activeDocument.addEventListener('pointercancel', onUp);
   },
 
   togglePenMode(this: FreeformRenderer): void {

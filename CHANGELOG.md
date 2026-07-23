@@ -2,6 +2,16 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.51
+
+### Fixed
+- iPad: the Pen tool could go unresponsive for about a second after finishing a stroke — iOS ends an interrupted touch (palm rejection, a pinch starting, etc.) with a different signal than a normal release, which the plugin wasn't listening for, so the finished stroke's internal listeners stayed attached and fought the next one.
+- iPad: drawing while pinch-zooming — a second finger landing mid-stroke now cancels the stroke instead of drawing a stray line, and a new stroke can no longer start from a non-primary touch.
+- iPad/stylus: strokes drawn with pressure could show a fat dot at the start and/or end — pressing down before moving (or lifting while still pressing) produced a full-width round cap; stroke tips now taper in properly instead.
+- Live pen strokes could visibly lag on high-frequency (120Hz) stylus input — the in-progress line was fully recomputed on every single pointer sample; it's now redrawn at most once per animation frame.
+- "Done (Enter)" in the Pen tool banner stopped responding to the Enter key after clicking any pen-picker control (color, width, instrument) — focus had moved off the canvas, which was the only place listening for it. Enter/Escape now exit the Pen tool no matter what has focus.
+- The eraser could only remove a straight or near-straight line by touching its endpoints — a straight segment is stored as just its two endpoints, and the eraser was only checking distance to stored points, not the line between them. It now detects the eraser's movement crossing the actual segment, so scrubbing through the middle of a line erases it.
+
 ## 1.0.50
 
 ### Changed
