@@ -6,10 +6,19 @@
 /* ── Typography & elevation system ──────────────────────────── */
 
 body {
-  --ib-font-display: 'New York', Georgia, 'Book Antiqua', 'Palatino Linotype', serif;
+  /* Headers (kanban/column/checklist titles, group labels, etc.) used to
+     hard-code a serif stack here regardless of the user's configured Text
+     font — now just follows it, same as body copy, so the whole plugin
+     respects Obsidian's Appearance → Font settings. */
+  --ib-font-display: var(--font-text);
   --ib-font-body: var(--font-text);
   --ib-card-bg: #FFFFFF;
   --ib-card-text: #323B4A;
+  /* Column/board container shells (kanban lists, kanban board columns, the
+     generic "Column" card) — a real Obsidian theme variable rather than a
+     hardcoded gray, so it matches the active theme instead of looking like
+     a fixed slab dropped on top of it. */
+  --ib-column-bg: var(--background-primary);
   /* Canvas background + grid-dot color when the user hasn't set a custom
      one in Settings (main.ts only ever sets these two as an *inline*
      override, which still wins over this class-level default either way). */
@@ -41,6 +50,12 @@ body.theme-dark {
   flex-direction: column;
   height: 100%;
   background: var(--background-primary);
+  /* Obsidian applies --font-interface to view panes by default; without
+     this, any card text that doesn't explicitly set font-family (i.e.
+     everything not already using --ib-font-body/--ib-font-display, mostly
+     plain rendered — not being-edited — card content) silently fell back
+     to the Interface font instead of the user's configured Text font. */
+  font-family: var(--font-text);
 }
 
 .visual-notes-content {
@@ -2405,7 +2420,7 @@ input.visual-notes-table-date-input {
   border-radius: 10px;
   border: 1px solid var(--background-modifier-border);
   box-shadow: var(--ib-shadow-low);
-  background: var(--ib-card-bg);
+  background: var(--ib-column-bg);
   overflow: hidden;
   gap: 0;
   padding: 0;
@@ -2417,7 +2432,12 @@ input.visual-notes-table-date-input {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 12px 36px 10px;
+  /* Right padding must clear the absolutely-positioned lock button (now at
+     right: 58px, ~20px wide → reaches ~78px in, bumped out to make room for
+     the "…" menu button between it and the collapse chevron) — otherwise a
+     long, centered title truncates right underneath them. Left padding
+     stays small since nothing sits over there. */
+  padding: 12px 82px 10px 16px;
   flex-shrink: 0;
   cursor: grab;
   border-bottom: 1px solid var(--background-modifier-border);
@@ -2473,7 +2493,13 @@ input.visual-notes-table-date-input {
   text-align: center;
 }
 
-/* Collapse toggle button */
+/* Collapse toggle button — also the shared base for the lock and "…" menu
+   buttons. Used to default to opacity: 0, only revealed by hovering
+   .visual-notes-kanban-header — which silently never applied to a generic
+   Column card's .visual-notes-column-header or the kanban board's own
+   .visual-notes-kanban-board-titlebar, leaving their buttons permanently
+   invisible there (no hover, no touch equivalent either). Always visible
+   now, everywhere, so they're actually discoverable. */
 .visual-notes-kanban-collapse-btn {
   position: absolute;
   top: 50%;
@@ -2487,17 +2513,12 @@ input.visual-notes-table-date-input {
   border-radius: 4px;
   cursor: pointer;
   color: var(--text-muted);
-  opacity: 0;
-  transition: opacity 80ms, background 80ms, color 80ms;
+  transition: background 80ms, color 80ms;
 }
 .visual-notes-kanban-collapse-btn svg {
   width: 13px;
   height: 13px;
   transition: transform 200ms ease;
-}
-.visual-notes-kanban-header:hover .visual-notes-kanban-collapse-btn,
-.visual-notes-freeform-kanban-card.is-collapsed .visual-notes-kanban-collapse-btn {
-  opacity: 1;
 }
 .visual-notes-kanban-collapse-btn:hover {
   background: var(--background-modifier-hover);
@@ -5030,13 +5051,19 @@ input.visual-notes-accent-pop-hex {
   justify-content: center;
   position: relative;
   min-height: 40px;
-  padding: 8px 40px;
+  /* Right padding must clear the "…" menu button (right: 82px, 20px wide —
+     now the furthest-reaching of the menu/lock/add-column/remove-column
+     cluster), or a long, centered board title truncates right underneath
+     them. */
+  padding: 8px 104px 8px 16px;
   cursor: grab;
   border-bottom: 1px solid var(--background-modifier-border);
   flex-shrink: 0;
   user-select: none;
 }
 .visual-notes-kanban-board-titlebar:active { cursor: grabbing; }
+/* Sits one slot past the lock button. */
+.visual-notes-kanban-board-titlebar .visual-notes-kanban-board-menu-btn { right: 82px; }
 
 .visual-notes-kanban-board-title {
   font-family: var(--ib-font-display);
@@ -5087,7 +5114,7 @@ input.visual-notes-accent-pop-hex {
   flex-direction: column;
   flex: 1 0 0;
   min-width: 160px;
-  background: var(--ib-card-bg);
+  background: var(--ib-column-bg);
   position: relative;
 }
 .visual-notes-kanban-board-column + .visual-notes-kanban-board-column {
@@ -5142,15 +5169,16 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-lock-btn { right: 34px; }
 /* …and after the +/− column buttons in a board's title bar. */
 .visual-notes-kanban-board-titlebar .visual-notes-lock-btn { right: 58px; }
-
-/* Reveal on hover wherever the header's own hover rule doesn't already
-   cover it; a locked padlock is always visible as the state signal. */
-.visual-notes-kanban-board-titlebar:hover .visual-notes-lock-btn,
-.visual-notes-column-header:hover .visual-notes-lock-btn {
-  opacity: 1;
+/* A single kanban card and a generic Column card both also carry a "…"
+   menu button (right: 34px, from the rule above) in the same header — bump
+   the padlock one slot further out so the two don't overlap. Board columns
+   don't get a lock button at all, so their own "…" stays at the default. */
+.visual-notes-freeform-kanban-card:not(.visual-notes-freeform-kanban-board-card) > .visual-notes-kanban-header .visual-notes-lock-btn,
+.visual-notes-column-header .visual-notes-lock-btn {
+  right: 58px;
 }
+
 .visual-notes-lock-btn.is-locked {
-  opacity: 1;
   color: var(--interactive-accent);
 }
 
@@ -5627,7 +5655,7 @@ input.visual-notes-accent-pop-hex {
   border-radius: 10px;
   border: 1px solid var(--background-modifier-border);
   box-shadow: var(--ib-shadow-low);
-  background: var(--ib-card-bg);
+  background: var(--ib-column-bg);
   overflow: hidden;
   gap: 0;
   padding: 0;
@@ -5638,7 +5666,9 @@ input.visual-notes-accent-pop-hex {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 36px 8px;
+  /* Same lock-button clearance as .visual-notes-kanban-header — see its
+     comment. */
+  padding: 10px 82px 8px 16px;
   flex-shrink: 0;
   cursor: grab;
   border-bottom: 1px solid var(--background-modifier-border);

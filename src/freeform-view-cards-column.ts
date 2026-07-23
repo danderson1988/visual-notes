@@ -70,13 +70,42 @@ export const cardsColumnMethods = {
         if (titleEl) this.editColumnTitle(card, titleEl);
       });
     }
+    // Fallback so double-clicking anywhere else in the header (not just the
+    // title text — handy for the small, dim "Untitled column" placeholder)
+    // still opens the rename input. titleEl's own listener above already
+    // stops propagation for a direct hit, so this never double-fires.
+    header.addEventListener('dblclick', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.visual-notes-kanban-collapse-btn')) return;
+      e.stopPropagation();
+      if (titleEl) this.editColumnTitle(card, titleEl);
+    });
 
     header.createSpan({ cls: 'visual-notes-column-count', text: `${card.children.length}` });
 
     this.appendLockButton(header, el, card);
 
+    // "…" menu — a reliable, discoverable way to rename (alongside the
+    // dblclick-anywhere-in-header fallback above), matching the kanban
+    // board's per-column "…" menu.
+    const menuBtn = header.createDiv('visual-notes-kanban-collapse-btn visual-notes-kanban-column-menu-btn');
+    setIcon(menuBtn, 'more-horizontal');
+    menuBtn.setAttribute('aria-label', 'Column options');
+    menuBtn.addEventListener('pointerdown', e => e.stopPropagation());
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const menu = this.newMenu();
+      if (titleEl) {
+        menu.addItem(i => i.setTitle('Rename').setIcon('pencil').onClick(() => {
+          if (titleEl) this.editColumnTitle(card, titleEl);
+        }));
+      }
+      menu.showAtMouseEvent(e);
+    });
+
     const collapseBtn = header.createDiv('visual-notes-kanban-collapse-btn');
     setIcon(collapseBtn, 'chevron-down');
+    collapseBtn.addEventListener('pointerdown', e => e.stopPropagation());
     collapseBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.pushUndo();

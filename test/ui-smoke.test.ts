@@ -18,10 +18,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FreeformRenderer } from '../src/freeform-view';
 import { fakeApp } from './fake-app';
-import { Platform } from 'obsidian';
+import { Platform, Menu } from 'obsidian';
 import type {
   VisualNotesFile, StickyCard, TileCard, TableCard, CommentCard,
   CalloutCard, GroupCard, CalendarCard, ColumnCard, KanbanColumnCard,
+  KanbanBoardCard,
 } from '../src/file-types';
 
 function setup(
@@ -1048,5 +1049,261 @@ describe('UI smoke: pen default ink color follows the active theme', () => {
     document.body.addClass('theme-dark');
     const { renderer } = setup([]);
     expect(renderer.currentInkColor).toBe('#F2F2F2');
+  });
+});
+
+describe('UI smoke: kanban/column header buttons stay clickable (delegated pointerdown regression)', () => {
+  // bindDelegatedCardEvents' single pointerdown listener on the canvas
+  // calls e.preventDefault() on every kanban/column/board card pointerdown
+  // except a few explicitly exempted targets (titles) — and in a real
+  // browser, preventDefault() on pointerdown suppresses the mousedown/click
+  // that would otherwise follow for that same press. Every clickable header
+  // button therefore needs its own pointerdown listener that stops
+  // propagation before the event ever reaches the delegated handler
+  // (matching the pre-existing lock-button/table-card pattern) — without
+  // it, the button never receives a click in a real browser even though it
+  // looks and behaves normally in code. jsdom doesn't synthesize click from
+  // pointerdown/mousedown, so these tests assert the mechanism itself
+  // (defaultPrevented stays false) rather than a real click firing.
+  it('single-column kanban "Add item" button pointerdown does not reach the delegated handler', () => {
+    const kb: KanbanColumnCard = { id: 'kb1', kind: 'kanban-column', x: 0, y: 0, w: 260, h: 300, color: '#fff', items: [] };
+    const { container } = setup([kb]);
+    const addBtn = container.querySelector<HTMLElement>('.visual-notes-kanban-add-btn')!;
+    expect(addBtn).toBeTruthy();
+    const ev = pointer('pointerdown', 50, 50);
+    addBtn.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
+  });
+
+  it('kanban board "Add column" button pointerdown does not reach the delegated handler', () => {
+    const board: KanbanBoardCard = {
+      id: 'kbd1', kind: 'kanban-board', x: 0, y: 0, w: 500, h: 300,
+      columns: [{ id: 'c1', title: 'To do', color: '#6b7280', items: [] }],
+    };
+    const { container } = setup([board]);
+    const addColBtn = container.querySelector<HTMLElement>(
+      '.visual-notes-kanban-board-add-col-btn:not(.visual-notes-kanban-board-remove-col-btn)',
+    )!;
+    expect(addColBtn).toBeTruthy();
+    const ev = pointer('pointerdown', 50, 50);
+    addColBtn.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
+  });
+
+  it('a kanban board column\'s "Add item" button pointerdown does not reach the delegated handler', () => {
+    const board: KanbanBoardCard = {
+      id: 'kbd1', kind: 'kanban-board', x: 0, y: 0, w: 500, h: 300,
+      columns: [{ id: 'c1', title: 'To do', color: '#6b7280', items: [] }],
+    };
+    const { container } = setup([board]);
+    const addBtn = container.querySelector<HTMLElement>('.visual-notes-kanban-board-column .visual-notes-kanban-add-btn')!;
+    expect(addBtn).toBeTruthy();
+    const ev = pointer('pointerdown', 50, 50);
+    addBtn.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
+  });
+
+  it('a kanban board column\'s "…" options button pointerdown does not reach the delegated handler', () => {
+    const board: KanbanBoardCard = {
+      id: 'kbd1', kind: 'kanban-board', x: 0, y: 0, w: 500, h: 300,
+      columns: [{ id: 'c1', title: 'To do', color: '#6b7280', items: [] }],
+    };
+    const { container } = setup([board]);
+    const menuBtn = container.querySelector<HTMLElement>('.visual-notes-kanban-column-menu-btn')!;
+    expect(menuBtn).toBeTruthy();
+    const ev = pointer('pointerdown', 50, 50);
+    menuBtn.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
+  });
+
+  it('a generic Column card title pointerdown does not reach the delegated handler, so dblclick rename still fires', () => {
+    const col: ColumnCard = { id: 'co1', kind: 'column', x: 0, y: 0, w: 300, h: 400, title: 'My Column', children: [] };
+    const { container } = setup([col]);
+    const titleEl = container.querySelector<HTMLElement>('.visual-notes-column-title')!;
+    expect(titleEl).toBeTruthy();
+    const ev = pointer('pointerdown', 50, 50);
+    titleEl.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
+  });
+
+  // A double-click is two real mousedown/mouseup/click pairs under the
+  // hood. e.preventDefault() on pointerdown suppresses that whole
+  // compatibility mousedown/click chain for the press it's called on — so a
+  // header-level dblclick listener alone (below) is not enough on its own;
+  // the browser must actually be *able* to produce click/dblclick events
+  // for the header's background in the first place, not just the title
+  // text. These check the pointerdown-level mechanism directly, since
+  // jsdom (unlike a real browser) doesn't suppress a manually-dispatched
+  // dblclick just because an earlier pointerdown called preventDefault.
+  it('a pointerdown on the kanban header background (not the title) does not get preventDefault', () => {
+    const kb: KanbanColumnCard = { id: 'kb1', kind: 'kanban-column', x: 0, y: 0, w: 260, h: 300, color: '#fff', items: [] };
+    const { container } = setup([kb]);
+    const header = container.querySelector<HTMLElement>('.visual-notes-kanban-header')!;
+    const ev = pointer('pointerdown', 50, 50);
+    header.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
+  });
+
+  it('a pointerdown on the kanban board titlebar background (not the title) does not get preventDefault', () => {
+    const board: KanbanBoardCard = {
+      id: 'kbd1', kind: 'kanban-board', x: 0, y: 0, w: 500, h: 300,
+      columns: [{ id: 'c1', title: 'To do', color: '#6b7280', items: [] }],
+    };
+    const { container } = setup([board]);
+    const titlebar = container.querySelector<HTMLElement>('.visual-notes-kanban-board-titlebar')!;
+    const ev = pointer('pointerdown', 50, 50);
+    titlebar.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
+  });
+
+  it('a pointerdown on a kanban board column\'s header background (not the title) does not get preventDefault', () => {
+    const board: KanbanBoardCard = {
+      id: 'kbd1', kind: 'kanban-board', x: 0, y: 0, w: 500, h: 300,
+      columns: [{ id: 'c1', title: 'To do', color: '#6b7280', items: [] }],
+    };
+    const { container } = setup([board]);
+    const header = container.querySelector<HTMLElement>('.visual-notes-kanban-board-column .visual-notes-kanban-header')!;
+    const ev = pointer('pointerdown', 50, 50);
+    header.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
+  });
+
+  it('a pointerdown on a generic Column card header background (not the title) does not get preventDefault', () => {
+    const col: ColumnCard = { id: 'co1', kind: 'column', x: 0, y: 0, w: 300, h: 400, title: 'My Column', children: [] };
+    const { container } = setup([col]);
+    const header = container.querySelector<HTMLElement>('.visual-notes-column-header')!;
+    const ev = pointer('pointerdown', 50, 50);
+    header.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
+  });
+});
+
+describe('UI smoke: double-clicking the header (not just the title text) opens rename, incl. "Untitled" placeholders', () => {
+  it('single-column kanban card: dblclick on the header background, not the title, renames an untitled card', () => {
+    const kb: KanbanColumnCard = { id: 'kb1', kind: 'kanban-column', x: 0, y: 0, w: 260, h: 300, color: '#fff', items: [] };
+    const { container } = setup([kb]);
+    const titleEl = container.querySelector<HTMLElement>('.visual-notes-kanban-title')!;
+    expect(titleEl.textContent).toBe('Untitled');
+    const header = container.querySelector<HTMLElement>('.visual-notes-kanban-header')!;
+    header.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(header.querySelector('input.visual-notes-kanban-title-input')).not.toBeNull();
+  });
+
+  it('kanban board: dblclick on the titlebar background, not the title, renames an untitled board', () => {
+    const board: KanbanBoardCard = {
+      id: 'kbd1', kind: 'kanban-board', x: 0, y: 0, w: 500, h: 300,
+      columns: [{ id: 'c1', title: 'To do', color: '#6b7280', items: [] }],
+    };
+    const { container } = setup([board]);
+    const titleEl = container.querySelector<HTMLElement>('.visual-notes-kanban-board-title')!;
+    expect(titleEl.textContent).toBe('Untitled board');
+    const titlebar = container.querySelector<HTMLElement>('.visual-notes-kanban-board-titlebar')!;
+    titlebar.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(titlebar.querySelector('input.visual-notes-kanban-title-input')).not.toBeNull();
+  });
+
+  it('kanban board column: dblclick on the column header background, not the title, renames an untitled column', () => {
+    const board: KanbanBoardCard = {
+      id: 'kbd1', kind: 'kanban-board', x: 0, y: 0, w: 500, h: 300,
+      columns: [{ id: 'c1', color: '#6b7280', items: [] }],
+    };
+    const { container } = setup([board]);
+    const titleEl = container.querySelector<HTMLElement>('.visual-notes-kanban-board-column .visual-notes-kanban-title')!;
+    expect(titleEl.textContent).toBe('Untitled');
+    const header = container.querySelector<HTMLElement>('.visual-notes-kanban-board-column .visual-notes-kanban-header')!;
+    header.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(header.querySelector('input.visual-notes-kanban-title-input')).not.toBeNull();
+  });
+
+  it('generic Column card: dblclick on the header background, not the title, renames an untitled column', () => {
+    const col: ColumnCard = { id: 'co1', kind: 'column', x: 0, y: 0, w: 300, h: 400, children: [] };
+    const { container } = setup([col]);
+    const titleEl = container.querySelector<HTMLElement>('.visual-notes-column-title')!;
+    expect(titleEl.textContent).toBe('Untitled column');
+    const header = container.querySelector<HTMLElement>('.visual-notes-column-header')!;
+    header.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(header.querySelector('input.visual-notes-kanban-title-input')).not.toBeNull();
+  });
+
+  it('does not open rename when the dblclick lands on the collapse button', () => {
+    const kb: KanbanColumnCard = { id: 'kb1', kind: 'kanban-column', x: 0, y: 0, w: 260, h: 300, color: '#fff', items: [] };
+    const { container } = setup([kb]);
+    const collapseBtn = container.querySelector<HTMLElement>('.visual-notes-kanban-collapse-btn')!;
+    collapseBtn.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(container.querySelector('input.visual-notes-kanban-title-input')).toBeNull();
+  });
+});
+
+describe('UI smoke: "…" menu button offers a reliable Rename, not dependent on double-click at all', () => {
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  // MenuItemStub.setTitle() is a no-op in the test double (doesn't record
+  // the label) — so rather than asserting on menu item text, these capture
+  // the real Menu instance built by the click handler and trigger its first
+  // (only) item directly, then assert on the resulting DOM change, which is
+  // what actually matters: the button reliably gets you into rename mode.
+  function captureMenu(): { get: () => InstanceType<typeof Menu> | null } {
+    let captured: InstanceType<typeof Menu> | null = null;
+    vi.spyOn(Menu.prototype, 'showAtMouseEvent').mockImplementation(function (this: InstanceType<typeof Menu>) {
+      captured = this;
+    });
+    return { get: () => captured };
+  }
+
+  it('single-column kanban card: the "…" menu\'s first item renames it', () => {
+    const kb: KanbanColumnCard = { id: 'kb1', kind: 'kanban-column', x: 0, y: 0, w: 260, h: 300, color: '#fff', items: [] };
+    const { container } = setup([kb]);
+    const menuBtn = container.querySelector<HTMLElement>('.visual-notes-kanban-header .visual-notes-kanban-column-menu-btn')!;
+    expect(menuBtn).toBeTruthy();
+
+    const menuBox = captureMenu();
+    menuBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const menu = menuBox.get()!;
+    expect(menu.items.length).toBeGreaterThan(0);
+    (menu.items[0] as any).__trigger();
+
+    expect(container.querySelector('input.visual-notes-kanban-title-input')).not.toBeNull();
+  });
+
+  it('kanban board: the titlebar "…" menu\'s first item renames the board', () => {
+    const board: KanbanBoardCard = {
+      id: 'kbd1', kind: 'kanban-board', x: 0, y: 0, w: 500, h: 300,
+      columns: [{ id: 'c1', title: 'To do', color: '#6b7280', items: [] }],
+    };
+    const { container } = setup([board]);
+    const menuBtn = container.querySelector<HTMLElement>('.visual-notes-kanban-board-menu-btn')!;
+    expect(menuBtn).toBeTruthy();
+
+    const menuBox = captureMenu();
+    menuBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const menu = menuBox.get()!;
+    expect(menu.items.length).toBeGreaterThan(0);
+    (menu.items[0] as any).__trigger();
+
+    expect(container.querySelector('.visual-notes-kanban-board-titlebar input.visual-notes-kanban-title-input')).not.toBeNull();
+  });
+
+  it('generic Column card: the "…" menu\'s first item renames it', () => {
+    const col: ColumnCard = { id: 'co1', kind: 'column', x: 0, y: 0, w: 300, h: 400, title: 'My Column', children: [] };
+    const { container } = setup([col]);
+    const menuBtn = container.querySelector<HTMLElement>('.visual-notes-column-header .visual-notes-kanban-column-menu-btn')!;
+    expect(menuBtn).toBeTruthy();
+
+    const menuBox = captureMenu();
+    menuBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const menu = menuBox.get()!;
+    expect(menu.items.length).toBeGreaterThan(0);
+    (menu.items[0] as any).__trigger();
+
+    expect(container.querySelector('input.visual-notes-kanban-title-input')).not.toBeNull();
+  });
+
+  it('the new menu buttons stay clickable (pointerdown does not reach the delegated card handler)', () => {
+    const kb: KanbanColumnCard = { id: 'kb1', kind: 'kanban-column', x: 0, y: 0, w: 260, h: 300, color: '#fff', items: [] };
+    const { container } = setup([kb]);
+    const menuBtn = container.querySelector<HTMLElement>('.visual-notes-kanban-header .visual-notes-kanban-column-menu-btn')!;
+    const ev = pointer('pointerdown', 50, 50);
+    menuBtn.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
   });
 });

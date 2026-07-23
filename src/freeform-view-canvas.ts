@@ -832,11 +832,22 @@ export const canvasMethods = {
         return;
       }
 
-      // Skip preventDefault on kanban titles so dblclick rename still fires (drag still works via capture)
-      const isKanbanTitle = (card.kind === 'kanban-column' || card.kind === 'kanban-board')
-        && !!target.closest('.visual-notes-kanban-title, .visual-notes-kanban-board-title');
+      // Skip preventDefault anywhere in a kanban/column header or board
+      // titlebar — not just the title text itself — so a double-click
+      // there still produces a real dblclick event (drag still works via
+      // capture, further down, which doesn't depend on preventDefault at
+      // all). preventDefault() on pointerdown suppresses the browser's own
+      // compatibility mousedown/click/dblclick for that same press, for
+      // every pointer type — the same mechanism that broke the kanban
+      // board's add-item/add-column buttons before they got their own
+      // pointerdown-stopPropagation guards. Titles used to be the only
+      // exemption, which left the header's own background (surrounding the
+      // title, incl. the whole "Untitled" placeholder's dim padding) still
+      // swallowing every click.
+      const isKanbanHeaderArea = (card.kind === 'kanban-column' || card.kind === 'kanban-board' || card.kind === 'column')
+        && !!target.closest('.visual-notes-kanban-header, .visual-notes-kanban-board-titlebar, .visual-notes-column-header');
       e.stopPropagation();
-      if (!isKanbanTitle) e.preventDefault();
+      if (!isKanbanHeaderArea) e.preventDefault();
 
       if (this.selectedConnectionId) this.deselectConnection();
 

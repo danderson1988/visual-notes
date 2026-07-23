@@ -2,6 +2,18 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.43
+
+### Fixed
+- Kanban, column, and kanban-board headers/titles used a hardcoded serif font regardless of your configured font, and cards showed Obsidian's Interface font instead of your Text font everywhere else — both now follow Appearance → Font like the rest of the app.
+- A kanban board's "Add item", "Add column", and "Remove column" buttons (and the collapse/column-options buttons) could silently do nothing when clicked — a card-drag handler was suppressing the click for any press outside the title text. Fixed for every affected button.
+- Double-clicking to rename a kanban card, kanban board, or column now works from anywhere in the header (not just the exact title text, including the small "Untitled" placeholder) — same underlying cause as above. Also added a "…" menu to every kanban card, kanban board, and column with a Rename option that doesn't depend on double-click at all.
+- The lock/collapse/"…" buttons in kanban and column headers were invisible outside a hover state that silently never applied to columns or a board's own title bar, making them impossible to find. Now always visible.
+- A long kanban/column/board title could visually run underneath the lock icon.
+
+### Changed
+- Column and kanban-board-column backgrounds now use Obsidian's theme color instead of a hardcoded gray.
+
 ## 1.0.42
 
 ### Fixed

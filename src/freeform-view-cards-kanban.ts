@@ -155,6 +155,16 @@ export const cardsKanbanMethods = {
         if (titleEl) this.editKanbanTitle(card, el, titleEl);
       });
     }
+    // Fallback so double-clicking anywhere else in the header (not just the
+    // title text itself — handy for the small, dim "Untitled" placeholder)
+    // still opens the rename input. titleEl's own listener above already
+    // stops propagation for a direct hit, so this never double-fires.
+    header.addEventListener('dblclick', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.visual-notes-kanban-collapse-btn, .visual-notes-kanban-column-menu-btn')) return;
+      e.stopPropagation();
+      if (titleEl) this.editKanbanTitle(card, el, titleEl);
+    });
 
     const countRow = header.createDiv('visual-notes-kanban-count-row');
     countRow.createSpan({ cls: 'visual-notes-kanban-col-count' });
@@ -162,9 +172,28 @@ export const cardsKanbanMethods = {
 
     this.appendLockButton(header, el, card);
 
+    // "…" menu — a reliable, discoverable way to rename (alongside the
+    // dblclick-anywhere-in-header fallback above), matching the board's
+    // per-column "…" menu.
+    const menuBtn = header.createDiv('visual-notes-kanban-collapse-btn visual-notes-kanban-column-menu-btn');
+    setIcon(menuBtn, 'more-horizontal');
+    menuBtn.setAttribute('aria-label', 'Card options');
+    menuBtn.addEventListener('pointerdown', e => e.stopPropagation());
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const menu = this.newMenu();
+      if (titleEl) {
+        menu.addItem(i => i.setTitle('Rename').setIcon('pencil').onClick(() => {
+          if (titleEl) this.editKanbanTitle(card, el, titleEl);
+        }));
+      }
+      menu.showAtMouseEvent(e);
+    });
+
     // Collapse toggle button
     const collapseBtn = header.createDiv('visual-notes-kanban-collapse-btn');
     setIcon(collapseBtn, 'chevron-down');
+    collapseBtn.addEventListener('pointerdown', e => e.stopPropagation());
     collapseBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.pushUndo();
@@ -197,6 +226,7 @@ export const cardsKanbanMethods = {
       const addIcon = addBtn.createSpan();
       setIcon(addIcon, 'plus');
       addBtn.createSpan({ text: 'Add item' });
+      addBtn.addEventListener('pointerdown', e => e.stopPropagation());
       addBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.addItemToOwner(owner, itemsEl);
@@ -303,11 +333,40 @@ export const cardsKanbanMethods = {
         if (boardTitleEl) this.editKanbanBoardTitle(card, boardTitleEl);
       });
     }
+    // Fallback so double-clicking anywhere else in the titlebar (not just
+    // the title text — handy for the small, dim "Untitled board" placeholder)
+    // still opens the rename input. boardTitleEl's own listener above
+    // already stops propagation for a direct hit, so this never double-fires.
+    titlebar.addEventListener('dblclick', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.visual-notes-kanban-collapse-btn, .visual-notes-kanban-board-add-col-btn')) return;
+      e.stopPropagation();
+      if (boardTitleEl) this.editKanbanBoardTitle(card, boardTitleEl);
+    });
     this.appendLockButton(titlebar, el, card);
+
+    // "…" menu — a reliable, discoverable way to rename the board itself
+    // (alongside the dblclick-anywhere-in-titlebar fallback above),
+    // matching each column's own "…" menu further down.
+    const menuBtn = titlebar.createDiv('visual-notes-kanban-collapse-btn visual-notes-kanban-column-menu-btn visual-notes-kanban-board-menu-btn');
+    setIcon(menuBtn, 'more-horizontal');
+    menuBtn.setAttribute('aria-label', 'Board options');
+    menuBtn.addEventListener('pointerdown', e => e.stopPropagation());
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const menu = this.newMenu();
+      if (boardTitleEl) {
+        menu.addItem(i => i.setTitle('Rename').setIcon('pencil').onClick(() => {
+          if (boardTitleEl) this.editKanbanBoardTitle(card, boardTitleEl);
+        }));
+      }
+      menu.showAtMouseEvent(e);
+    });
 
     const addColBtn = titlebar.createDiv('visual-notes-kanban-board-add-col-btn');
     setIcon(addColBtn, 'plus');
     addColBtn.setAttribute('aria-label', 'Add column');
+    addColBtn.addEventListener('pointerdown', e => e.stopPropagation());
     addColBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.addColumnToBoard(card, el);
@@ -316,6 +375,7 @@ export const cardsKanbanMethods = {
     const removeColBtn = titlebar.createDiv('visual-notes-kanban-board-add-col-btn visual-notes-kanban-board-remove-col-btn');
     setIcon(removeColBtn, 'minus');
     removeColBtn.setAttribute('aria-label', 'Remove most recently added column');
+    removeColBtn.addEventListener('pointerdown', e => e.stopPropagation());
     if (card.columns.length <= 1) {
       removeColBtn.addClass('is-disabled');
     } else {
@@ -406,6 +466,16 @@ export const cardsKanbanMethods = {
         if (titleEl) this.editKanbanColumnTitle(board, column, titleEl);
       });
     }
+    // Fallback so double-clicking anywhere else in the header (not just the
+    // title text — handy for the small, dim "Untitled" placeholder) still
+    // opens the rename input. titleEl's own listener above already stops
+    // propagation for a direct hit, so this never double-fires.
+    header.addEventListener('dblclick', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.visual-notes-kanban-collapse-btn, .visual-notes-kanban-column-menu-btn')) return;
+      e.stopPropagation();
+      if (titleEl) this.editKanbanColumnTitle(board, column, titleEl);
+    });
 
     const countRow = header.createDiv('visual-notes-kanban-count-row');
     countRow.createSpan({ cls: 'visual-notes-kanban-col-count' });
@@ -413,6 +483,7 @@ export const cardsKanbanMethods = {
 
     const collapseBtn = header.createDiv('visual-notes-kanban-collapse-btn');
     setIcon(collapseBtn, 'chevron-down');
+    collapseBtn.addEventListener('pointerdown', e => e.stopPropagation());
     collapseBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.pushUndo();
@@ -424,6 +495,7 @@ export const cardsKanbanMethods = {
     const menuBtn = header.createDiv('visual-notes-kanban-collapse-btn visual-notes-kanban-column-menu-btn');
     setIcon(menuBtn, 'more-horizontal');
     menuBtn.setAttribute('aria-label', 'Column options');
+    menuBtn.addEventListener('pointerdown', e => e.stopPropagation());
     menuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.showColumnMenu(e, board, column, columnEl);
@@ -445,6 +517,7 @@ export const cardsKanbanMethods = {
       const addIcon = addBtn.createSpan();
       setIcon(addIcon, 'plus');
       addBtn.createSpan({ text: 'Add item' });
+      addBtn.addEventListener('pointerdown', e => e.stopPropagation());
       addBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.addItemToOwner(owner, itemsEl);
