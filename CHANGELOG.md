@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.48
+
+### Fixed
+- Notes, sticky notes, and other cards flickering or disappearing entirely on iPad — Safari has known bugs tracking `content-visibility: auto` (an off-screen-card rendering optimization) through the pan/zoom transform on the canvas, which could make it wrongly treat an on-screen card as skipped. Turned off for Safari (incl. the iPad/iOS app) specifically; unaffected elsewhere.
+
 ## 1.0.47
 
 ### Fixed

@@ -1,6 +1,6 @@
 import {
   App, TFile, TFolder, TAbstractFile, Notice, setIcon,
-  Component,
+  Component, Platform,
 } from 'obsidian';
 import {
   VisualNotesFile, TileCard,
@@ -259,6 +259,14 @@ export class FreeformRenderer extends Component {
 
   render(): void {
     this.container.addClass('ib-freeform-host');
+    // Safari (incl. the iPadOS/iOS app, both WKWebView) has long-standing
+    // bugs tracking content-visibility: auto's viewport intersection
+    // through a transformed ancestor — cards live inside .visual-notes-
+    // canvas-inner, which pan/zoom sets a CSS transform on, and can end up
+    // wrongly treated as off-screen and skipped, flickering or vanishing
+    // entirely. See the matching CSS override on .is-safari .visual-notes-
+    // freeform-card in styles.css.
+    this.container.toggleClass('is-safari', Platform.isSafari);
     this.container.empty();
     this.cardEls.clear();
     this.connectionPaths.clear();

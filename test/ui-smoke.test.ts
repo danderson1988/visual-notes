@@ -1575,3 +1575,19 @@ describe('UI smoke: pen/marker strokes are undoable', () => {
     expect((board.cards[0] as StickyCard).text).toBe('hi');
   });
 });
+
+describe('UI smoke: Safari content-visibility workaround (iPad flicker/disappear fix)', () => {
+  afterEach(() => { Platform.isSafari = false; });
+
+  it('marks the container is-safari under Platform.isSafari, so the CSS override applies', () => {
+    Platform.isSafari = true;
+    const { container } = setup([]);
+    expect(container.hasClass('is-safari')).toBe(true);
+  });
+
+  it('does not mark the container is-safari on other platforms', () => {
+    Platform.isSafari = false;
+    const { container } = setup([]);
+    expect(container.hasClass('is-safari')).toBe(false);
+  });
+});

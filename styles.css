@@ -376,6 +376,17 @@ body.theme-dark {
   z-index: var(--card-z, 0);
 }
 
+/* Safari's content-visibility: auto has long-standing bugs tracking
+   viewport intersection through a transformed ancestor — .visual-notes-
+   canvas-inner (this card's parent) gets a CSS transform for pan/zoom, and
+   Safari can wrongly treat an on-screen card as skipped, causing it to
+   flicker or disappear entirely (reported on iPad — same WebKit engine as
+   desktop Safari, see freeform-view.ts's is-safari class). Not worth the
+   large-board performance win there; just opt out. */
+.is-safari .visual-notes-freeform-card {
+  content-visibility: visible;
+}
+
 /* Tile-specific layout within the base card */
 .visual-notes-freeform-tile-card {
   align-items: center;
