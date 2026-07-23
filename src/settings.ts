@@ -3,6 +3,7 @@ import type VisualNotesPlugin from './main';
 import { ConfirmModal } from './tile-modal';
 import { Tile } from './types';
 import { relinkAllBoards } from './asset-manager';
+import { STICKY_COLORS } from './freeform-view-shared';
 
 // ── Board picker modal ────────────────────────────────────────
 
@@ -454,20 +455,8 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
       .setDesc('Colour used when creating new sticky notes.');
 
     const stickyPalette = setting.controlEl.createDiv('visual-notes-settings-sticky-palette');
-    const STICKY_SWATCHES = [
-      { color: '#FDE68A', name: 'Yellow' },
-      { color: '#FCA5A5', name: 'Rose' },
-      { color: '#86EFAC', name: 'Green' },
-      { color: '#93C5FD', name: 'Blue' },
-      { color: '#C4B5FD', name: 'Purple' },
-      { color: '#FBB6CE', name: 'Pink' },
-      { color: '#FCD34D', name: 'Amber' },
-      { color: '#A7F3D0', name: 'Mint' },
-      { color: '#D1D5DB', name: 'Grey' },
-      { color: '#F3F4F6', name: 'Light Grey' },
-    ];
-    const currentColor = this.plugin.settings.defaultStickyColor ?? '#FDE68A';
-    for (const { color } of STICKY_SWATCHES) {
+    const currentColor = this.plugin.settings.defaultStickyColor ?? STICKY_COLORS[0].color;
+    for (const { color } of STICKY_COLORS) {
       const sw = stickyPalette.createDiv('visual-notes-modal-swatch');
       sw.style.backgroundColor = color;
       if (color === currentColor) sw.addClass('is-selected');

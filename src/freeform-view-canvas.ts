@@ -2208,7 +2208,10 @@ export const canvasMethods = {
 
     const isHl = this.penTool === 'highlighter';
     const swatchRow = picker.createDiv('visual-notes-pen-picker-row');
-    const PEN_COLORS = ['#1f2937', '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ffffff'];
+    // First entry matches currentInkColor's own light/dark default so the
+    // is-selected ring below has something to land on out of the box.
+    const defaultInk = activeDocument.body.hasClass('theme-dark') ? '#F2F2F2' : '#1f2937';
+    const PEN_COLORS = [defaultInk, '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ffffff'];
     // The colors an actual highlighter set comes in — fluoro yellow first.
     const HIGHLIGHT_COLORS = ['#ffeb3b', '#b2ff59', '#ff80ab', '#ffb74d', '#81d4fa', '#ce93d8'];
     const palette = isHl ? HIGHLIGHT_COLORS : PEN_COLORS;

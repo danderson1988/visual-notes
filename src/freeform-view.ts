@@ -119,7 +119,11 @@ export class FreeformRenderer extends Component {
   penToolBtn: HTMLElement | null = null;
   penColorPicker: HTMLElement | null = null;
   penBanner: HTMLElement | null = null;
-  currentInkColor = '#1f2937';
+  // Dark slate reads fine on the light canvas most vaults start with, but
+  // on a dark-themed canvas it lands a shade off the background itself —
+  // reported as new pen strokes being nearly invisible. Match
+  // --ib-card-text's own light/dark split instead of a single fixed value.
+  currentInkColor = activeDocument.body.hasClass('theme-dark') ? '#F2F2F2' : '#1f2937';
   currentInkWidth = 3;
   // Which drawing instrument is active while in pen mode. Highlighter draws
   // wide, semi-transparent strokes; eraser scrubs whole strokes away.

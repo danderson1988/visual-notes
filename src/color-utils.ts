@@ -22,3 +22,15 @@ export function isDark(hex: string): boolean {
 export function contrastColor(hex: string): string {
   return isDark(hex) ? '#ffffff' : '#1a1a1a';
 }
+
+/**
+ * True for a plain 6-digit hex color ("#FDE68A"), false for anything else —
+ * in particular a CSS var()/keyword reference like "var(--ib-card-bg)",
+ * which isDark()/contrastColor() can't meaningfully evaluate (they'd just
+ * parseInt() garbage out of it). Callers use this to skip per-card contrast
+ * computation for theme-driven default colors and fall back to the
+ * matching CSS-level text color instead.
+ */
+export function isHexColor(s: string): boolean {
+  return /^#[0-9a-fA-F]{6}$/.test(s);
+}

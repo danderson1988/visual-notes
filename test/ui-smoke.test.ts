@@ -987,3 +987,66 @@ describe('UI smoke: minimap/zoom/snap hide while the phone context bar is active
     expect(renderer.zoomPill!.hasClass('is-hidden-for-ctx-bar')).toBe(false);
   });
 });
+
+describe('UI smoke: sticky/note text auto-contrast against background', () => {
+  it('a pale background gets dark auto-contrast text', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#FDE68A' };
+    const { container } = setup([sticky]);
+    const textEl = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"] .visual-notes-sticky-text')!;
+    expect(textEl.style.color).toBe('rgb(26, 26, 26)'); // #1a1a1a
+  });
+
+  it('a dark background gets light auto-contrast text', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#1a1a2e' };
+    const { container } = setup([sticky]);
+    const textEl = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"] .visual-notes-sticky-text')!;
+    expect(textEl.style.color).toBe('rgb(255, 255, 255)'); // #ffffff
+  });
+
+  it('an explicit card.textColor overrides auto-contrast', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#FDE68A', textColor: '#0000ff' };
+    const { container } = setup([sticky]);
+    const textEl = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"] .visual-notes-sticky-text')!;
+    expect(textEl.style.color).toBe('rgb(0, 0, 255)');
+  });
+
+  it('a theme-driven background (var(...)) is left to CSS, not JS-computed contrast', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: 'var(--ib-card-bg)' };
+    const { container } = setup([sticky]);
+    const textEl = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"] .visual-notes-sticky-text')!;
+    expect(textEl.style.color).toBe(''); // no inline override — var(--ib-card-text) from the stylesheet applies
+  });
+
+  it('picking a new background color via the context bar recomputes text contrast', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#FDE68A' };
+    const { renderer, container } = setup([sticky]);
+    renderer.selection.select('s1');
+    (renderer as any).handleCtxEvent({ type: 'sticky-color', hex: '#1a1a2e' });
+
+    const textEl = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"] .visual-notes-sticky-text')!;
+    expect(textEl.style.color).toBe('rgb(255, 255, 255)');
+  });
+
+  it('a blank Note defaults to a theme-following background, not a hardcoded near-white hex', () => {
+    const { renderer, board } = setup([]);
+    (renderer as any).addBlankCardAt(0, 0);
+    const note = board.cards[0] as StickyCard;
+    expect(note.color).toBe('var(--ib-card-bg)');
+  });
+});
+
+describe('UI smoke: pen default ink color follows the active theme', () => {
+  afterEach(() => { document.body.removeClass('theme-dark'); });
+
+  it('defaults to a dark ink color outside a dark theme', () => {
+    document.body.removeClass('theme-dark');
+    const { renderer } = setup([]);
+    expect(renderer.currentInkColor).toBe('#1f2937');
+  });
+
+  it('defaults to a light ink color under a dark theme, so strokes stay visible on a dark canvas', () => {
+    document.body.addClass('theme-dark');
+    const { renderer } = setup([]);
+    expect(renderer.currentInkColor).toBe('#F2F2F2');
+  });
+});

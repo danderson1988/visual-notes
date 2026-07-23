@@ -2,6 +2,16 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.41
+
+### Fixed
+- Notes and sticky notes now auto-contrast their text against their own background color, instead of using a single app-wide text color regardless of the card's actual color — this was the cause of white-on-white notes and barely-readable text on the default pastel sticky colors.
+- Blank Notes now default to a theme-following background instead of a hardcoded near-white color, so they no longer look washed out on a dark theme.
+- The Pen tool's default ink color now follows your theme (light ink on dark, dark ink on light) instead of one fixed dark color that could blend into a dark canvas.
+
+### Changed
+- Internal: the Settings page's sticky-color palette now shares its color list with the in-canvas picker instead of keeping its own separate copy, so the two can't drift out of sync.
+
 ## 1.0.40
 
 ### Fixed

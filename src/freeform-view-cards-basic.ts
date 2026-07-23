@@ -7,7 +7,7 @@ import {
   Card, CommentCard, CommentReply,
   SwatchCard, FileCard, CalloutCard, GroupCard,
 } from './file-types';
-import { contrastColor } from './color-utils';
+import { contrastColor, isHexColor } from './color-utils';
 import {
   resolveThumbnailSrc,
 } from './thumbnail-utils';
@@ -176,7 +176,15 @@ export const cardsBasicMethods = {
     const inner = el.createDiv('visual-notes-sticky-inner');
     const textEl = inner.createDiv('visual-notes-sticky-text');
     if (card.textScale) textEl.addClass(`text-scale-${card.textScale}`);
-    if (card.textColor) textEl.style.color = card.textColor;
+    // A pastel/bright background (the default palette is all pale colors)
+    // read against the theme's own text color regardless of contrast —
+    // white theme text on a pale yellow sticky was reported as barely
+    // readable. Auto-contrast against the card's own background unless the
+    // user picked an explicit text color; skipped for theme-driven
+    // defaults (e.g. a blank Note's `var(--ib-card-bg)`), which already
+    // pair correctly with the CSS-level --ib-card-text fallback.
+    const autoTextColor = card.textColor ?? (isHexColor(card.color) ? contrastColor(card.color) : undefined);
+    if (autoTextColor) textEl.style.color = autoTextColor;
     if (card.textAlign) textEl.style.textAlign = card.textAlign;
     const placeholder = card.blank ? '*Start Typing…*' : '*Double-click to edit…*';
     void MarkdownRenderer.render(this.app, card.text || placeholder, textEl, '', this);
@@ -1227,7 +1235,12 @@ export const cardsBasicMethods = {
   addBlankCard(this: FreeformRenderer): void { const p = this.centerPos(STICKY_DEFAULT_W, STICKY_DEFAULT_H); this.addBlankCardAt(p.x, p.y); },
 
   addBlankCardAt(this: FreeformRenderer, x: number, y: number): void {
-    const card: StickyCard = { id: crypto.randomUUID(), kind: 'sticky', x, y, w: STICKY_DEFAULT_W, z: this.nextZ(), text: '', color: '#F3F4F6', blank: true };
+    // Theme-following default (matches checklist's own 'var(--background-
+    // primary)' default) instead of a hardcoded near-white hex — the
+    // hardcoded value stayed near-white in a dark theme too, which read as
+    // "white background, white text" once paired with the dark theme's
+    // own (light) --ib-card-text.
+    const card: StickyCard = { id: crypto.randomUUID(), kind: 'sticky', x, y, w: STICKY_DEFAULT_W, z: this.nextZ(), text: '', color: 'var(--ib-card-bg)', blank: true };
     this.pushUndo(); this.board.cards.push(card); void this.saveNow();
     const el = this.createCardEl(card);
     this.selection.select(card.id); this.refreshSelectionVisuals();

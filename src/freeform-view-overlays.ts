@@ -10,6 +10,7 @@ import {
   isGoogleMapsUrl,
 } from './thumbnail-utils';
 import { nearestColorName, randomNamedColor, COLOR_PALETTES } from './named-colors';
+import { contrastColor, isHexColor } from './color-utils';
 import { TileModal } from './tile-modal';
 import { LabelPromptModal, ReactionPickerModal } from './card-badges';
 import {
@@ -1418,6 +1419,13 @@ export const overlaysMethods = {
         card.color = e.hex;
         const fill = el.querySelector<HTMLElement>('.visual-notes-sticky-shape-fill');
         if (fill) fill.style.backgroundColor = e.hex; else el.style.backgroundColor = e.hex;
+        // Keep text readable against the new background — same
+        // auto-contrast renderStickyContent applies on initial render,
+        // recomputed here since picking a color doesn't re-render the card.
+        if (!card.textColor) {
+          const textEl = el.querySelector<HTMLElement>('.visual-notes-sticky-text');
+          if (textEl) textEl.style.color = isHexColor(e.hex) ? contrastColor(e.hex) : '';
+        }
         this.scheduleSave();
         break;
       }
