@@ -1488,3 +1488,90 @@ describe('UI smoke: box-select (marquee) also catches pen/marker strokes', () =>
     expect(renderer.selectedDrawingIds.has(s2.groupId)).toBe(true);
   });
 });
+
+describe('UI smoke: pen/marker strokes are undoable', () => {
+  // undoSnapshot()/applyUndoSnapshot() used to only capture cards and
+  // connections — every pushUndo() call scattered through the ink code
+  // (draw, erase, drag, resize, recolor) was pushing a snapshot that
+  // silently couldn't restore a drawing at all, so Ctrl+Z never touched
+  // pen/highlighter strokes no matter what you'd just done to one.
+  function drawStroke(renderer: FreeformRenderer, sx: number, sy: number, ex: number, ey: number) {
+    renderer.outer.dispatchEvent(pointer('pointerdown', sx, sy));
+    document.dispatchEvent(pointer('pointerup', ex, ey));
+  }
+
+  it('undo removes a just-drawn stroke', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 0, 20, 20);
+    expect(board.drawings).toHaveLength(1);
+
+    renderer.undo();
+
+    expect(board.drawings).toHaveLength(0);
+  });
+
+  it('redo brings a just-undone stroke back', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 0, 20, 20);
+    const drawn = board.drawings[0];
+
+    renderer.undo();
+    expect(board.drawings).toHaveLength(0);
+    renderer.redo();
+
+    expect(board.drawings).toHaveLength(1);
+    expect(board.drawings[0].id).toBe(drawn.id);
+  });
+
+  it('undo only removes the most recently drawn stroke, one step at a time', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 0, 20, 20);
+    drawStroke(renderer, 500, 500, 520, 520);
+    expect(board.drawings).toHaveLength(2);
+
+    renderer.undo();
+    expect(board.drawings).toHaveLength(1);
+    expect(board.drawings[0].points[0].x).toBeCloseTo(0, 5);
+
+    renderer.undo();
+    expect(board.drawings).toHaveLength(0);
+  });
+
+  it('undo restores a deleted drawing group', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 0, 20, 20);
+    const [s1] = board.drawings;
+    renderer.exitPenMode();
+
+    renderer.selectedDrawingIds = new Set([s1.groupId]);
+    renderer.deleteSelectedDrawing();
+    expect(board.drawings).toHaveLength(0);
+
+    renderer.undo();
+
+    expect(board.drawings).toHaveLength(1);
+    expect(board.drawings[0].groupId).toBe(s1.groupId);
+  });
+
+  it('undoing a drawing change does not revert unrelated card edits pushed earlier', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#fff' };
+    const { renderer, board } = setup([sticky]);
+    renderer.pushUndo();
+    (board.cards[0] as StickyCard).text = 'changed';
+
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 0, 20, 20);
+    expect(board.drawings).toHaveLength(1);
+
+    renderer.undo(); // undoes the stroke
+    expect(board.drawings).toHaveLength(0);
+    expect((board.cards[0] as StickyCard).text).toBe('changed'); // card edit untouched
+
+    renderer.undo(); // undoes the card edit
+    expect((board.cards[0] as StickyCard).text).toBe('hi');
+  });
+});

@@ -27,14 +27,24 @@ declare module './freeform-view' {
 
 export const persistenceMethods = {
   undoSnapshot(this: FreeformRenderer): string {
-    return JSON.stringify({ cards: this.board.cards, connections: this.board.connections, archived: this.board.archived });
+    return JSON.stringify({
+      cards: this.board.cards, connections: this.board.connections, archived: this.board.archived,
+      drawings: this.board.drawings,
+    });
   },
 
   applyUndoSnapshot(this: FreeformRenderer, json: string): void {
-    const snap = JSON.parse(json) as { cards: VisualNotesFile['cards']; connections: VisualNotesFile['connections']; archived?: VisualNotesFile['archived'] };
+    const snap = JSON.parse(json) as {
+      cards: VisualNotesFile['cards']; connections: VisualNotesFile['connections']; archived?: VisualNotesFile['archived'];
+      drawings?: VisualNotesFile['drawings'];
+    };
     this.board.cards = snap.cards;
     this.board.connections = snap.connections ?? [];
     this.board.archived = snap.archived;
+    // Older in-memory snapshots (pushed before drawings were included here)
+    // won't have this key — falling back to the current drawings rather
+    // than wiping them out is safer than an undefined->[] wipe mid-session.
+    this.board.drawings = snap.drawings ?? this.board.drawings;
     this.scheduleSave(); this.rebuildCards();
   },
 
@@ -64,9 +74,9 @@ export const persistenceMethods = {
     this.initConnectionLayer();
     for (const card of this.board.cards) this.createCardEl(card);
     this.refreshAllConnections();
-    // inner.empty() also tore down the ink SVG layer — rebuild it so
-    // existing pen strokes (unaffected by undo/redo, which only snapshots
-    // cards/connections) still render afterward.
+    // inner.empty() also tore down the ink SVG layer — rebuild it and
+    // re-render from this.board.drawings, which undo/redo snapshots and
+    // restores right alongside cards/connections.
     this.initInkLayer();
     this.renderAllDrawings();
   },

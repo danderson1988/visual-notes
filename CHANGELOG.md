@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.47
+
+### Fixed
+- Undo/redo (Ctrl+Z / Ctrl+Shift+Z) now works for the Pen tool — drawing, erasing, dragging, resizing, and recoloring a stroke or sketch can all be undone. Previously undo only ever tracked cards and connections, so pen/highlighter changes were silently never undoable no matter what you'd just done.
+
 ## 1.0.46
 
 ### Changed
