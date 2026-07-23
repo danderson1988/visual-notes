@@ -1591,3 +1591,79 @@ describe('UI smoke: Safari content-visibility workaround (iPad flicker/disappear
     expect(container.hasClass('is-safari')).toBe(false);
   });
 });
+
+describe('UI smoke: pen size/color picker floats beside the toolbar instead of growing it', () => {
+  // Reported: at 1920×1080 the picker's width/color rows ran under the
+  // bottom-left trash zone, because the picker used to be an in-flow child
+  // of the toolbar — a vertically-centered element (top: 50%;
+  // translateY(-50%)), so growing it to fit the picker pushed its bottom
+  // edge further down the screen every time Pen mode opened.
+  function mockRectsFor(rects: Map<Element, DOMRect>) {
+    return vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      return rects.get(this) ?? ({ x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0, toJSON: () => undefined } as DOMRect);
+    });
+  }
+  function rect(l: number, t: number, w: number, h: number): DOMRect {
+    return { x: l, y: t, width: w, height: h, top: t, left: l, right: l + w, bottom: t + h, toJSON: () => undefined } as DOMRect;
+  }
+
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('the picker is not appended inside the toolbar element', () => {
+    const { renderer } = setup([]);
+    renderer.enterPenMode();
+    expect(renderer.penColorPicker).not.toBeNull();
+    expect(renderer.toolbarEl.contains(renderer.penColorPicker!)).toBe(false);
+    expect(renderer.container.contains(renderer.penColorPicker!)).toBe(true);
+  });
+
+  it('entering Pen mode does not change the toolbar element\'s own children', () => {
+    const { renderer } = setup([]);
+    const before = renderer.toolbarEl.childElementCount;
+    renderer.enterPenMode();
+    expect(renderer.toolbarEl.childElementCount).toBe(before);
+  });
+
+  it('moves the picker above the trash zone when the anchored position would overlap it', () => {
+    const { renderer } = setup([]);
+    renderer.enterPenMode();
+    const picker = renderer.penColorPicker!;
+    const anchor = renderer.penToolBtn!;
+    const trash = renderer.trashZoneEl!;
+
+    // A tall container (2000px) so the picker's anchored position doesn't
+    // need any generic edge-clamping on its own (900 is well within
+    // [8, 2000-8-110]) — isolates the trash-specific nudge from the
+    // generic clamp, which would otherwise mask a missing nudge by
+    // coincidentally also pulling the picker clear in a shorter container.
+    const rects = new Map<Element, DOMRect>([
+      [renderer.container, rect(0, 0, 1920, 2000)],
+      [anchor, rect(20, 900, 56, 40)],
+      [picker, rect(20, 900, 180, 110)], // anchored beside it, overlapping the trash row below
+      [trash, rect(16, 950, 56, 100)], // deliberately overlaps the picker's own rect
+    ]);
+    mockRectsFor(rects);
+
+    (renderer as any).positionPenPicker();
+
+    const pickerTop = parseFloat(picker.style.top || '0');
+    const pickerHeight = 110; // matches the mocked picker rect above
+    const trashTopRelative = 950; // trash.top - container.top
+    // No longer overlapping vertically — the picker's bottom edge must
+    // clear the trash zone's top edge, not just its own top corner (which
+    // stayed "above" the trash's top the whole time even while the two
+    // rects overlapped, so it can't tell a real fix from a no-op nudge).
+    expect(pickerTop + pickerHeight).toBeLessThanOrEqual(trashTopRelative);
+  });
+});
+
+describe('UI smoke: "Save as template" moved out of the header into the "…" menu', () => {
+  it('the toolbar overflow menu includes a Save as template item', () => {
+    const { renderer, container } = setup([]);
+    // The anchor only affects the popup's on-screen position, not its
+    // contents — any element works here.
+    (renderer as any).toggleOverflow(renderer.toolbarEl);
+    const items = Array.from(container.querySelectorAll('.visual-notes-tb-overflow-item')).map(el => el.textContent);
+    expect(items.some(t => t?.includes('Save as template'))).toBe(true);
+  });
+});

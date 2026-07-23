@@ -18,6 +18,7 @@ import {
 } from './canvas/pan-zoom';
 import { ContextBar, CtxEvent } from './context-bar';
 import { sortAssetFile, saveNewAsset } from './asset-manager';
+import { promptSaveBoardAsTemplate } from './file-io';
 import { CropImageModal } from './crop-modal';
 import { toPng } from 'html-to-image';
 import { buildSingleImagePdf, dataUrlToBytes } from './pdf-export';
@@ -657,15 +658,18 @@ export const overlaysMethods = {
     if (this.overflowPopover) { this.closeOverflow(); return; }
 
     const pop = this.overflowPopover = this.container.createDiv('visual-notes-tb-overflow');
-    const mkOv = (label: string, icon: string, tool: string) => {
+    const mkItem = (label: string, icon: string, onClick: (btn: HTMLElement) => void) => {
       const btn = pop.createDiv('visual-notes-tb-overflow-item');
       btn.setAttribute('tabindex', '0');
       const iconEl = btn.createDiv('visual-notes-tb-overflow-icon');
       setIcon(iconEl, icon);
       btn.createSpan({ text: label });
-      const handler = () => { this.closeOverflow(); this.closeFab(); this.activateTool(tool, btn); };
+      const handler = () => { this.closeOverflow(); this.closeFab(); onClick(btn); };
       btn.addEventListener('click', handler);
       btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
+    };
+    const mkOv = (label: string, icon: string, tool: string) => {
+      mkItem(label, icon, (btn) => this.activateTool(tool, btn));
     };
     mkOv('Image',     'image',     'image');
     mkOv('Audio',     'music',     'audio');
@@ -679,6 +683,8 @@ export const overlaysMethods = {
     mkOv('Group',     'frame',     'group');
     mkOv('Calendar',  'calendar-days',  'calendar');
     mkOv('Checkers',  'crown',          'checkers');
+    pop.createDiv('visual-notes-tb-overflow-divider');
+    mkItem('Save as template…', 'save', () => promptSaveBoardAsTemplate(this.app, this.file));
 
     // Position the overflow relative to the anchor based on toolbar side
     const aRect = anchor.getBoundingClientRect();

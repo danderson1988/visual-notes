@@ -5,7 +5,7 @@ import { VisualNotesSettings, DEFAULT_SETTINGS } from './types';
 import { CreateBoardModal, TemplatePickerModal, TemplateChoice } from './create-board-modal';
 import { needsMigration, migrateV1toV2 } from './migration';
 import { relinkAllBoards } from './asset-manager';
-import { isVisualNotesOwnedFile, listTemplates, createBoardFileFromTemplate, installStarterTemplate, TEMPLATES_FOLDER } from './file-io';
+import { isVisualNotesOwnedFile, listTemplates, createBoardFileFromTemplate, installStarterTemplate, TEMPLATES_FOLDER, promptSaveBoardAsTemplate } from './file-io';
 import { STARTER_TEMPLATES } from './starter-templates';
 
 export default class VisualNotesPlugin extends Plugin {
@@ -142,6 +142,22 @@ export default class VisualNotesPlugin extends Plugin {
         const file = view?.file;
         if (!file || file.extension !== 'canvas') return false;
         if (!checking) void this.toggleNativeView(view);
+        return true;
+      },
+    });
+
+    // Command: save the current board as a template — was previously only
+    // reachable via a dedicated header button (removed: it was one of the
+    // least-used actions taking up permanent header space); now also in
+    // the toolbar's "…" overflow menu.
+    this.addCommand({
+      id: 'save-board-as-template',
+      name: 'Save current board as template',
+      checkCallback: (checking) => {
+        const view = this.app.workspace.getActiveViewOfType(VisualNotesView);
+        const file = view?.file;
+        if (!file) return false;
+        if (!checking) promptSaveBoardAsTemplate(this.app, file);
         return true;
       },
     });

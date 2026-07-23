@@ -56,6 +56,29 @@ body.theme-dark {
      plain rendered — not being-edited — card content) silently fell back
      to the Interface font instead of the user's configured Text font. */
   font-family: var(--font-text);
+  /* This element IS Obsidian's own .view-content pane, which core styles
+     with a default padding on every side — native Canvas overrides it the
+     same way to go edge-to-edge. Left/right/bottom padding here was pure
+     wasted canvas space with nothing using it. */
+  padding: 0;
+  border: none;
+  /* Positioning context for the header when it floats over the canvas
+     (see .visual-notes-layout-freeform .visual-notes-view-header below). */
+  position: relative;
+}
+
+/* Obsidian themes commonly style .view-content with a more specific
+   selector, which can win over the ordinary reset above and leave a thick
+   frame around a freeform board.  The Canvas layout is intentionally a
+   full-bleed surface, so force its actual view-content element flush with
+   the leaf.  This is scoped to our class: it does not affect tabs, pane
+   splitters, or any other Obsidian view. */
+.view-content.visual-notes-container.visual-notes-layout-freeform {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 
 .visual-notes-content {
@@ -84,18 +107,37 @@ body.theme-dark {
 .visual-notes-view-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 16px;
+  gap: 4px;
+  /* Kept as thin as the back button/badge allow — the tab above already
+     shows the board name, so this strip only needs to earn its height for
+     the back-navigation control and the Canvas/Tile grid badge. */
+  padding: 2px 8px;
   border-bottom: 1px solid var(--background-modifier-border);
   flex-shrink: 0;
+}
+
+/* On the canvas layout, the header no longer eats a full-width white strip
+   off the top — it floats as a small pill over the canvas, the same way
+   the toolbar/zoom pill/search/filter already do, so the dot-grid runs
+   edge-to-edge exactly like Obsidian's native Canvas. Tile grid keeps the
+   plain in-flow header above, since its content isn't a canvas. */
+.visual-notes-layout-freeform .visual-notes-view-header {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  box-shadow: var(--ib-shadow-low);
 }
 
 .visual-notes-back-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   border-radius: 2px;
   cursor: pointer;
   color: var(--text-muted);
@@ -114,32 +156,8 @@ body.theme-dark {
 }
 
 .visual-notes-back-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-/* Header icon buttons other than Back — save-as-template */
-.visual-notes-save-template-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 2px;
-  cursor: pointer;
-  color: var(--text-muted);
-  flex-shrink: 0;
-  transition: background 80ms ease, color 80ms ease;
-}
-
-.visual-notes-save-template-btn:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
-}
-
-.visual-notes-save-template-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 /* ── Breadcrumb ─────────────────────────────────────────────── */
@@ -149,7 +167,7 @@ body.theme-dark {
   flex-wrap: wrap;
   gap: 2px;
   padding: 0;
-  font-size: 14px;
+  font-size: 11px;
   color: var(--text-muted);
   flex-shrink: 0;
 }
@@ -609,7 +627,7 @@ path.is-marquee-selected {
   flex-direction: column;
   width: 72px;
   padding: 10px 8px;
-  left: 24px;
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
 }
@@ -619,7 +637,7 @@ path.is-marquee-selected {
   flex-direction: column;
   width: 72px;
   padding: 10px 8px;
-  right: 24px;
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
 }
@@ -629,7 +647,7 @@ path.is-marquee-selected {
   flex-direction: row;
   height: 72px;
   padding: 8px 10px;
-  top: 24px;
+  top: 16px;
   left: 50%;
   transform: translateX(-50%);
 }
@@ -639,7 +657,7 @@ path.is-marquee-selected {
   flex-direction: row;
   height: 72px;
   padding: 8px 10px;
-  bottom: 24px;
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
 }
@@ -782,6 +800,12 @@ path.is-marquee-selected {
 
 .visual-notes-tb-overflow-item.is-active {
   color: var(--interactive-accent);
+}
+
+.visual-notes-tb-overflow-divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--background-modifier-border);
 }
 
 .visual-notes-tb-overflow-icon {
@@ -1453,8 +1477,8 @@ path.is-marquee-selected {
 
 .visual-notes-zoom-pill {
   position: absolute;
-  bottom: 24px;
-  right: 24px;
+  bottom: 16px;
+  right: 16px;
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 2px;
@@ -1476,8 +1500,8 @@ path.is-marquee-selected {
 
 .visual-notes-snap-toggle-btn {
   position: absolute;
-  bottom: 24px;
-  right: 88px;
+  bottom: 16px;
+  right: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1511,8 +1535,8 @@ path.is-marquee-selected {
    showing — the container just grows upward when it opens. */
 .visual-notes-minimap {
   position: absolute;
-  bottom: 64px;
-  right: 24px;
+  bottom: 56px;
+  right: 16px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -1630,7 +1654,7 @@ path.is-marquee-selected {
 .visual-notes-search {
   position: absolute;
   top: 16px;
-  right: 24px;
+  right: 16px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1741,7 +1765,7 @@ input.visual-notes-search-input {
 .visual-notes-filter {
   position: absolute;
   top: 62px;
-  right: 24px;
+  right: 16px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -5899,13 +5923,20 @@ input.visual-notes-accent-pop-hex {
   background: rgba(255, 255, 255, 0.34);
 }
 
+/* A floating panel beside the toolbar (positioned/clamped in JS by
+   positionPenPicker), not an in-flow toolbar child — see the comment on
+   showPenColorPicker for why. */
 .visual-notes-pen-picker {
+  position: absolute;
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 8px;
-  margin-top: 4px;
-  border-top: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  box-shadow: var(--ib-shadow-high);
+  z-index: 200;
 }
 
 .visual-notes-pen-picker-row {

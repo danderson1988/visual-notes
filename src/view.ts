@@ -1,12 +1,11 @@
 import { FileView, WorkspaceLeaf, TFile, Notice, setIcon } from 'obsidian';
 import type VisualNotesPlugin from './main';
 import { VisualNotesFile } from './file-types';
-import { readBoardFile, writeBoardFile, isVisualNotesOwnedFile, saveBoardAsTemplate } from './file-io';
+import { readBoardFile, writeBoardFile, isVisualNotesOwnedFile } from './file-io';
 import { GridRenderer } from './grid-view';
 import { FreeformRenderer } from './freeform-view';
 import { relinkBoardData } from './asset-manager';
 import { CreateBoardModal } from './create-board-modal';
-import { NamePromptModal } from './tile-modal';
 
 // Obsidian core's own view type string for its native Canvas view.
 export const NATIVE_CANVAS_VIEW_TYPE = 'canvas';
@@ -130,6 +129,7 @@ export class VisualNotesView extends FileView {
     const container = this.containerEl.children[1] as HTMLElement;
     container.empty();
     container.addClass('visual-notes-container');
+    container.toggleClass('visual-notes-layout-freeform', board.layout === 'freeform');
 
     this.renderHeader(container, file, board.layout);
 
@@ -177,25 +177,13 @@ export class VisualNotesView extends FileView {
     backBtn.setAttribute('aria-label', 'Go back');
     backBtn.addEventListener('click', () => { void this.navigateBack(); });
 
-    // Save as template — reads the file fresh off disk rather than reaching
-    // into the live renderer, so this works the same for both grid and
-    // freeform layouts without either renderer needing to expose its board.
-    const templateBtn = header.createDiv('visual-notes-save-template-btn');
-    setIcon(templateBtn, 'save');
-    templateBtn.setAttribute('aria-label', 'Save as template');
-    templateBtn.addEventListener('click', () => {
-      new NamePromptModal(this.app, 'Save as template', 'Template name', (name) => { void (async () => {
-        const board = await readBoardFile(this.app, file);
-        const saved = await saveBoardAsTemplate(this.app, board, name);
-        new Notice(`Visual Notes: Saved template "${saved.basename}".`);
-      })(); }, file.basename, 'Save').open();
-    });
-
     // Breadcrumb
     const breadcrumb = header.createDiv('visual-notes-breadcrumb');
 
     if (this.navigationHistory.length === 0) {
-      breadcrumb.createSpan({ text: file.basename, cls: 'visual-notes-breadcrumb-current' });
+      // No drill-down path to show — the plain filename here would just
+      // repeat the tab title right above it, so skip straight to the
+      // layout badge below rather than rendering a redundant copy of it.
     } else {
       // Render history entries as clickable ancestors
       this.navigationHistory.forEach((histFile, i) => {

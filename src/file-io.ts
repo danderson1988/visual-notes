@@ -2,6 +2,7 @@ import { App, Notice, TFile, TFolder } from 'obsidian';
 import { VisualNotesFile } from './file-types';
 import { CanvasData, visualNotesToCanvas, canvasToVisualNotes, isVisualNotesCanvas } from './canvas-format';
 import { migrateLegacyKanbanColumns } from './kanban-migrate';
+import { NamePromptModal } from './tile-modal';
 
 // ── Read ──────────────────────────────────────────────────────
 
@@ -114,6 +115,18 @@ export async function saveBoardAsTemplate(app: App, board: VisualNotesFile, name
   const clone = JSON.parse(JSON.stringify(board)) as VisualNotesFile;
   delete clone.archived;
   return writeNewBoardFile(app, name, folder, clone);
+}
+
+// Shared by the toolbar's "…" overflow menu and the "Save current board as
+// template" command — reads the file fresh off disk rather than reaching
+// into a live renderer, so it works the same for both grid and freeform
+// layouts without either renderer needing to expose its board.
+export function promptSaveBoardAsTemplate(app: App, file: TFile): void {
+  new NamePromptModal(app, 'Save as template', 'Template name', (name) => { void (async () => {
+    const board = await readBoardFile(app, file);
+    const saved = await saveBoardAsTemplate(app, board, name);
+    new Notice(`Visual Notes: Saved template "${saved.basename}".`);
+  })(); }, file.basename, 'Save').open();
 }
 
 // ── Helpers ───────────────────────────────────────────────────

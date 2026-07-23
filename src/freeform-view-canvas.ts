@@ -107,6 +107,7 @@ declare module './freeform-view' {
     showPenBanner(): void;
     hidePenBanner(): void;
     showPenColorPicker(): void;
+    positionPenPicker(): void;
     hidePenColorPicker(): void;
     refreshAllConnections(): void;
     renderSingleConnection(conn: Connection): void;
@@ -2262,7 +2263,16 @@ export const canvasMethods = {
 
   showPenColorPicker(this: FreeformRenderer): void {
     this.hidePenColorPicker();
-    const picker = this.toolbarEl.createDiv('visual-notes-pen-picker');
+    // A floating panel next to the toolbar, not an in-flow toolbar child —
+    // the toolbar is vertically centered (top: 50%; translateY(-50%)), so
+    // growing it in place to fit this picker pushed its bottom edge
+    // further down the screen every time it opened, far enough at common
+    // resolutions (reported at 1920×1080) to run under the bottom-left
+    // trash zone. Floating it beside the Pen button instead leaves the
+    // toolbar's own size/position untouched; positionPenPicker (called at
+    // the end, once the rows below exist to measure) anchors and clamps
+    // it, same approach as the "…" overflow menu (see toggleOverflow).
+    const picker = this.container.createDiv('visual-notes-pen-picker');
     this.penColorPicker = picker;
 
     // Instrument row: pen / highlighter / eraser.
@@ -2288,7 +2298,7 @@ export const canvasMethods = {
     }
 
     // The eraser has no color or width — just the instrument row.
-    if (this.penTool === 'eraser') return;
+    if (this.penTool === 'eraser') { this.positionPenPicker(); return; }
 
     const isHl = this.penTool === 'highlighter';
     const swatchRow = picker.createDiv('visual-notes-pen-picker-row');
@@ -2324,6 +2334,55 @@ export const canvasMethods = {
         widthRow.querySelectorAll<HTMLElement>('.visual-notes-pen-width-btn').forEach(b => b.removeClass('is-selected'));
         btn.addClass('is-selected');
       });
+    }
+    this.positionPenPicker();
+  },
+
+  // Anchors the picker beside the Pen toolbar button (side depends on
+  // toolbarPosition, mirroring toggleOverflow's anchor logic), clamps it
+  // fully inside the container, then nudges it clear of the trash zone
+  // specifically if it still overlaps — the concrete collision reported at
+  // 1920×1080 with the old in-flow layout.
+  positionPenPicker(this: FreeformRenderer): void {
+    const picker = this.penColorPicker;
+    const anchor = this.penToolBtn;
+    if (!picker || !anchor) return;
+    const aRect = anchor.getBoundingClientRect();
+    const cRect = this.container.getBoundingClientRect();
+    const gap = 8;
+    if (this.toolbarPosition === 'right') {
+      picker.setCssStyles({ top: `${aRect.top - cRect.top}px`, right: `${cRect.right - aRect.left + gap}px`, bottom: '', left: '' });
+    } else if (this.toolbarPosition === 'bottom') {
+      picker.setCssStyles({ bottom: `${cRect.bottom - aRect.top + gap}px`, left: `${aRect.left - cRect.left}px`, top: '', right: '' });
+    } else if (this.toolbarPosition === 'top') {
+      picker.setCssStyles({ top: `${aRect.bottom - cRect.top + gap}px`, left: `${aRect.left - cRect.left}px`, bottom: '', right: '' });
+    } else {
+      picker.setCssStyles({ top: `${aRect.top - cRect.top}px`, left: `${aRect.right - cRect.left + gap}px`, bottom: '', right: '' });
+    }
+
+    // Clamp fully inside the container so it's never cut off at a screen
+    // edge — same measure-then-pull-in approach as toggleOverflow.
+    const margin = 8;
+    let pRect = picker.getBoundingClientRect();
+    let top = pRect.top - cRect.top;
+    let left = pRect.left - cRect.left;
+    top = Math.max(margin, Math.min(top, cRect.height - margin - pRect.height));
+    left = Math.max(margin, Math.min(left, cRect.width - margin - pRect.width));
+    picker.setCssStyles({ top: `${top}px`, left: `${left}px`, bottom: '', right: '' });
+
+    // Still overlapping the trash zone (bottom-left — only ever a concern
+    // for a left/bottom toolbar)? Move above it instead of just clamping,
+    // since clamping alone would just slide the picker sideways into the
+    // same row rather than actually clearing it.
+    const trash = this.trashZoneEl;
+    if (!trash) return;
+    pRect = picker.getBoundingClientRect();
+    const tRect = trash.getBoundingClientRect();
+    const overlaps = pRect.left < tRect.right + margin && pRect.right > tRect.left - margin
+      && pRect.top < tRect.bottom + margin && pRect.bottom > tRect.top - margin;
+    if (overlaps) {
+      const flippedTop = Math.max(margin, tRect.top - cRect.top - pRect.height - margin);
+      picker.setCssStyles({ top: `${flippedTop}px` });
     }
   },
 

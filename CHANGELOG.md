@@ -2,6 +2,16 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.49
+
+### Changed
+- The canvas now fills the entire pane edge-to-edge, matching Obsidian's native Canvas — removed the wasted padding/border Obsidian's default view pane was adding on all sides, and turned the board-name header into a small floating pill in the top-left corner (over the canvas) instead of a full-width bar reserving space at the top.
+- Moved "Save as template" out of the top bar and into the toolbar's "···" menu and the Command Palette ("Save current board as template"), since the header no longer has room to spare.
+- Toolbar, zoom control, minimap, search, and filter now sit closer to the screen edges (16px instead of 24px).
+
+### Fixed
+- The Pen tool's size/color picker could overlap the trash icon on smaller or lower-resolution screens (e.g. 1920×1080 at 100% scaling) — it now positions itself relative to the available canvas space and flips away from the trash zone if they'd collide.
+
 ## 1.0.48
 
 ### Fixed
