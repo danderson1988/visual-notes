@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.45
+
+### Changed
+- Internal: added explicit types around the new drawing multi-select code (plugin-review compliance — cleared a batch of `@typescript-eslint/no-unsafe-*` warnings). No behaviour change.
+
 ## 1.0.44
 
 ### Fixed

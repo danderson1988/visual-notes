@@ -1767,9 +1767,9 @@ export const canvasMethods = {
       // clicked stroke wasn't already part of it, so an existing
       // multi-selection survives a plain click-and-drag on one of its
       // members, matching card behavior.
-      const groupIds = [...this.selectedDrawingIds];
-      const groupStrokes = groupIds.flatMap(id => this.groupStrokes(id));
-      const startPoints = groupStrokes.map(s => s.points.map(p => ({ ...p })));
+      const groupIds: string[] = [...this.selectedDrawingIds];
+      const groupStrokes: DrawingStroke[] = groupIds.flatMap((id): DrawingStroke[] => this.groupStrokes(id));
+      const startPoints: { x: number; y: number }[][] = groupStrokes.map(s => s.points.map(p => ({ ...p })));
       const sx = e.clientX, sy = e.clientY;
       let moved = false;
 
@@ -1996,7 +1996,7 @@ export const canvasMethods = {
   },
 
   showDrawingMenu(this: FreeformRenderer, e: MouseEvent, groupIds: string[]): void {
-    const strokes = groupIds.flatMap(id => this.groupStrokes(id));
+    const strokes: DrawingStroke[] = groupIds.flatMap((id): DrawingStroke[] => this.groupStrokes(id));
     if (!strokes.length) return;
     const menu = this.newMenu();
     menu.addItem(i => i.setTitle('Change color…').setIcon('palette').onClick(() => {
