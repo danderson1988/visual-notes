@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.44
+
+### Fixed
+- Box-select (drag a rubber-band rectangle) and Shift/Ctrl-click multi-select now work on pen and highlighter strokes, same as they already did for cards — previously a click always replaced whatever drawing was selected, and the box-select marquee ignored drawings entirely.
+- Drawing several separate doodles without turning the Pen tool off in between no longer welds them into one giant selectable/movable group — a new stroke only joins the current sketch if it actually starts near it; one drawn somewhere else on the canvas now gets its own group automatically.
+
 ## 1.0.43
 
 ### Fixed

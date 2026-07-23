@@ -105,8 +105,12 @@ HTMLElementProto.hide = function (this: HTMLElement) { this.style.display = 'non
 HTMLElementProto.toggle = function (this: HTMLElement, show: boolean) { show ? (this as any).show() : (this as any).hide(); };
 HTMLElementProto.toggleVisibility = function (this: HTMLElement, visible: boolean) { (this as any).toggle(visible); };
 HTMLElementProto.isShown = function (this: HTMLElement) { return this.style.display !== 'none'; };
-HTMLElementProto.setCssStyles = function (this: HTMLElement, styles: Partial<CSSStyleDeclaration>) { Object.assign(this.style, styles); };
-HTMLElementProto.setCssProps = function (this: HTMLElement, props: Record<string, string>) { for (const [k, v] of Object.entries(props)) this.style.setProperty(k, v); };
+// Real Obsidian's setCssStyles/setCssProps work on any styleable Element,
+// SVG included (ink/connection paths style themselves this way) — patched
+// on ElementProto, not HTMLElementProto, to match. SVGElement has a real
+// .style in both browsers and jsdom.
+ElementProto.setCssStyles = function (this: Element, styles: Partial<CSSStyleDeclaration>) { Object.assign((this as HTMLElement).style, styles); };
+ElementProto.setCssProps = function (this: Element, props: Record<string, string>) { for (const [k, v] of Object.entries(props)) (this as HTMLElement).style.setProperty(k, v); };
 HTMLElementProto.onClickEvent = function (this: HTMLElement, listener: EventListener, options?: boolean | AddEventListenerOptions) {
   this.addEventListener('click', listener, options);
 };

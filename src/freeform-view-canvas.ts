@@ -88,8 +88,8 @@ declare module './freeform-view' {
     buildHighlightOutlineD(stroke: DrawingStroke): string;
     renderSingleDrawing(stroke: DrawingStroke): void;
     groupStrokes(groupId: string): DrawingStroke[];
-    selectDrawing(groupId: string): void;
-    refreshDrawingSelectionVisual(groupId: string): void;
+    selectDrawing(groupId: string, additive?: boolean): void;
+    refreshDrawingSelectionVisual(): void;
     deselectDrawing(): void;
     computeGroupBBox(groupId: string): { minX: number; minY: number; maxX: number; maxY: number } | null;
     renderDrawingBox(groupId: string, bbox: { minX: number; minY: number; maxX: number; maxY: number }): void;
@@ -97,7 +97,7 @@ declare module './freeform-view' {
     startDrawingResize(e: PointerEvent, groupId: string, corner: 'nw' | 'ne' | 'sw' | 'se'): void;
     deleteSelectedDrawing(): void;
     rerenderGroup(groupId: string): void;
-    showDrawingMenu(e: MouseEvent, groupId: string): void;
+    showDrawingMenu(e: MouseEvent, groupIds: string[]): void;
     startInkStroke(startEvent: PointerEvent): void;
     autoStraighten(stroke: DrawingStroke): void;
     startEraseScrub(startEvent: PointerEvent): void;
@@ -363,7 +363,10 @@ export const canvasMethods = {
         return;
       }
       if (this.selectedConnectionId) this.deselectConnection();
-      if (this.selectedDrawingId) this.deselectDrawing();
+      // Shift-clicking empty canvas to start a marquee keeps any existing
+      // drawing selection so the marquee can add more strokes to it —
+      // matches the shift-aware card selection just below.
+      if (!e.shiftKey && this.selectedDrawingIds.size > 0) this.deselectDrawing();
       if (e.button === 1 || (e.button === 0 && this.spaceDown)) {
         e.preventDefault(); this.startPan(e);
       } else if (e.button === 0 && this.pendingTool) {
@@ -726,6 +729,18 @@ export const canvasMethods = {
           path.addClass('is-marquee-selected');
         }
       }
+      // Pen/marker strokes caught in the box get their whole group selected
+      // too (not clearing first — the pre-marquee pointerdown handler
+      // already cleared any prior drawing selection unless Shift was held,
+      // same as it does for cards above).
+      for (const stroke of this.board.drawings) {
+        const hitPath = this.inkHitPaths.get(stroke.id);
+        if (!hitPath) continue;
+        const sr = hitPath.getBoundingClientRect();
+        const sL = sr.left - rect.left, sT = sr.top - rect.top;
+        if (sL < mR && sL + sr.width > mL && sT < mB && sT + sr.height > mT) this.selectedDrawingIds.add(stroke.groupId);
+      }
+      if (this.selectedDrawingIds.size > 0) this.refreshDrawingSelectionVisual();
       this.refreshSelectionVisuals(true);
     };
     this.outer.addEventListener('pointermove', onMove); this.outer.addEventListener('pointerup', onUp);
@@ -1294,13 +1309,13 @@ export const canvasMethods = {
       if (this.overflowPopover) { this.closeOverflow(); return; }
       if (this.connectMode) { this.exitConnectMode(); return; }
       if (this.selectedConnectionId) { this.deselectConnection(); return; }
-      if (this.selectedDrawingId) { this.deselectDrawing(); return; }
+      if (this.selectedDrawingIds.size > 0) { this.deselectDrawing(); return; }
       this.selection.clear(); this.refreshSelectionVisuals(); return;
     }
     if (e.key === 'Delete' || e.key === 'Backspace') {
       if (!this.selection.isEmpty() || this.marqueeConnectionIds.size > 0) { e.preventDefault(); this.deleteSelected(); return; }
       if (this.selectedConnectionId) { e.preventDefault(); this.deleteSelectedConnection(); return; }
-      if (this.selectedDrawingId) { e.preventDefault(); this.deleteSelectedDrawing(); return; }
+      if (this.selectedDrawingIds.size > 0) { e.preventDefault(); this.deleteSelectedDrawing(); return; }
     }
     if (meta && e.key === 'a') { e.preventDefault(); for (const c of this.board.cards) this.selection.add(c.id); this.refreshSelectionVisuals(); return; }
     if (meta && e.key === 'd') { e.preventDefault(); this.duplicateSelected(); return; }
@@ -1741,10 +1756,19 @@ export const canvasMethods = {
     hit.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       e.stopPropagation();
-      const groupId = stroke.groupId;
-      this.selectDrawing(groupId);
+      const additive = e.shiftKey || e.ctrlKey || e.metaKey;
+      this.selectDrawing(stroke.groupId, additive);
+      // A modifier-click only toggles selection membership — same as card
+      // multi-select, it doesn't also start a drag.
+      if (additive) return;
 
-      const groupStrokes = this.groupStrokes(groupId);
+      // Drags every currently-selected group together (not just the one
+      // clicked) — selectDrawing above only replaced the selection if the
+      // clicked stroke wasn't already part of it, so an existing
+      // multi-selection survives a plain click-and-drag on one of its
+      // members, matching card behavior.
+      const groupIds = [...this.selectedDrawingIds];
+      const groupStrokes = groupIds.flatMap(id => this.groupStrokes(id));
       const startPoints = groupStrokes.map(s => s.points.map(p => ({ ...p })));
       const sx = e.clientX, sy = e.clientY;
       let moved = false;
@@ -1759,20 +1783,19 @@ export const canvasMethods = {
           this.inkPaths.get(s.id)?.setAttribute('d', this.buildStrokePathD(s));
           this.inkHitPaths.get(s.id)?.setAttribute('d', this.buildInkPathD(s.points));
         });
-        this.refreshDrawingSelectionVisual(groupId);
+        this.refreshDrawingSelectionVisual();
         this.setTrashHover(e2.clientX, e2.clientY);
       };
       const onUp = (e2: PointerEvent) => {
         activeDocument.removeEventListener('pointermove', onMove);
         activeDocument.removeEventListener('pointerup', onUp);
         this.clearTrashHover();
-        // Dropped on the trash zone: delete the whole sketch group. The
+        // Dropped on the trash zone: delete every dragged sketch group. The
         // drag's own pushUndo (on first movement) already covers this, so
-        // one undo brings the sketch back where it started.
+        // one undo brings every group back where it started.
         if (moved && this.isOverTrash(e2.clientX, e2.clientY)) {
-          const toRemove = this.groupStrokes(groupId);
-          this.board.drawings = this.board.drawings.filter(s => s.groupId !== groupId);
-          for (const s of toRemove) {
+          this.board.drawings = this.board.drawings.filter(s => !groupIds.includes(s.groupId));
+          for (const s of groupStrokes) {
             this.inkPaths.get(s.id)?.remove(); this.inkPaths.delete(s.id);
             this.inkHitPaths.get(s.id)?.remove(); this.inkHitPaths.delete(s.id);
           }
@@ -1787,8 +1810,8 @@ export const canvasMethods = {
     });
     hit.addEventListener('contextmenu', (e) => {
       e.preventDefault(); e.stopPropagation();
-      this.selectDrawing(stroke.groupId);
-      this.showDrawingMenu(e, stroke.groupId);
+      if (!this.selectedDrawingIds.has(stroke.groupId)) this.selectDrawing(stroke.groupId);
+      this.showDrawingMenu(e, [...this.selectedDrawingIds]);
     });
     this.inkSvgEl.appendChild(hit);
     this.inkHitPaths.set(stroke.id, hit);
@@ -1798,47 +1821,66 @@ export const canvasMethods = {
     return this.board.drawings.filter(s => s.groupId === groupId);
   },
 
-  selectDrawing(this: FreeformRenderer, groupId: string): void {
-    if (this.selectedDrawingId === groupId) return;
-    this.deselectDrawing();
-    this.selection.clear(); this.refreshSelectionVisuals();
-    this.deselectConnection();
-    this.selectedDrawingId = groupId;
-    this.refreshDrawingSelectionVisual(groupId);
+  selectDrawing(this: FreeformRenderer, groupId: string, additive = false): void {
+    if (additive) {
+      if (this.selectedDrawingIds.has(groupId)) this.selectedDrawingIds.delete(groupId);
+      else this.selectedDrawingIds.add(groupId);
+    } else if (this.selectedDrawingIds.size === 1 && this.selectedDrawingIds.has(groupId)) {
+      // Already the sole selection — nothing to change.
+      this.outer.focus();
+      return;
+    } else if (!this.selectedDrawingIds.has(groupId)) {
+      // Only reset to a single-group selection when the clicked stroke
+      // isn't already part of the current (possibly multi-group)
+      // selection — so a plain click-and-drag on an already-selected
+      // stroke keeps the whole selection intact, same as cards.
+      this.selection.clear(); this.refreshSelectionVisuals();
+      this.deselectConnection();
+      this.selectedDrawingIds = new Set([groupId]);
+    }
+    this.refreshDrawingSelectionVisual();
     this.outer.focus();
   },
 
-  refreshDrawingSelectionVisual(this: FreeformRenderer, groupId: string): void {
+  refreshDrawingSelectionVisual(this: FreeformRenderer): void {
     this.inkSelectGroup?.remove();
     this.inkSelectGroup = null;
-    const strokes = this.groupStrokes(groupId);
-    if (!strokes.length) { this.removeDrawingBox(); return; }
+    if (this.selectedDrawingIds.size === 0) { this.removeDrawingBox(); return; }
 
     const g = createSvg('g');
     g.setAttribute('pointer-events', 'none');
-    for (const stroke of strokes) {
-      const p = createSvg('path');
-      p.setAttribute('d', this.buildInkPathD(stroke.points));
-      p.setAttribute('stroke', 'var(--interactive-accent)');
-      p.setAttribute('stroke-width', String(stroke.width + 8));
-      p.setAttribute('stroke-opacity', '0.3');
-      p.setAttribute('fill', 'none');
-      p.setAttribute('stroke-linecap', 'round');
-      p.setAttribute('stroke-linejoin', 'round');
-      g.appendChild(p);
+    for (const groupId of this.selectedDrawingIds) {
+      for (const stroke of this.groupStrokes(groupId)) {
+        const p = createSvg('path');
+        p.setAttribute('d', this.buildInkPathD(stroke.points));
+        p.setAttribute('stroke', 'var(--interactive-accent)');
+        p.setAttribute('stroke-width', String(stroke.width + 8));
+        p.setAttribute('stroke-opacity', '0.3');
+        p.setAttribute('fill', 'none');
+        p.setAttribute('stroke-linecap', 'round');
+        p.setAttribute('stroke-linejoin', 'round');
+        g.appendChild(p);
+      }
     }
     this.inkSvgEl.insertBefore(g, this.inkSvgEl.firstChild);
     this.inkSelectGroup = g;
 
-    const bbox = this.computeGroupBBox(groupId);
-    if (bbox) this.renderDrawingBox(groupId, bbox);
-    else this.removeDrawingBox();
+    // Resize handles only make sense for a single group at a time — a
+    // multi-group selection still shows the halo above, just without a box.
+    if (this.selectedDrawingIds.size === 1) {
+      const groupId = [...this.selectedDrawingIds][0];
+      const bbox = this.computeGroupBBox(groupId);
+      if (bbox) this.renderDrawingBox(groupId, bbox);
+      else this.removeDrawingBox();
+    } else {
+      this.removeDrawingBox();
+    }
   },
 
   deselectDrawing(this: FreeformRenderer): void {
     this.inkSelectGroup?.remove();
     this.inkSelectGroup = null;
-    this.selectedDrawingId = null;
+    this.selectedDrawingIds.clear();
     this.removeDrawingBox();
   },
 
@@ -1918,7 +1960,7 @@ export const canvasMethods = {
         this.inkHitPaths.get(s.id)?.setAttribute('d', this.buildInkPathD(s.points));
         this.inkHitPaths.get(s.id)?.setAttribute('stroke-width', String(Math.max(16, s.width + 12)));
       });
-      this.refreshDrawingSelectionVisual(groupId);
+      this.refreshDrawingSelectionVisual();
     };
     const onUp = () => {
       activeDocument.removeEventListener('pointermove', onMove);
@@ -1930,11 +1972,11 @@ export const canvasMethods = {
   },
 
   deleteSelectedDrawing(this: FreeformRenderer): void {
-    if (!this.selectedDrawingId) return;
-    const groupId = this.selectedDrawingId;
+    if (this.selectedDrawingIds.size === 0) return;
+    const groupIds = [...this.selectedDrawingIds];
     this.pushUndo();
-    const toRemove = this.groupStrokes(groupId);
-    this.board.drawings = this.board.drawings.filter(s => s.groupId !== groupId);
+    const toRemove = this.board.drawings.filter(s => groupIds.includes(s.groupId));
+    this.board.drawings = this.board.drawings.filter(s => !groupIds.includes(s.groupId));
     for (const s of toRemove) {
       this.inkPaths.get(s.id)?.remove(); this.inkPaths.delete(s.id);
       this.inkHitPaths.get(s.id)?.remove(); this.inkHitPaths.delete(s.id);
@@ -1944,17 +1986,17 @@ export const canvasMethods = {
   },
 
   rerenderGroup(this: FreeformRenderer, groupId: string): void {
-    const wasSelected = this.selectedDrawingId === groupId;
+    const wasSelected = this.selectedDrawingIds.has(groupId);
     for (const s of this.groupStrokes(groupId)) {
       this.inkPaths.get(s.id)?.remove(); this.inkPaths.delete(s.id);
       this.inkHitPaths.get(s.id)?.remove(); this.inkHitPaths.delete(s.id);
       this.renderSingleDrawing(s);
     }
-    if (wasSelected) { this.deselectDrawing(); this.selectDrawing(groupId); }
+    if (wasSelected) this.refreshDrawingSelectionVisual();
   },
 
-  showDrawingMenu(this: FreeformRenderer, e: MouseEvent, groupId: string): void {
-    const strokes = this.groupStrokes(groupId);
+  showDrawingMenu(this: FreeformRenderer, e: MouseEvent, groupIds: string[]): void {
+    const strokes = groupIds.flatMap(id => this.groupStrokes(id));
     if (!strokes.length) return;
     const menu = this.newMenu();
     menu.addItem(i => i.setTitle('Change color…').setIcon('palette').onClick(() => {
@@ -1962,7 +2004,8 @@ export const canvasMethods = {
         if (!hex) return;
         this.pushUndo();
         for (const s of strokes) s.color = hex;
-        this.rerenderGroup(groupId); this.scheduleSave();
+        for (const id of groupIds) this.rerenderGroup(id);
+        this.scheduleSave();
       }).open();
     }));
     // Highlighter strokes carry the marker's 3.5× width scale, so the same
@@ -1970,13 +2013,14 @@ export const canvasMethods = {
     const setWidth = (w: number) => {
       this.pushUndo();
       for (const s of strokes) s.width = w * (this.isHighlightStroke(s) ? 3.5 : 1);
-      this.rerenderGroup(groupId); this.scheduleSave();
+      for (const id of groupIds) this.rerenderGroup(id);
+      this.scheduleSave();
     };
     menu.addItem(i => i.setTitle('Thin').setIcon('minus').onClick(() => setWidth(2)));
     menu.addItem(i => i.setTitle('Medium').setIcon('minus').onClick(() => setWidth(4)));
     menu.addItem(i => i.setTitle('Thick').setIcon('minus').onClick(() => setWidth(8)));
     menu.addSeparator();
-    menu.addItem(i => i.setTitle('Delete').setIcon('trash').onClick(() => this.deleteSelectedDrawing()));
+    menu.addItem(i => i.setTitle(groupIds.length > 1 ? `Delete ${groupIds.length} sketches` : 'Delete').setIcon('trash').onClick(() => this.deleteSelectedDrawing()));
     menu.showAtMouseEvent(e);
   },
 
@@ -1988,15 +2032,29 @@ export const canvasMethods = {
 
     const isHighlighter = this.penTool === 'highlighter';
     const rect = this.outer.getBoundingClientRect();
+    // Pen strokes drawn close together share a group so a multi-stroke
+    // sketch acts as one unit — but a new stroke only joins the current
+    // group if it actually starts near it; one that starts far away (e.g.
+    // a second, unrelated doodle drawn without toggling the Pen tool off
+    // in between) starts a fresh group instead of getting lumped into the
+    // first one. Highlighter strokes always get their own fresh group
+    // regardless — each swipe marks its own word or area and stays
+    // independently selectable, movable, and deletable.
+    const PEN_GROUP_PROXIMITY = 48; // canvas px
+    let groupId: string;
+    if (isHighlighter) {
+      groupId = crypto.randomUUID();
+    } else {
+      const startCp = screenToCanvas(startEvent.clientX - rect.left, startEvent.clientY - rect.top, this.vp);
+      const bbox = this.currentPenGroupId ? this.computeGroupBBox(this.currentPenGroupId) : null;
+      const nearCurrentGroup = !!this.currentPenGroupId && (!bbox
+        || (startCp.x >= bbox.minX - PEN_GROUP_PROXIMITY && startCp.x <= bbox.maxX + PEN_GROUP_PROXIMITY
+          && startCp.y >= bbox.minY - PEN_GROUP_PROXIMITY && startCp.y <= bbox.maxY + PEN_GROUP_PROXIMITY));
+      groupId = nearCurrentGroup ? this.currentPenGroupId! : (this.currentPenGroupId = crypto.randomUUID());
+    }
     const stroke: DrawingStroke = {
       id: crypto.randomUUID(),
-      // Pen strokes share the session's group so a multi-stroke sketch acts
-      // as one unit — but each highlighter swipe marks its own word or
-      // area, so every one gets a fresh group and stays independently
-      // selectable, movable, and deletable.
-      groupId: isHighlighter
-        ? crypto.randomUUID()
-        : (this.currentPenGroupId ?? (this.currentPenGroupId = crypto.randomUUID())),
+      groupId,
       points: [],
       color: isHighlighter ? this.currentHighlightColor : this.currentInkColor,
       // A real highlighter is a broad chisel of translucent ink — scale the

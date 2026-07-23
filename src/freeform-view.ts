@@ -131,12 +131,16 @@ export class FreeformRenderer extends Component {
   // The highlighter keeps its own color selection (classic fluoro palette),
   // so flipping between pen and highlighter doesn't clobber either choice.
   currentHighlightColor = '#ffeb3b';
-  // Strokes drawn between enterPenMode/exitPenMode share this groupId, so a
-  // multi-stroke sketch behaves as one selectable/draggable/deletable unit.
+  // Strokes drawn close together (within PEN_GROUP_PROXIMITY, see
+  // startInkStroke) share this groupId, so a multi-stroke sketch behaves as
+  // one selectable/draggable/deletable unit — a new stroke starting far
+  // away gets a fresh group instead of joining this one.
   currentPenGroupId: string | null = null;
-  // Holds a groupId (not an individual stroke id) — selection, drag,
-  // delete, and recolor all operate on every stroke sharing that group.
-  selectedDrawingId: string | null = null;
+  // Holds groupIds (not individual stroke ids) — selection, drag, delete,
+  // and recolor all operate on every stroke sharing any of these groups.
+  // Box-select and Shift/Ctrl-click can select several separate groups at
+  // once, same as card multi-select.
+  selectedDrawingIds: Set<string> = new Set();
   inkSelectGroup: SVGGElement | null = null;
   drawingBoxEl: HTMLElement | null = null;
 
@@ -1113,10 +1117,11 @@ export class FreeformRenderer extends Component {
 
 
 
-  // Rebuilds the selection halo (one translucent, thicker path per stroke
-  // in the group) and the dashed bounding box + resize handles, without
-  // touching selectedDrawingId — called both when a group is first selected
-  // and continuously while it's being dragged or resized.
+  // Rebuilds the selection halo (one translucent, thicker path per stroke,
+  // across every selected group) and — only when exactly one group is
+  // selected — the dashed bounding box + resize handles, without touching
+  // selectedDrawingIds — called both when the selection changes and
+  // continuously while a group is being dragged or resized.
 
 
   // Padded by each stroke's own half-width so the box hugs the visible ink,

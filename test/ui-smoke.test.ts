@@ -1307,3 +1307,184 @@ describe('UI smoke: "…" menu button offers a reliable Rename, not dependent on
     expect(ev.defaultPrevented).toBe(false);
   });
 });
+
+describe('UI smoke: pen strokes only merge into one group when drawn close together', () => {
+  // With the default viewport ({x:0, y:0, zoom:1}) and jsdom's zeroed
+  // getBoundingClientRect(), screenToCanvas is an identity mapping — so
+  // these client coordinates land at the same canvas coordinates, no
+  // layout mocking required.
+  function drawStroke(renderer: FreeformRenderer, sx: number, sy: number, ex: number, ey: number) {
+    renderer.outer.dispatchEvent(pointer('pointerdown', sx, sy));
+    document.dispatchEvent(pointer('pointerup', ex, ey));
+  }
+
+  it('two strokes drawn far apart in the same pen session get different groupIds', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 0, 20, 20);
+    drawStroke(renderer, 500, 500, 520, 520);
+    expect(board.drawings).toHaveLength(2);
+    expect(board.drawings[0].groupId).not.toBe(board.drawings[1].groupId);
+  });
+
+  it('two strokes drawn close together in the same pen session share a groupId', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 0, 20, 20);
+    drawStroke(renderer, 25, 25, 40, 40);
+    expect(board.drawings).toHaveLength(2);
+    expect(board.drawings[0].groupId).toBe(board.drawings[1].groupId);
+  });
+
+  it('grouping only tracks proximity to the most recently drawn stroke, not every earlier one', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 0, 20, 20);       // group A
+    drawStroke(renderer, 500, 500, 520, 520); // group B (far from A) — now the "active" group
+    drawStroke(renderer, 22, 22, 30, 30);     // near A's old location, but far from B
+    expect(board.drawings).toHaveLength(3);
+    // Gets its own fresh group rather than silently reattaching to A, which
+    // was drawn several strokes ago and is no longer the active sketch.
+    expect(board.drawings[2].groupId).not.toBe(board.drawings[0].groupId);
+    expect(board.drawings[2].groupId).not.toBe(board.drawings[1].groupId);
+  });
+});
+
+describe('UI smoke: pen/marker strokes support Shift/Ctrl multi-select', () => {
+  function drawStroke(renderer: FreeformRenderer, sx: number, sy: number, ex: number, ey: number) {
+    renderer.outer.dispatchEvent(pointer('pointerdown', sx, sy));
+    document.dispatchEvent(pointer('pointerup', ex, ey));
+  }
+
+  function twoFarApartStrokes(renderer: FreeformRenderer) {
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 0, 20, 20);
+    drawStroke(renderer, 500, 500, 520, 520);
+    renderer.exitPenMode();
+  }
+
+  it('a plain click selects just the clicked stroke\'s group', () => {
+    const { renderer, board } = setup([]);
+    twoFarApartStrokes(renderer);
+    const [s1] = board.drawings;
+    const hit1 = renderer.inkHitPaths.get(s1.id)!;
+
+    hit1.dispatchEvent(pointer('pointerdown', 10, 10));
+    document.dispatchEvent(pointer('pointerup', 10, 10));
+
+    expect(renderer.selectedDrawingIds.size).toBe(1);
+    expect(renderer.selectedDrawingIds.has(s1.groupId)).toBe(true);
+  });
+
+  it('shift-clicking a second, far-away stroke adds it to the selection instead of replacing it', () => {
+    const { renderer, board } = setup([]);
+    twoFarApartStrokes(renderer);
+    const [s1, s2] = board.drawings;
+    const hit1 = renderer.inkHitPaths.get(s1.id)!;
+    const hit2 = renderer.inkHitPaths.get(s2.id)!;
+
+    hit1.dispatchEvent(pointer('pointerdown', 10, 10));
+    document.dispatchEvent(pointer('pointerup', 10, 10));
+    hit2.dispatchEvent(pointer('pointerdown', 510, 510, { shiftKey: true }));
+    document.dispatchEvent(pointer('pointerup', 510, 510));
+
+    expect(renderer.selectedDrawingIds.size).toBe(2);
+    expect(renderer.selectedDrawingIds.has(s1.groupId)).toBe(true);
+    expect(renderer.selectedDrawingIds.has(s2.groupId)).toBe(true);
+  });
+
+  it('ctrl-clicking an already-selected stroke removes just that one from the selection', () => {
+    const { renderer, board } = setup([]);
+    twoFarApartStrokes(renderer);
+    const [s1, s2] = board.drawings;
+    const hit1 = renderer.inkHitPaths.get(s1.id)!;
+    const hit2 = renderer.inkHitPaths.get(s2.id)!;
+
+    hit1.dispatchEvent(pointer('pointerdown', 10, 10));
+    document.dispatchEvent(pointer('pointerup', 10, 10));
+    hit2.dispatchEvent(pointer('pointerdown', 510, 510, { ctrlKey: true }));
+    document.dispatchEvent(pointer('pointerup', 510, 510));
+    expect(renderer.selectedDrawingIds.size).toBe(2);
+
+    hit1.dispatchEvent(pointer('pointerdown', 10, 10, { ctrlKey: true }));
+    document.dispatchEvent(pointer('pointerup', 10, 10));
+
+    expect(renderer.selectedDrawingIds.size).toBe(1);
+    expect(renderer.selectedDrawingIds.has(s2.groupId)).toBe(true);
+  });
+
+  it('deleting a multi-group selection removes every selected group\'s strokes', () => {
+    const { renderer, board } = setup([]);
+    twoFarApartStrokes(renderer);
+    const [s1, s2] = board.drawings;
+    renderer.selectedDrawingIds = new Set([s1.groupId, s2.groupId]);
+
+    renderer.deleteSelectedDrawing();
+
+    expect(board.drawings).toHaveLength(0);
+    expect(renderer.selectedDrawingIds.size).toBe(0);
+  });
+
+  it('a plain click-and-drag on a stroke already part of a multi-selection moves every selected group', () => {
+    const { renderer, board } = setup([]);
+    twoFarApartStrokes(renderer);
+    const [s1, s2] = board.drawings;
+    renderer.selectedDrawingIds = new Set([s1.groupId, s2.groupId]);
+    const hit1 = renderer.inkHitPaths.get(s1.id)!;
+
+    hit1.dispatchEvent(pointer('pointerdown', 10, 10));
+    document.dispatchEvent(pointer('pointermove', 30, 10)); // past DRAG_THRESHOLD
+    document.dispatchEvent(pointer('pointerup', 30, 10));
+
+    // Both groups' strokes shifted by the same delta — s2 (the one not
+    // clicked) only moves if the drag carried the whole selection, not
+    // just the clicked stroke's own group.
+    expect(s1.points[0].x).toBeCloseTo(20, 5);
+    expect(s2.points[0].x).toBeCloseTo(520, 5);
+  });
+});
+
+describe('UI smoke: box-select (marquee) also catches pen/marker strokes', () => {
+  // jsdom has no real layout engine — mock getBoundingClientRect per
+  // element (via a Map keyed by element identity) so the marquee's
+  // rectangle-overlap test against each stroke's hit path has real
+  // geometry to compare, same technique the connection-culling tests use
+  // but generalized to Element since ink hit paths are SVG, not HTML.
+  function mockRectsFor(rects: Map<Element, DOMRect>) {
+    return vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      return rects.get(this) ?? ({ x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0, toJSON: () => undefined } as DOMRect);
+    });
+  }
+  function rect(l: number, t: number, w: number, h: number): DOMRect {
+    return { x: l, y: t, width: w, height: h, top: t, left: l, right: l + w, bottom: t + h, toJSON: () => undefined } as DOMRect;
+  }
+
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('a marquee dragged over two separate strokes selects both of their groups', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0));
+    document.dispatchEvent(pointer('pointerup', 20, 20));
+    renderer.outer.dispatchEvent(pointer('pointerdown', 100, 100));
+    document.dispatchEvent(pointer('pointerup', 120, 120));
+    renderer.exitPenMode();
+    expect(board.drawings).toHaveLength(2);
+    const [s1, s2] = board.drawings;
+
+    const rects = new Map<Element, DOMRect>([
+      [renderer.outer, rect(0, 0, 800, 600)],
+      [renderer.inkHitPaths.get(s1.id)!, rect(0, 0, 20, 20)],
+      [renderer.inkHitPaths.get(s2.id)!, rect(100, 100, 20, 20)],
+    ]);
+    mockRectsFor(rects);
+
+    renderer.outer.dispatchEvent(pointer('pointerdown', -10, -10));
+    renderer.outer.dispatchEvent(pointer('pointermove', 150, 150));
+    renderer.outer.dispatchEvent(pointer('pointerup', 150, 150));
+
+    expect(renderer.selectedDrawingIds.size).toBe(2);
+    expect(renderer.selectedDrawingIds.has(s1.groupId)).toBe(true);
+    expect(renderer.selectedDrawingIds.has(s2.groupId)).toBe(true);
+  });
+});
