@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.42
+
+### Fixed
+- The canvas background and grid dots stayed their light-mode colors even in a dark theme, unless you'd manually set a custom color in Settings — same underlying cause as the note/sticky/pen readability fixes in 1.0.41 (a hardcoded default with no dark-theme variant). Now uses Obsidian's own theme colors so it matches your actual theme, including non-standard ones, rather than a generic dark gray.
+
 ## 1.0.41
 
 ### Fixed
