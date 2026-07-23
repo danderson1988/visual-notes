@@ -1,6 +1,10 @@
 import {
   TFile, TFolder, Notice, setIcon,
 } from 'obsidian';
+// Pressure-aware tapered stroke outlines for the Pen tool.
+// perfect-freehand by Steve Ruiz, MIT license:
+// https://github.com/steveruizok/perfect-freehand
+import { getStroke } from 'perfect-freehand';
 import {
   TileCard, TileTarget, NoteLinkCard,
   ImageCard, AudioCard,
@@ -85,6 +89,7 @@ declare module './freeform-view' {
     buildInkPathD(points: { x: number; y: number }[]): string;
     isHighlightStroke(stroke: DrawingStroke): boolean;
     buildStrokePathD(stroke: DrawingStroke): string;
+    buildPenOutlineD(stroke: DrawingStroke): string;
     buildHighlightOutlineD(stroke: DrawingStroke): string;
     renderSingleDrawing(stroke: DrawingStroke): void;
     groupStrokes(groupId: string): DrawingStroke[];
@@ -92,6 +97,7 @@ declare module './freeform-view' {
     refreshDrawingSelectionVisual(): void;
     deselectDrawing(): void;
     computeGroupBBox(groupId: string): { minX: number; minY: number; maxX: number; maxY: number } | null;
+    isNearGroup(groupId: string, point: { x: number; y: number }, threshold: number): boolean;
     renderDrawingBox(groupId: string, bbox: { minX: number; minY: number; maxX: number; maxY: number }): void;
     removeDrawingBox(): void;
     startDrawingResize(e: PointerEvent, groupId: string, corner: 'nw' | 'ne' | 'sw' | 'se'): void;
@@ -1665,7 +1671,47 @@ export const canvasMethods = {
   buildStrokePathD(this: FreeformRenderer, stroke: DrawingStroke): string {
     return this.isHighlightStroke(stroke)
       ? this.buildHighlightOutlineD(stroke)
-      : this.buildInkPathD(stroke.points);
+      : this.buildPenOutlineD(stroke);
+  },
+
+  // Pen strokes render as a filled outline (like the highlighter) rather
+  // than a constant-width stroked polyline: perfect-freehand turns the
+  // point run into a pressure-aware ribbon with tapered ends, so a stylus
+  // stroke thins where you pressed lightly and a fast flick tapers off,
+  // instead of every line being a uniform sausage.
+  buildPenOutlineD(this: FreeformRenderer, stroke: DrawingStroke): string {
+    const pts = stroke.points;
+    if (pts.length === 0) return '';
+    // Real pressure data if any sample carried it; otherwise let
+    // perfect-freehand fake pressure from drawing speed (mouse input and
+    // strokes saved before pressure capture existed).
+    const hasPressure = pts.some(p => p.p != null && p.p !== 0.5);
+    const outline = getStroke(
+      pts.map(p => [p.x, p.y, p.p ?? 0.5]),
+      {
+        // `size` is the ribbon's full width at neutral pressure — feed the
+        // user's chosen stroke width scaled up slightly, since thinning
+        // pulls the average below it.
+        size: Math.max(stroke.width * 1.6, 1.5),
+        thinning: 0.55,
+        smoothing: 0.5,
+        // Points are captured raw at the pointer's native sampling rate (see
+        // startInkStroke) — no pre-smoothing on our end, so this is the only
+        // thing standing between real jitter and the drawn line.
+        streamline: 0.5,
+        simulatePressure: !hasPressure,
+        last: true,
+      },
+    );
+    if (outline.length < 3) return this.buildInkPathD(pts);
+    const r = (n: number) => Math.round(n * 100) / 100;
+    let d = `M ${r(outline[0][0])} ${r(outline[0][1])}`;
+    for (let i = 1; i < outline.length; i++) {
+      const [x0, y0] = outline[i - 1];
+      const [x1, y1] = outline[i];
+      d += ` Q ${r(x0)} ${r(y0)}, ${r((x0 + x1) / 2)} ${r((y0 + y1) / 2)}`;
+    }
+    return d + ' Z';
   },
 
   buildHighlightOutlineD(this: FreeformRenderer, stroke: DrawingStroke): string {
@@ -1733,12 +1779,11 @@ export const canvasMethods = {
       path.setAttribute('stroke', 'none');
       path.classList.add('ib-highlight-stroke');
     } else {
-      path.setAttribute('d', d);
-      path.setAttribute('stroke', stroke.color);
-      path.setAttribute('stroke-width', String(stroke.width));
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke-linecap', 'round');
-      path.setAttribute('stroke-linejoin', 'round');
+      // Filled pressure-tapered ribbon, not a stroked polyline — see
+      // buildPenOutlineD.
+      path.setAttribute('d', this.buildPenOutlineD(stroke));
+      path.setAttribute('fill', stroke.color);
+      path.setAttribute('stroke', 'none');
     }
     path.setAttribute('pointer-events', 'none');
     this.inkSvgEl.appendChild(path);
@@ -1908,6 +1953,22 @@ export const canvasMethods = {
     return { minX, minY, maxX, maxY };
   },
 
+  // True point-to-point proximity, not "inside the group's bounding box" —
+  // a bbox check let a stroke starting anywhere inside a large or
+  // diagonal shape's rectangle (e.g. a big circle, or a line from corner
+  // to corner) get pulled into the group even when it started nowhere near
+  // the actual drawn line, which is what "too aggressive" grouping meant
+  // in practice. Same reach math as the eraser's hit test.
+  isNearGroup(this: FreeformRenderer, groupId: string, point: { x: number; y: number }, threshold: number): boolean {
+    for (const s of this.groupStrokes(groupId)) {
+      const reach = threshold + s.width / 2;
+      for (const p of s.points) {
+        if (Math.hypot(p.x - point.x, p.y - point.y) <= reach) return true;
+      }
+    }
+    return false;
+  },
+
   renderDrawingBox(this: FreeformRenderer, groupId: string, bbox: { minX: number; minY: number; maxX: number; maxY: number }): void {
     this.removeDrawingBox();
     const box = this.inner.createDiv('visual-notes-drawing-select-box');
@@ -2062,10 +2123,8 @@ export const canvasMethods = {
       groupId = crypto.randomUUID();
     } else {
       const startCp = screenToCanvas(startEvent.clientX - rect.left, startEvent.clientY - rect.top, this.vp);
-      const bbox = this.currentPenGroupId ? this.computeGroupBBox(this.currentPenGroupId) : null;
-      const nearCurrentGroup = !!this.currentPenGroupId && (!bbox
-        || (startCp.x >= bbox.minX - PEN_GROUP_PROXIMITY && startCp.x <= bbox.maxX + PEN_GROUP_PROXIMITY
-          && startCp.y >= bbox.minY - PEN_GROUP_PROXIMITY && startCp.y <= bbox.maxY + PEN_GROUP_PROXIMITY));
+      const nearCurrentGroup = !!this.currentPenGroupId
+        && this.isNearGroup(this.currentPenGroupId, startCp, PEN_GROUP_PROXIMITY);
       groupId = nearCurrentGroup ? this.currentPenGroupId! : (this.currentPenGroupId = crypto.randomUUID());
     }
     const stroke: DrawingStroke = {
@@ -2078,29 +2137,39 @@ export const canvasMethods = {
       width: isHighlighter ? this.currentInkWidth * 3.5 : this.currentInkWidth,
       opacity: isHighlighter ? 0.45 : undefined,
     };
-    // Drop pointermove samples closer together than ~4 screen px — high
-    // sampling rates otherwise feed the smoother a cluster of near-duplicate
-    // points that reintroduces jitter into the curve. Fewer, more spread-out
-    // points read as a single confident line rather than a dense polyline.
+    // Highlighter strokes still go through the old capture pipeline: drop
+    // pointermove samples closer together than ~4 screen px, then a
+    // trailing exponential smoothing pass on top, since buildHighlightOutlineD
+    // draws straight through whatever points it's given and has no smoothing
+    // of its own.
+    //
+    // Pen strokes skip both — perfect-freehand's own `smoothing`/`streamline`
+    // options (see buildPenOutlineD) are built to consume a raw, noisy
+    // pointer stream directly, and pre-smoothing here fought them: the
+    // distance cutoff silently dropped real pressure changes recorded while
+    // the pen barely moved (pressing harder mid-stroke without much
+    // travel), and the trailing lag blurred exactly the kind of fine
+    // position detail the pressure taper is supposed to ride on.
     const MIN_POINT_DIST = 4 / this.vp.zoom;
-    // Trailing (exponential) smoothing on top of that — each raw sample
-    // only pulls the drawn point partway toward it, so the line lags
-    // slightly behind the actual pointer and rounds through hand/mouse
-    // micro-jitter instead of tracing it exactly. This is what gives the
-    // stroke a fluid, inked feel rather than a faceted mouse-trace; lower
-    // TRAIL = smoother but laggier, higher = snappier but more jagged.
     const TRAIL = 0.35;
     let smoothed: { x: number; y: number } | null = null;
-    const addPoint = (clientX: number, clientY: number) => {
+    const addPoint = (clientX: number, clientY: number, pressure?: number) => {
       const cp = screenToCanvas(clientX - rect.left, clientY - rect.top, this.vp);
+      // Only store real stylus pressure — mouse/touch report a constant
+      // 0.5/0, which buildPenOutlineD treats as "no data, simulate".
+      const p = pressure != null && pressure > 0 && pressure !== 0.5 ? pressure : undefined;
+      if (!isHighlighter) {
+        stroke.points.push(p != null ? { x: cp.x, y: cp.y, p } : { x: cp.x, y: cp.y });
+        return;
+      }
       smoothed = smoothed
         ? { x: smoothed.x + (cp.x - smoothed.x) * TRAIL, y: smoothed.y + (cp.y - smoothed.y) * TRAIL }
         : { x: cp.x, y: cp.y };
       const last = stroke.points[stroke.points.length - 1];
       if (last && Math.hypot(smoothed.x - last.x, smoothed.y - last.y) < MIN_POINT_DIST) return;
-      stroke.points.push({ x: smoothed.x, y: smoothed.y });
+      stroke.points.push(p != null ? { x: smoothed.x, y: smoothed.y, p } : { x: smoothed.x, y: smoothed.y });
     };
-    addPoint(startEvent.clientX, startEvent.clientY);
+    addPoint(startEvent.clientX, startEvent.clientY, startEvent.pressure);
     // Anchor for Shift-drawn straight lines: the true (unsmoothed) start.
     const firstPoint = { ...stroke.points[0] };
 
@@ -2111,11 +2180,8 @@ export const canvasMethods = {
       livePath.setAttribute('stroke', 'none');
       livePath.classList.add('ib-highlight-stroke');
     } else {
-      livePath.setAttribute('stroke', stroke.color);
-      livePath.setAttribute('stroke-width', String(stroke.width));
-      livePath.setAttribute('fill', 'none');
-      livePath.setAttribute('stroke-linecap', 'round');
-      livePath.setAttribute('stroke-linejoin', 'round');
+      livePath.setAttribute('fill', stroke.color);
+      livePath.setAttribute('stroke', 'none');
     }
     livePath.setAttribute('pointer-events', 'none');
     livePath.setAttribute('d', this.buildStrokePathD(stroke));
@@ -2129,24 +2195,29 @@ export const canvasMethods = {
         // Shift mid-stroke resumes freehand from wherever the line ended.
         shiftLine = true;
         const cp = screenToCanvas(e2.clientX - rect.left, e2.clientY - rect.top, this.vp);
-        stroke.points = [{ ...firstPoint }, { x: cp.x, y: cp.y }];
+        const p = e2.pressure > 0 && e2.pressure !== 0.5 ? e2.pressure : undefined;
+        stroke.points = [{ ...firstPoint }, p != null ? { x: cp.x, y: cp.y, p } : { x: cp.x, y: cp.y }];
         smoothed = { x: cp.x, y: cp.y };
       } else {
         shiftLine = false;
-        addPoint(e2.clientX, e2.clientY);
+        addPoint(e2.clientX, e2.clientY, e2.pressure);
       }
       livePath.setAttribute('d', this.buildStrokePathD(stroke));
     };
     const onUp = (e2: PointerEvent) => {
       activeDocument.removeEventListener('pointermove', onMove);
       activeDocument.removeEventListener('pointerup', onUp);
-      // Snap the very last point to the true release position — the
-      // trailing smoothing in addPoint intentionally lags a bit behind the
-      // live pointer for a fluid line, so without this the stroke would
-      // stop just short of wherever the pointer was actually lifted.
+      // Snap the very last point to the true release position — highlighter
+      // strokes still run through addPoint's trailing smoothing, which
+      // intentionally lags a bit behind the live pointer for a fluid line,
+      // so without this the stroke would stop just short of wherever the
+      // pointer was actually lifted.
       const cp = screenToCanvas(e2.clientX - rect.left, e2.clientY - rect.top, this.vp);
+      const lastP = e2.pressure > 0 && e2.pressure !== 0.5 ? e2.pressure : undefined;
       const last = stroke.points[stroke.points.length - 1];
-      if (!last || Math.hypot(cp.x - last.x, cp.y - last.y) > 0.01) stroke.points.push({ x: cp.x, y: cp.y });
+      if (!last || Math.hypot(cp.x - last.x, cp.y - last.y) > 0.01) {
+        stroke.points.push(lastP != null ? { x: cp.x, y: cp.y, p: lastP } : { x: cp.x, y: cp.y });
+      }
       livePath.remove();
       if (stroke.points.length < 2) return;
       if (!shiftLine) this.autoStraighten(stroke);

@@ -2,6 +2,14 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.50
+
+### Changed
+- Pen strokes are now rendered with [perfect-freehand](https://github.com/steveruizok/perfect-freehand) (MIT license, © Steve Ruiz): pressure from a stylus/tablet now tapers and varies the width of a stroke instead of every line being a uniform thickness. Mouse input gets a simulated taper based on drawing speed.
+
+### Fixed
+- The Pen tool's stroke-grouping (which strokes drawn together count as one sketch for select/move/delete) compared a new stroke's start point against the current sketch's bounding *rectangle* rather than the actual drawn line — so a new stroke starting anywhere inside a large or diagonal shape (a big circle, a corner-to-corner line) could get swept into that group even though it was nowhere near the real ink. Now checks true distance to the drawn points themselves.
+
 ## 1.0.49
 
 ### Changed

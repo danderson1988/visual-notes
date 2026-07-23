@@ -1348,6 +1348,33 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     expect(board.drawings[2].groupId).not.toBe(board.drawings[0].groupId);
     expect(board.drawings[2].groupId).not.toBe(board.drawings[1].groupId);
   });
+
+  it('a stroke starting inside another group\'s bounding box, but far from its actual line, does not merge with it', () => {
+    // The old check treated "inside the group's bounding rectangle" as
+    // "near it" — a big or diagonal shape's bbox can cover a lot of empty
+    // space nothing was actually drawn in. A diagonal stroke corner-to-
+    // corner has a bbox spanning the whole square; a new stroke starting
+    // near the *opposite* corner is well within that bbox but nowhere near
+    // the actual line, and should not be swept into the same group.
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 0, 500, 500);   // diagonal corner-to-corner, group A
+    drawStroke(renderer, 450, 50, 480, 60); // inside A's bbox, ~450px from the actual line
+    expect(board.drawings).toHaveLength(2);
+    expect(board.drawings[1].groupId).not.toBe(board.drawings[0].groupId);
+  });
+
+  it('pen strokes render as a filled tapered outline (perfect-freehand), not a stroked polyline', () => {
+    const { renderer, board, container } = setup([]);
+    renderer.enterPenMode();
+    drawStroke(renderer, 0, 0, 100, 100);
+    expect(board.drawings).toHaveLength(1);
+    const path = container.querySelector<SVGPathElement>('.visual-notes-ink-svg path')!;
+    expect(path.getAttribute('fill')).toBe(board.drawings[0].color);
+    expect(path.getAttribute('stroke')).toBe('none');
+    // Closed outline path — the ribbon shape, not an open centerline.
+    expect(path.getAttribute('d')).toMatch(/Z$/);
+  });
 });
 
 describe('UI smoke: pen/marker strokes support Shift/Ctrl multi-select', () => {

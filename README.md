@@ -198,3 +198,5 @@ Copy or symlink the folder into `<vault>/.obsidian/plugins/visual-notes/`, then 
 ## License
 
 [MIT](LICENSE) — © Daniel Anderson
+
+Pen strokes are rendered with [perfect-freehand](https://github.com/steveruizok/perfect-freehand) by Steve Ruiz (MIT license).

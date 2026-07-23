@@ -30,7 +30,11 @@ export interface DrawingStroke {
   // if it's several separate strokes — is selected, dragged, recolored,
   // and deleted as one unit rather than stroke-by-stroke.
   groupId: string;
-  points: { x: number; y: number }[]; // absolute canvas-space coordinates
+  // Absolute canvas-space coordinates. `p` is the stylus pressure (0..1)
+  // captured at that sample, when the input device reported one — strokes
+  // without it (mouse, older files) get velocity-simulated pressure at
+  // render time instead, so both taper naturally.
+  points: { x: number; y: number; p?: number }[];
   color: string;
   width: number; // stroke thickness in canvas px
   // Set for highlighter strokes (semi-transparent marker ink drawn over

@@ -72,13 +72,15 @@ body.theme-dark {
    frame around a freeform board.  The Canvas layout is intentionally a
    full-bleed surface, so force its actual view-content element flush with
    the leaf.  This is scoped to our class: it does not affect tabs, pane
-   splitters, or any other Obsidian view. */
-.view-content.visual-notes-container.visual-notes-layout-freeform {
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
+   splitters, or any other Obsidian view. Beats theme overrides on
+   specificity alone (the repeated class raises the selector's weight)
+   rather than reaching for !important. */
+.view-content.visual-notes-container.visual-notes-container.visual-notes-layout-freeform {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .visual-notes-content {
