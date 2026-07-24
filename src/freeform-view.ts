@@ -24,6 +24,7 @@ import {
   SupportedCard,
 } from './freeform-view-shared';
 import { canvasMethods } from './freeform-view-canvas';
+import { PenDrawOptions, DEFAULT_PEN_DRAW_OPTIONS, PenOptionsPanel } from './pen-options-panel';
 import { cardsBasicMethods } from './freeform-view-cards-basic';
 import { cardsTableMethods } from './freeform-view-cards-table';
 import { cardsKanbanMethods } from './freeform-view-cards-kanban';
@@ -119,6 +120,10 @@ export class FreeformRenderer extends Component {
   penToolBtn: HTMLElement | null = null;
   penColorPicker: HTMLElement | null = null;
   penBanner: HTMLElement | null = null;
+  // Advanced perfect-freehand tuning panel, opened via the gear icon in the
+  // pen color/width picker — constructed lazily on first open (see
+  // togglePenOptionsPanel), not on every enterPenMode.
+  penOptionsPanel: PenOptionsPanel | null = null;
   // A literal CSS variable reference, not a resolved hex — re-evaluates
   // live if the user switches theme mid-session (a hex computed once from
   // body.hasClass('theme-dark') at construction time never did, which was
@@ -127,7 +132,7 @@ export class FreeformRenderer extends Component {
   // Same var --ib-card-text itself resolves to, so ink always matches
   // body text — legible against --ib-card-bg/--ib-canvas-bg in any theme.
   currentInkColor = 'var(--text-normal)';
-  currentInkWidth = 3;
+  currentInkWidth = 4; // Medium — matches the Thin/Medium/Thick picker's own values (2/4/8)
   // Which drawing instrument is active while in pen mode. Highlighter draws
   // wide, semi-transparent strokes; eraser scrubs whole strokes away.
   penTool: 'pen' | 'highlighter' | 'eraser' = 'pen';
@@ -245,6 +250,8 @@ export class FreeformRenderer extends Component {
     public snapGridSize = 32,
     public onToggleSnapToGrid?: (value: boolean) => void,
     public mobileFabPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' = 'bottom-right',
+    public penDrawOptions: PenDrawOptions = { ...DEFAULT_PEN_DRAW_OPTIONS },
+    public onPenDrawOptionsChange?: (value: PenDrawOptions) => void,
   ) {
     super();
     this.vp = { ...(board.viewport ?? { x: 0, y: 0, zoom: 1 }) };

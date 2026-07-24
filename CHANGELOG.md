@@ -2,6 +2,15 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.66
+
+### Added
+- **Pen Options panel**: a new gear icon in the Pen picker opens a draggable panel exposing perfect-freehand's own tuning controls — Size, Thinning, Streamline, Smoothing, Easing, Taper Start/Cap Start, Taper End/Cap End, plus a Reset button. Changes apply live to every stroke on the board (old and new) and are saved with plugin settings, so they persist across reloads.
+
+### Fixed
+- The pen "Drawing — hold Shift for straight lines" tooltip banner overlapped the toolbar when the toolbar position was set to Top; it now sits below the toolbar in that layout.
+- Pen thickness now defaults to Medium instead of an in-between value that didn't match any of the Thin/Medium/Thick picker options.
+
 ## 1.0.65
 
 ### Changed

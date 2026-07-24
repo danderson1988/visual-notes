@@ -19,6 +19,7 @@ import { join } from 'node:path';
 import { FreeformRenderer } from '../src/freeform-view';
 import { ContextBar } from '../src/context-bar';
 import { resolveDefaultStickyColor, STICKY_COLORS } from '../src/freeform-view-shared';
+import { PenOptionsPanel, DEFAULT_PEN_DRAW_OPTIONS, type PenDrawOptions } from '../src/pen-options-panel';
 import { fakeApp } from './fake-app';
 import { Platform, Menu } from 'obsidian';
 import type {
@@ -1529,9 +1530,18 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     const ys: number[] = [];
     for (let i = 1; i < nums.length; i += 2) ys.push(nums[i]);
     const perpendicularSpread = Math.max(...ys) - Math.min(...ys);
-    // Intended full diameter is ~4.8 (width 3 * 1.6); collapsed comes out
-    // at ~0.02 — practically invisible.
+    // Full diameter is the fixed size (16); collapsed comes out at ~0.02 —
+    // practically invisible.
     expect(perpendicularSpread).toBeGreaterThan(3);
+  });
+
+  it('pen strokes render at a fixed size regardless of stroke.width (Thin/Medium/Thick no longer changes the shape)', () => {
+    // Deliberate simplification, not a bug — see buildPenOutlineD.
+    const { renderer } = setup([]);
+    const points = [{ x: 0, y: 0 }, { x: 50, y: 0 }, { x: 100, y: 0 }];
+    const thin: DrawingStroke = { id: 't', groupId: 'g', points, color: '#000', width: 2 };
+    const thick: DrawingStroke = { id: 'k', groupId: 'g', points, color: '#000', width: 8 };
+    expect(renderer.buildPenOutlineD(thin)).toBe(renderer.buildPenOutlineD(thick));
   });
 
   it('preserves stylus pressure when a drawing is moved or resized', () => {
@@ -1903,6 +1913,15 @@ describe('UI smoke: pen size/color picker floats beside the toolbar instead of g
     expect(renderer.toolbarEl.childElementCount).toBe(before);
   });
 
+  it('defaults pen thickness to Medium', () => {
+    const { renderer } = setup([]);
+    expect(renderer.currentInkWidth).toBe(4);
+    renderer.enterPenMode();
+    const mediumBtn = Array.from(renderer.penColorPicker!.querySelectorAll<HTMLElement>('.visual-notes-pen-width-btn'))
+      .find(b => b.textContent === 'Medium')!;
+    expect(mediumBtn.classList.contains('is-selected')).toBe(true);
+  });
+
   it('moves the picker above the trash zone when the anchored position would overlap it', () => {
     const { renderer } = setup([]);
     renderer.enterPenMode();
@@ -1933,6 +1952,167 @@ describe('UI smoke: pen size/color picker floats beside the toolbar instead of g
     // stayed "above" the trash's top the whole time even while the two
     // rects overlapped, so it can't tell a real fix from a no-op nudge).
     expect(pickerTop + pickerHeight).toBeLessThanOrEqual(trashTopRelative);
+  });
+});
+
+describe('UI smoke: PenOptionsPanel (draggable perfect-freehand tuning)', () => {
+  function makePanel(overrides: Partial<PenDrawOptions> = {}) {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const anchor = document.createElement('div');
+    container.appendChild(anchor);
+    const options: PenDrawOptions = { ...DEFAULT_PEN_DRAW_OPTIONS, ...overrides };
+    const onLiveChange = vi.fn();
+    const onCommit = vi.fn();
+    const panel = new PenOptionsPanel(container, options, onLiveChange, onCommit);
+    return { container, anchor, options, onLiveChange, onCommit, panel };
+  }
+
+  it('show() builds one row per control plus a draggable header', () => {
+    const { container, anchor, panel } = makePanel();
+    panel.show(anchor);
+    const el = container.querySelector('.visual-notes-pen-options-panel')!;
+    expect(el).toBeTruthy();
+    // size, thinning, streamline, smoothing, taper start, taper end
+    expect(el.querySelectorAll('.visual-notes-pen-options-slider')).toHaveLength(6);
+    expect(el.querySelectorAll('.visual-notes-pen-options-toggle')).toHaveLength(2); // cap start/end
+    expect(el.querySelector('.visual-notes-pen-options-select')).toBeTruthy(); // easing
+    expect(el.querySelector('.visual-notes-pen-options-header.is-draggable')).toBeTruthy();
+  });
+
+  it('toggle() opens then closes the panel', () => {
+    const { container, anchor, panel } = makePanel();
+    expect(panel.isOpen()).toBe(false);
+    panel.toggle(anchor);
+    expect(panel.isOpen()).toBe(true);
+    expect(container.querySelector('.visual-notes-pen-options-panel')).toBeTruthy();
+    panel.toggle(anchor);
+    expect(panel.isOpen()).toBe(false);
+    expect(container.querySelector('.visual-notes-pen-options-panel')).toBeNull();
+  });
+
+  it('moving a slider updates the shared options object live, without committing until release', () => {
+    const { container, anchor, options, onLiveChange, onCommit, panel } = makePanel();
+    panel.show(anchor);
+    const sizeSlider = container.querySelectorAll<HTMLInputElement>('.visual-notes-pen-options-slider')[0];
+    sizeSlider.value = '40';
+    sizeSlider.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(options.size).toBe(40);
+    expect(onLiveChange).toHaveBeenCalledTimes(1);
+    expect(onCommit).not.toHaveBeenCalled();
+    sizeSlider.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(onCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it('clicking a cap toggle flips the boolean and commits immediately', () => {
+    const { container, anchor, options, onLiveChange, onCommit, panel } = makePanel();
+    panel.show(anchor);
+    const capStartToggle = container.querySelectorAll<HTMLElement>('.visual-notes-pen-options-toggle')[0];
+    expect(options.capStart).toBe(true);
+    capStartToggle.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(options.capStart).toBe(false);
+    expect(onLiveChange).toHaveBeenCalledTimes(1);
+    expect(onCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it('changing the easing dropdown updates options.easing and commits', () => {
+    const { container, anchor, options, onCommit, panel } = makePanel();
+    panel.show(anchor);
+    const select = container.querySelector<HTMLSelectElement>('.visual-notes-pen-options-select')!;
+    select.value = 'easeOut';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(options.easing).toBe('easeOut');
+    expect(onCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it('Reset restores every value to the defaults and commits', () => {
+    const { container, anchor, options, onCommit, panel } = makePanel({ size: 40, thinning: -0.5, capStart: false });
+    panel.show(anchor);
+    const resetBtn = container.querySelector<HTMLElement>('.visual-notes-pen-options-reset')!;
+    resetBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(options).toEqual(DEFAULT_PEN_DRAW_OPTIONS);
+    expect(onCommit).toHaveBeenCalled();
+  });
+
+  it('the close button hides the panel', () => {
+    const { container, anchor, panel } = makePanel();
+    panel.show(anchor);
+    const closeBtn = container.querySelector<HTMLElement>('.visual-notes-pen-options-close')!;
+    closeBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(panel.isOpen()).toBe(false);
+    expect(container.querySelector('.visual-notes-pen-options-panel')).toBeNull();
+  });
+
+  it('dragging the header by its pointer moves the panel within the container', () => {
+    function mockRect(l: number, t: number, w: number, h: number): DOMRect {
+      return { x: l, y: t, width: w, height: h, top: t, left: l, right: l + w, bottom: t + h, toJSON: () => undefined } as DOMRect;
+    }
+    const rects = new Map<Element, DOMRect>();
+    const spy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      return rects.get(this) ?? mockRect(0, 0, 0, 0);
+    });
+    const { container, anchor, panel } = makePanel();
+    rects.set(container, mockRect(0, 0, 800, 600));
+    rects.set(anchor, mockRect(10, 10, 20, 20));
+    panel.show(anchor);
+    const el = container.querySelector<HTMLElement>('.visual-notes-pen-options-panel')!;
+    rects.set(el, mockRect(50, 50, 240, 200));
+    const header = container.querySelector<HTMLElement>('.visual-notes-pen-options-header')!;
+
+    header.dispatchEvent(pointer('pointerdown', 60, 60)); // 10px into the panel from its (50,50) corner
+    document.dispatchEvent(pointer('pointermove', 160, 160)); // +100, +100
+    document.dispatchEvent(pointer('pointerup', 160, 160));
+
+    expect(el.style.left).toBe('150px');
+    expect(el.style.top).toBe('150px');
+    spy.mockRestore();
+  });
+});
+
+describe('UI smoke: pen options gear icon integrates with the pen picker and rendering', () => {
+  it('the gear icon only appears when the Pen tool (not Highlighter/Eraser) is selected', () => {
+    const { renderer, container } = setup([]);
+    renderer.enterPenMode();
+    expect(container.querySelector('.visual-notes-pen-options-gear')).toBeTruthy();
+
+    const highlighterBtn = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-pen-tool-btn'))
+      .find(b => b.getAttribute('aria-label') === 'Highlighter')!;
+    highlighterBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(container.querySelector('.visual-notes-pen-options-gear')).toBeNull();
+
+    const eraserBtn = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-pen-tool-btn'))
+      .find(b => b.getAttribute('aria-label') === 'Eraser')!;
+    eraserBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(container.querySelector('.visual-notes-pen-options-gear')).toBeNull();
+  });
+
+  it('clicking the gear icon opens the pen options panel', () => {
+    const { renderer, container } = setup([]);
+    renderer.enterPenMode();
+    const gearBtn = container.querySelector<HTMLElement>('.visual-notes-pen-options-gear')!;
+    gearBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(renderer.penOptionsPanel?.isOpen()).toBe(true);
+    expect(container.querySelector('.visual-notes-pen-options-panel')).toBeTruthy();
+  });
+
+  it('exiting Pen mode closes the options panel', () => {
+    const { renderer, container } = setup([]);
+    renderer.enterPenMode();
+    const gearBtn = container.querySelector<HTMLElement>('.visual-notes-pen-options-gear')!;
+    gearBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(renderer.penOptionsPanel?.isOpen()).toBe(true);
+    renderer.exitPenMode();
+    expect(renderer.penOptionsPanel?.isOpen()).toBe(false);
+  });
+
+  it('buildPenOutlineD reflects a live change to penDrawOptions.size', () => {
+    const { renderer } = setup([]);
+    const points = [{ x: 0, y: 0 }, { x: 50, y: 0 }, { x: 100, y: 0 }];
+    const stroke: DrawingStroke = { id: 's', groupId: 'g', points, color: '#000', width: 4 };
+    const before = renderer.buildPenOutlineD(stroke);
+    renderer.penDrawOptions.size = 40;
+    const after = renderer.buildPenOutlineD(stroke);
+    expect(after).not.toBe(before);
   });
 });
 

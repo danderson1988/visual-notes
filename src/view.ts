@@ -4,6 +4,7 @@ import { VisualNotesFile } from './file-types';
 import { readBoardFile, writeBoardFile, isVisualNotesOwnedFile } from './file-io';
 import { GridRenderer } from './grid-view';
 import { FreeformRenderer } from './freeform-view';
+import { DEFAULT_PEN_DRAW_OPTIONS } from './pen-options-panel';
 import { relinkBoardData } from './asset-manager';
 import { CreateBoardModal } from './create-board-modal';
 
@@ -154,6 +155,12 @@ export class VisualNotesView extends FileView {
         this.plugin.settings.snapGridSize ?? 32,
         (value) => { this.plugin.settings.snapToGrid = value; void this.plugin.saveSettings(); },
         this.plugin.settings.mobileFabPosition ?? 'bottom-right',
+        // Cloned — the panel mutates this object in place, and it must
+        // never be the same reference as DEFAULT_PEN_DRAW_OPTIONS or a
+        // fresh install's first slider drag would corrupt that shared
+        // module-level default for every board opened afterward.
+        { ...DEFAULT_PEN_DRAW_OPTIONS, ...this.plugin.settings.penDrawOptions },
+        (value) => { this.plugin.settings.penDrawOptions = value; void this.plugin.saveSettings(); },
       );
     } else {
       this.renderer = new GridRenderer(

@@ -1,3 +1,5 @@
+import type { PenDrawOptions } from './pen-options-panel';
+
 // ── v1 tile type (kept for migration) ────────────────────────
 
 export interface Tile {
@@ -37,6 +39,7 @@ export interface VisualNotesSettings {
   snapGridSize?: number;            // grid size in px used by snapToGrid; default 32 (matches the dot-grid spacing)
   trashZoneSize?: number;           // diameter in px of the bottom-left trash drop zone; default 42
   mobileFabPosition?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'; // corner of the phone-width "+" FAB; default bottom-right
+  penDrawOptions?: PenDrawOptions;  // perfect-freehand tuning from the pen options panel; default DEFAULT_PEN_DRAW_OPTIONS
 }
 
 export const DEFAULT_SETTINGS: VisualNotesSettings = {

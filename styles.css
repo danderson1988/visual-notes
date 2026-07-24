@@ -5908,6 +5908,16 @@ input.visual-notes-accent-pop-hex {
   pointer-events: none;
 }
 
+/* Both the toolbar's "top" layout and this banner default to the same
+   top:16px, left:50% spot, so with the toolbar set to Top they land right
+   on top of each other. The toolbar element is always created first (see
+   bindDelegatedCardEvents vs. showPenBanner), so it's reliably an earlier
+   sibling here — drop the banner below the toolbar's own 16px + 72px
+   footprint instead of overlapping it. */
+.visual-notes-freeform-toolbar.tb-pos-top ~ .visual-notes-pen-banner {
+  top: 104px;
+}
+
 .visual-notes-pen-banner-icon {
   display: flex;
   align-items: center;
@@ -5999,6 +6009,126 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-pen-tool-btn.is-selected {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
+}
+
+/* ── Pen options panel (draggable perfect-freehand tuning) ──────── */
+.visual-notes-pen-options-panel {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  width: 240px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  box-shadow: var(--ib-shadow-high);
+  z-index: 201; /* above the pen picker (200) it was opened from */
+  overflow: hidden;
+}
+
+.visual-notes-pen-options-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--background-modifier-hover);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-normal);
+  user-select: none;
+}
+
+.visual-notes-pen-options-header.is-draggable {
+  cursor: move;
+}
+
+.visual-notes-pen-options-reset {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.visual-notes-pen-options-reset:hover {
+  background: var(--background-modifier-border);
+  color: var(--text-normal);
+}
+
+.visual-notes-pen-options-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.visual-notes-pen-options-close:hover {
+  background: var(--background-modifier-border);
+  color: var(--text-normal);
+}
+.visual-notes-pen-options-close svg {
+  width: 13px;
+  height: 13px;
+}
+
+.visual-notes-pen-options-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.visual-notes-pen-options-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.visual-notes-pen-options-label {
+  flex: 0 0 76px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.visual-notes-pen-options-slider {
+  flex: 1;
+  cursor: pointer;
+  accent-color: var(--interactive-accent);
+}
+
+.visual-notes-pen-options-value {
+  flex: 0 0 30px;
+  font-size: 11px;
+  color: var(--text-normal);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.visual-notes-pen-options-select {
+  flex: 1;
+  font-size: 11px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.visual-notes-pen-options-toggle {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  background: var(--background-modifier-border);
+  border: 1px solid var(--background-modifier-border);
+}
+.visual-notes-pen-options-toggle.is-on {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
 }
 
 /* While the eraser instrument is active, swap the pen crosshair for a cell

@@ -5,6 +5,7 @@ import {
 // perfect-freehand by Steve Ruiz, MIT license:
 // https://github.com/steveruizok/perfect-freehand
 import { getStroke } from 'perfect-freehand';
+import { EASING_FNS, PenOptionsPanel } from './pen-options-panel';
 import {
   TileCard, TileTarget, NoteLinkCard,
   ImageCard, AudioCard,
@@ -114,6 +115,7 @@ declare module './freeform-view' {
     showPenColorPicker(): void;
     positionPenPicker(): void;
     hidePenColorPicker(): void;
+    togglePenOptionsPanel(anchor: HTMLElement): void;
     refreshAllConnections(): void;
     renderSingleConnection(conn: Connection): void;
     removeSingleConnection(id: string): void;
@@ -1686,51 +1688,28 @@ export const canvasMethods = {
   },
 
   // Pen strokes render as a filled outline (like the highlighter) rather
-  // than a constant-width stroked polyline: perfect-freehand turns the
-  // point run into a pressure-aware ribbon with tapered ends, so a stylus
-  // stroke thins where you pressed lightly and a fast flick tapers off,
-  // instead of every line being a uniform sausage.
+  // than a constant-width stroked polyline, via perfect-freehand.
+  //
+  // Options come from this.penDrawOptions (tuned live via the pen options
+  // panel — see pen-options-panel.ts), not from stroke.width/pressure: this
+  // means the Thin/Medium/Thick picker and real Apple Pencil/Wacom pressure
+  // don't change the rendered shape, and every stroke on the board re-
+  // renders through the same shared, currently-live config — an
+  // intentional simplification, not a bug.
   buildPenOutlineD(this: FreeformRenderer, stroke: DrawingStroke): string {
     const pts = stroke.points;
     if (pts.length === 0) return '';
-    // Real pressure data if any sample carried it; otherwise let
-    // perfect-freehand fake pressure from drawing speed (mouse input and
-    // strokes saved before pressure capture existed).
-    const hasPressure = pts.some(p => p.p != null && p.p !== 0.5);
-    // perfect-freehand's outline construction becomes unstable — the
-    // ribbon can collapse to a near-zero-width sliver across its entire
-    // length, not just gracefully thin out — once a stroke's taper
-    // distance gets close to its total path length. Scaling the taper down
-    // to fit still lands inside that unstable range for short strokes, so
-    // instead: only taper at all once the stroke is comfortably (4x) longer
-    // than the desired taper distance; shorter strokes/dots get a plain
-    // full-width round cap (see the `cap: true` below), which is stable
-    // and reads fine on something that short anyway.
-    let pathLen = 0;
-    for (let i = 1; i < pts.length; i++) pathLen += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
-    const desiredTaper = stroke.width * 3;
-    const taper = pathLen > desiredTaper * 4 ? desiredTaper : 0;
+    const o = this.penDrawOptions;
     const outline = getStroke(
       pts.map(p => [p.x, p.y, p.p ?? 0.5]),
       {
-        // `size` is the ribbon's full width at neutral pressure — feed the
-        // user's chosen stroke width scaled up slightly, since thinning
-        // pulls the average below it.
-        size: Math.max(stroke.width * 1.6, 1.5),
-        thinning: 0.55,
-        smoothing: 0.5,
-        // Points are captured raw at the pointer's native sampling rate (see
-        // startInkStroke) — no pre-smoothing on our end, so this is the only
-        // thing standing between real jitter and the drawn line.
-        streamline: 0.5,
-        simulatePressure: !hasPressure,
-        // Taper the tips in — without this the ends get a full-width round
-        // cap, which on a pressure-heavy first/last sample (a stylus
-        // pressed down before moving) reads as a fat dot stamped on each
-        // end of the line.
-        start: { taper, cap: true },
-        end: { taper, cap: true },
-        last: true,
+        size: o.size,
+        smoothing: o.smoothing,
+        thinning: o.thinning,
+        streamline: o.streamline,
+        easing: EASING_FNS[o.easing],
+        start: { taper: o.taperStart, cap: o.capStart },
+        end: { taper: o.taperEnd, cap: o.capEnd },
       },
     );
     if (outline.length < 3) return this.buildInkPathD(pts);
@@ -2463,6 +2442,19 @@ export const canvasMethods = {
     this.inkHitPaths.forEach(p => { p.setCssStyles({ pointerEvents: 'stroke' }); });
     this.hidePenColorPicker();
     this.hidePenBanner();
+    this.penOptionsPanel?.hide();
+  },
+
+  togglePenOptionsPanel(this: FreeformRenderer, anchor: HTMLElement): void {
+    if (!this.penOptionsPanel) {
+      this.penOptionsPanel = new PenOptionsPanel(
+        this.container,
+        this.penDrawOptions,
+        () => this.renderAllDrawings(),
+        () => this.onPenDrawOptionsChange?.(this.penDrawOptions),
+      );
+    }
+    this.penOptionsPanel.toggle(anchor);
   },
 
   showPenBanner(this: FreeformRenderer): void {
@@ -2515,6 +2507,19 @@ export const canvasMethods = {
         // Rebuild the whole picker: the swatch palette swaps between pen
         // and highlighter colors, and the eraser has no rows at all.
         this.showPenColorPicker();
+      });
+    }
+    // Advanced perfect-freehand tuning (size/thinning/taper/etc, see
+    // pen-options-panel.ts) only applies to actual pen strokes — the
+    // highlighter uses a completely different rendering path
+    // (buildHighlightOutlineD) and the eraser doesn't render anything.
+    if (this.penTool === 'pen') {
+      const gearBtn = toolRow.createDiv('visual-notes-pen-tool-btn visual-notes-pen-options-gear');
+      gearBtn.setAttribute('aria-label', 'Pen options');
+      setIcon(gearBtn, 'settings');
+      gearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.togglePenOptionsPanel(gearBtn);
       });
     }
 
