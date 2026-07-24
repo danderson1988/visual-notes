@@ -2,6 +2,15 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.63
+
+### Fixed
+- iPad: continuous Pencil handwriting could still come apart into several disconnected fragments (rendered as stray dots since 1.0.62, silently dropped before that) — WebKit can drop and reacquire Pencil contact mid-letter. A stroke that gets interrupted (rather than deliberately lifted) now resumes as one continuous stroke if the next touch lands soon after and close to where it left off; a genuine, deliberate release still ends its own separate mark.
+- Pen mode's `touch-action: none` (see 1.0.60) now also applies to every element inside the canvas, not just the background, so it takes effect for strokes starting over a card too.
+
+### Docs
+- README: noted that iPadOS Scribble can intercept fast, small Pencil strokes before the canvas ever sees them, and that turning it off (Settings → Apple Pencil → Scribble) resolves it — a system-level behavior no web-based app can override.
+
 ## 1.0.62
 
 ### Fixed

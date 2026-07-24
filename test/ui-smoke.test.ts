@@ -1498,6 +1498,69 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     expect(board.drawings).toHaveLength(0);
   });
 
+  it('a Pencil stroke resumes after an interruption if it picks back up soon and close by (fragmentation fix)', () => {
+    // Confirmed on-device: continuous handwriting could come apart into
+    // several disconnected dots once WebKit interrupted Pencil contact
+    // mid-letter — each fragment, previously silently discarded, started
+    // rendering on its own once the single-sample dot fallback shipped.
+    // Resuming the interrupted stroke instead of starting a new one, when
+    // the next pointerdown lands soon after and near where it left off,
+    // fixes that at the source instead of just rendering the pieces.
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointermove', 20, 20, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointercancel', 20, 20, { pointerType: 'pen' })); // interrupted mid-letter
+
+    // Picks back up almost immediately, right where it left off.
+    renderer.outer.dispatchEvent(pointer('pointerdown', 21, 21, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointermove', 40, 40, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointerup', 40, 40, { pointerType: 'pen' }));
+
+    expect(board.drawings).toHaveLength(1); // one continuous stroke, not two fragments
+    expect(board.drawings[0].points.some(p => p.x <= 20)).toBe(true);
+    expect(board.drawings[0].points.some(p => p.x >= 40)).toBe(true);
+  });
+
+  it('does not resume a stroke that picks back up far from where it left off', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointermove', 20, 20, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointercancel', 20, 20, { pointerType: 'pen' }));
+
+    renderer.outer.dispatchEvent(pointer('pointerdown', 500, 500, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointerup', 520, 520, { pointerType: 'pen' }));
+
+    expect(board.drawings).toHaveLength(2); // unrelated strokes, stayed separate
+  });
+
+  it('does not resume after a deliberate pointerup (finishing a letter, dotting an "i")', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointermove', 20, 20, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointerup', 20, 20, { pointerType: 'pen' })); // clean, deliberate lift
+
+    renderer.outer.dispatchEvent(pointer('pointerdown', 21, 21, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointerup', 22, 22, { pointerType: 'pen' }));
+
+    expect(board.drawings).toHaveLength(2); // two separate, independently selectable marks
+  });
+
+  it('touch input never triggers stroke resume', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'touch' }));
+    document.dispatchEvent(pointer('pointermove', 20, 20, { pointerType: 'touch' }));
+    document.dispatchEvent(pointer('pointercancel', 20, 20, { pointerType: 'touch' })); // discarded, not tracked
+
+    renderer.outer.dispatchEvent(pointer('pointerdown', 21, 21, { pointerType: 'touch' }));
+    document.dispatchEvent(pointer('pointerup', 40, 40, { pointerType: 'touch' }));
+
+    expect(board.drawings).toHaveLength(1); // only the second stroke — first was discarded, not merged
+  });
+
   it('a fast pointermove reads every getCoalescedEvents() sample, not just the event\'s own final position', () => {
     // A quick, small gesture (a fast cursive "s" or "e") can have most of
     // its real Pencil samples bundled into the browser's coalesced-event

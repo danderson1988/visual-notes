@@ -2159,6 +2159,7 @@ export const canvasMethods = {
     // treating it as one was silently discarding whole strokes with no
     // palm or extra finger anywhere near the screen.
     const isTouchStroke = startEvent.pointerType === 'touch';
+    const isPenStroke = startEvent.pointerType === 'pen';
     if (isTouchStroke && (!startEvent.isPrimary || this.activeTouches >= 2)) return;
 
     // Defensive: force-close any stroke still waiting on its own pointerup/
@@ -2173,10 +2174,42 @@ export const canvasMethods = {
     // next stroke's pointerdown, its listeners were left dangling forever,
     // silently absorbing events the new stroke needed. Whatever the exact
     // WebKit sequence, this guarantees the new stroke always starts clean.
+    // (This — or a genuine pointercancel — is also what populates
+    // lastPenStrokeEnd below, just below.)
     this.activeStrokeAbort?.();
 
     const isHighlighter = this.penTool === 'highlighter';
     const rect = this.outer.getBoundingClientRect();
+    const startCp = screenToCanvas(startEvent.clientX - rect.left, startEvent.clientY - rect.top, this.vp);
+
+    // A same-pointerId Pencil stroke that was *interrupted* (pointercancel,
+    // or force-closed above because it never even got that) rather than
+    // deliberately lifted (a clean pointerup — see onUp, which never sets
+    // lastPenStrokeEnd) resumes here instead of starting a fresh, separate
+    // stroke, if it picks back up soon enough and close enough to where the
+    // interrupted one left off. WebKit can apparently drop and reacquire
+    // Pencil contact mid-letter; without this, one continuous "s" or "e"
+    // came apart into several disconnected fragments (rendered as stray
+    // dots once those fragments stopped being silently discarded — see
+    // commitStroke's single-sample case below).
+    const RESUME_WINDOW_MS = 300;
+    const RESUME_DIST = 16; // canvas px
+    let resumeStroke: DrawingStroke | null = null;
+    if (isPenStroke && this.lastPenStrokeEnd && this.lastPenStrokeEnd.pointerId === startEvent.pointerId
+      && performance.now() - this.lastPenStrokeEnd.endedAt < RESUME_WINDOW_MS) {
+      const prev = this.lastPenStrokeEnd.stroke;
+      const prevLast = prev.points[prev.points.length - 1];
+      if (prevLast && Math.hypot(startCp.x - prevLast.x, startCp.y - prevLast.y) < RESUME_DIST) {
+        resumeStroke = prev;
+        // Undo prev's eager commit (from onCancel) — this pointerdown
+        // continues it rather than sitting alongside it as a second stroke.
+        this.board.drawings = this.board.drawings.filter(s => s.id !== prev.id);
+        this.inkPaths.get(prev.id)?.remove(); this.inkPaths.delete(prev.id);
+        this.inkHitPaths.get(prev.id)?.remove(); this.inkHitPaths.delete(prev.id);
+      }
+    }
+    this.lastPenStrokeEnd = null;
+
     // Pen strokes drawn close together share a group so a multi-stroke
     // sketch acts as one unit — but a new stroke only joins the current
     // group if it actually starts near it; one that starts far away (e.g.
@@ -2187,15 +2220,16 @@ export const canvasMethods = {
     // independently selectable, movable, and deletable.
     const PEN_GROUP_PROXIMITY = 48; // canvas px
     let groupId: string;
-    if (isHighlighter) {
+    if (resumeStroke) {
+      groupId = resumeStroke.groupId;
+    } else if (isHighlighter) {
       groupId = crypto.randomUUID();
     } else {
-      const startCp = screenToCanvas(startEvent.clientX - rect.left, startEvent.clientY - rect.top, this.vp);
       const nearCurrentGroup = !!this.currentPenGroupId
         && this.isNearGroup(this.currentPenGroupId, startCp, PEN_GROUP_PROXIMITY);
       groupId = nearCurrentGroup ? this.currentPenGroupId! : (this.currentPenGroupId = crypto.randomUUID());
     }
-    const stroke: DrawingStroke = {
+    const stroke: DrawingStroke = resumeStroke ? { ...resumeStroke, points: [...resumeStroke.points] } : {
       id: crypto.randomUUID(),
       groupId,
       points: [],
@@ -2324,7 +2358,6 @@ export const canvasMethods = {
       // can't null out a newer stroke's still-active entry.
       if (this.activeStrokeAbort === abortThisStroke) this.activeStrokeAbort = null;
     };
-    const isPenStroke = startEvent.pointerType === 'pen';
     const commitStroke = () => {
       if (stroke.points.length < 1) return;
       if (stroke.points.length < 2) {
@@ -2365,7 +2398,14 @@ export const canvasMethods = {
       if (e2 && e2.pointerId !== pointerId) return;
       removeListeners();
       livePath.remove();
-      if (!isTouchStroke) commitStroke();
+      if (!isTouchStroke) {
+        commitStroke();
+        // Deliberately *not* set in onUp — a clean release means the user
+        // meant to end the stroke there (a dotted "i", finishing a letter),
+        // and the next stroke should stay its own separate, selectable
+        // mark. Only an interruption (this path) is eligible to resume.
+        if (isPenStroke) this.lastPenStrokeEnd = { pointerId, stroke, endedAt: performance.now() };
+      }
     };
     const abortThisStroke = () => onCancel();
     this.activeStrokeAbort = abortThisStroke;

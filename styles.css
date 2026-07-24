@@ -5878,7 +5878,8 @@ input.visual-notes-accent-pop-hex {
   z-index: 10000;
 }
 
-.visual-notes-canvas-outer.is-pen-mode {
+.visual-notes-canvas-outer.is-pen-mode,
+.visual-notes-canvas-outer.is-pen-mode * {
   cursor: crosshair;
   /* Without this, iOS/iPadOS holds each touch or Pencil-down briefly to
      decide whether it might be the start of a scroll/pinch gesture before

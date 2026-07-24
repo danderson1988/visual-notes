@@ -90,6 +90,7 @@ Select any text in a sticky note, checklist, kanban item, or image caption to re
 - **Multi-select** strokes via marquee or Shift/Ctrl-click, then move, resize, recolor, or delete them as a group
 - **Eraser** detects your swipe crossing a stroke's actual line, not just proximity to its sample points — works cleanly on straight lines, not just wobbly ones
 - Full **undo/redo** support for every drawing action
+- **iPad + Apple Pencil note:** if quick, small strokes (like a fast "s" or "e") intermittently fail to appear, turn off **Scribble** in iPad Settings → Apple Pencil. Scribble intercepts fast Pencil strokes for handwriting-to-text before they ever reach the canvas — this is a system feature web-based apps cannot override.
 
 ### Asset Management
 - **Auto-sort:** every image, audio clip, video, or document imported into a board is automatically moved to the correct subfolder in the vault root:
