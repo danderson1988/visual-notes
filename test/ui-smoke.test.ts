@@ -1444,6 +1444,29 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     expect(board.drawings[0].points.some(p => p.x >= 50)).toBe(true);
   });
 
+  it('a Pencil stroke still starts even when the event arrives with isPrimary: false', () => {
+    // isPrimary is the browser's own "first contact of this pointer type"
+    // flag — meaningful for fingers (a real second finger of a pinch gets
+    // isPrimary: false), but there's no such thing as a second Apple
+    // Pencil. WebKit's hover/touch bookkeeping around the lift-and-retouch
+    // transition (the same quirk activeStrokeAbort defends against) could
+    // still hand a Pencil pointerdown a false isPrimary with nothing else
+    // touching the screen at all, which used to discard the stroke outright.
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen', isPrimary: false }));
+    document.dispatchEvent(pointer('pointerup', 100, 100, { pointerType: 'pen', isPrimary: false }));
+    expect(board.drawings).toHaveLength(1);
+  });
+
+  it('a finger-drawn stroke still refuses to start with isPrimary: false (pinch protection preserved)', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'touch', isPrimary: false }));
+    document.dispatchEvent(pointer('pointerup', 100, 100, { pointerType: 'touch', isPrimary: false }));
+    expect(board.drawings).toHaveLength(0);
+  });
+
   it('a finger-drawn stroke still refuses to start with a second finger already down (pinch protection preserved)', () => {
     const { renderer, board } = setup([]);
     renderer.enterPenMode();

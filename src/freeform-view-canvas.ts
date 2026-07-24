@@ -2150,14 +2150,16 @@ export const canvasMethods = {
     if (this.penTool === 'eraser') { this.startEraseScrub(startEvent); return; }
 
     // Never start a stroke from a secondary touch — the second finger of a
-    // pinch-zoom gesture fires its own pointerdown, which used to draw a
-    // line while zooming. Only gated for finger input though: Apple Pencil
-    // reports its own pointerType and never shows up in the native touch
-    // list, so a resting palm or supporting finger nearby — completely
-    // normal handwriting posture — was being counted as "a second finger"
-    // and silently refusing to start the stroke at all.
+    // pinch-zoom gesture fires its own pointerdown (isPrimary: false), which
+    // used to draw a line while zooming. Both checks below are scoped to
+    // finger input only: there's no such thing as a second Apple Pencil, so
+    // for pen input a false isPrimary or a stray activeTouches count is
+    // just WebKit's own hover/touch bookkeeping around the same lift-and-
+    // retouch transition mentioned below, not a real second contact —
+    // treating it as one was silently discarding whole strokes with no
+    // palm or extra finger anywhere near the screen.
     const isTouchStroke = startEvent.pointerType === 'touch';
-    if (!startEvent.isPrimary || (isTouchStroke && this.activeTouches >= 2)) return;
+    if (isTouchStroke && (!startEvent.isPrimary || this.activeTouches >= 2)) return;
 
     // Defensive: force-close any stroke still waiting on its own pointerup/
     // pointercancel before starting a new one. Reported specifically with

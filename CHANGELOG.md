@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.60
+
+### Fixed
+- iPad: Apple Pencil strokes could still be silently discarded with no palm, finger, or other touch involved at all — 1.0.59 scoped the pinch-protection touch-count check to finger input, but missed that the adjacent `isPrimary` check on the same line was still unconditional. WebKit's own hover/touch bookkeeping around the Pencil's lift-and-retouch transition could hand a stroke a false `isPrimary` with nothing else touching the screen, and that alone was enough to drop it. Both checks are now scoped to finger input.
+
 ## 1.0.59
 
 ### Fixed
