@@ -1402,12 +1402,7 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     // a finger touch, which always gets a fresh one) — so the two taps
     // here deliberately share an id, matching that behavior; a plain
     // pointerId filter alone can't distinguish them. startInkStroke now
-    // force-aborts any still-open stroke before starting a new one — and,
-    // since that force-close shares the same commit-not-discard path a
-    // real pointercancel uses for non-touch strokes, the abandoned first
-    // stroke is preserved (as whatever was captured up to that point)
-    // rather than silently lost, alongside the second stroke completing
-    // normally.
+    // force-aborts any still-open stroke before starting a new one.
     const { renderer, board } = setup([]);
     renderer.enterPenMode();
 
@@ -1418,9 +1413,8 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     renderer.outer.dispatchEvent(pointer('pointerdown', 500, 500, { pointerId: 1 }));
     document.dispatchEvent(pointer('pointerup', 510, 510, { pointerId: 1 }));
 
-    expect(board.drawings).toHaveLength(2);
-    expect(board.drawings[0].points.every(p => p.x <= 10)).toBe(true); // force-closed stroke 1, preserved
-    expect(board.drawings[1].points.every(p => p.x >= 500)).toBe(true); // stroke 2, unaffected
+    expect(board.drawings).toHaveLength(1);
+    for (const p of board.drawings[0].points) expect(p.x).toBeGreaterThan(400);
   });
 
   it('a Pencil stroke is not blocked from starting by incidental touches (palm resting nearby)', () => {
@@ -1470,171 +1464,6 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     renderer.enterPenMode();
     renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'touch', isPrimary: false }));
     document.dispatchEvent(pointer('pointerup', 100, 100, { pointerType: 'touch', isPrimary: false }));
-    expect(board.drawings).toHaveLength(0);
-  });
-
-  it('a Pencil stroke commits the points captured so far when pointercancel fires instead of pointerup', () => {
-    // WebKit can cancel a Pencil's own tracking mid-stroke around the same
-    // hover/touch quirks as elsewhere in this file, with nothing else
-    // touching the screen — discarding the whole stroke over that (the old
-    // behavior, shared with finger pinch-handoff cancels) was worse than
-    // just ending it a little early.
-    const { renderer, board } = setup([]);
-    renderer.enterPenMode();
-    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointermove', 50, 50, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointercancel', 999, 999, { pointerType: 'pen' })); // position should be ignored
-    expect(board.drawings).toHaveLength(1);
-    expect(board.drawings[0].points.some(p => p.x >= 50)).toBe(true);
-    expect(board.drawings[0].points.some(p => p.x === 999)).toBe(false);
-  });
-
-  it('a finger-drawn stroke is still discarded (not committed) when pointercancel fires', () => {
-    const { renderer, board } = setup([]);
-    renderer.enterPenMode();
-    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'touch' }));
-    document.dispatchEvent(pointer('pointermove', 50, 50, { pointerType: 'touch' }));
-    document.dispatchEvent(pointer('pointercancel', 100, 100, { pointerType: 'touch' }));
-    expect(board.drawings).toHaveLength(0);
-  });
-
-  it('a Pencil stroke resumes after an interruption if it picks back up soon and close by (fragmentation fix)', () => {
-    // Confirmed on-device: continuous handwriting could come apart into
-    // several disconnected dots once WebKit interrupted Pencil contact
-    // mid-letter — each fragment, previously silently discarded, started
-    // rendering on its own once the single-sample dot fallback shipped.
-    // Resuming the interrupted stroke instead of starting a new one, when
-    // the next pointerdown lands soon after and near where it left off,
-    // fixes that at the source instead of just rendering the pieces.
-    const { renderer, board } = setup([]);
-    renderer.enterPenMode();
-    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointermove', 20, 20, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointercancel', 20, 20, { pointerType: 'pen' })); // interrupted mid-letter
-
-    // Picks back up almost immediately, right where it left off.
-    renderer.outer.dispatchEvent(pointer('pointerdown', 21, 21, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointermove', 40, 40, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointerup', 40, 40, { pointerType: 'pen' }));
-
-    expect(board.drawings).toHaveLength(1); // one continuous stroke, not two fragments
-    expect(board.drawings[0].points.some(p => p.x <= 20)).toBe(true);
-    expect(board.drawings[0].points.some(p => p.x >= 40)).toBe(true);
-  });
-
-  it('does not resume a stroke that picks back up far from where it left off', () => {
-    const { renderer, board } = setup([]);
-    renderer.enterPenMode();
-    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointermove', 20, 20, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointercancel', 20, 20, { pointerType: 'pen' }));
-
-    renderer.outer.dispatchEvent(pointer('pointerdown', 500, 500, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointerup', 520, 520, { pointerType: 'pen' }));
-
-    expect(board.drawings).toHaveLength(2); // unrelated strokes, stayed separate
-  });
-
-  it('scales the resume distance allowance with how long the gap was, for fast strokes', async () => {
-    // A fixed radius tight enough to keep two genuinely separate quick taps
-    // apart is, on a fast stroke, comfortably smaller than the ground the
-    // pen covers during even a brief WebKit hiccup — so the allowance
-    // grows with the gap instead of using one fixed distance for every
-    // stroke speed.
-    vi.useFakeTimers();
-    const { renderer, board } = setup([]);
-    renderer.enterPenMode();
-    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointermove', 20, 20, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointercancel', 20, 20, { pointerType: 'pen' }));
-
-    await vi.advanceTimersByTimeAsync(150); // a longer, but still-recoverable, hiccup
-    // 50px away — well past a fixed 16px radius, but within the allowance
-    // for a 150ms gap (20 + 150*0.3 = 65px).
-    renderer.outer.dispatchEvent(pointer('pointerdown', 50, 50, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointerup', 70, 70, { pointerType: 'pen' }));
-
-    expect(board.drawings).toHaveLength(1);
-    vi.useRealTimers();
-  });
-
-  it('still refuses to resume when the distance is too far even accounting for the gap', async () => {
-    vi.useFakeTimers();
-    const { renderer, board } = setup([]);
-    renderer.enterPenMode();
-    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointermove', 20, 20, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointercancel', 20, 20, { pointerType: 'pen' }));
-
-    await vi.advanceTimersByTimeAsync(150); // allowance is only ~65px at this gap
-    renderer.outer.dispatchEvent(pointer('pointerdown', 500, 500, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointerup', 520, 520, { pointerType: 'pen' }));
-
-    expect(board.drawings).toHaveLength(2);
-    vi.useRealTimers();
-  });
-
-  it('does not resume after a deliberate pointerup (finishing a letter, dotting an "i")', () => {
-    const { renderer, board } = setup([]);
-    renderer.enterPenMode();
-    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointermove', 20, 20, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointerup', 20, 20, { pointerType: 'pen' })); // clean, deliberate lift
-
-    renderer.outer.dispatchEvent(pointer('pointerdown', 21, 21, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointerup', 22, 22, { pointerType: 'pen' }));
-
-    expect(board.drawings).toHaveLength(2); // two separate, independently selectable marks
-  });
-
-  it('touch input never triggers stroke resume', () => {
-    const { renderer, board } = setup([]);
-    renderer.enterPenMode();
-    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'touch' }));
-    document.dispatchEvent(pointer('pointermove', 20, 20, { pointerType: 'touch' }));
-    document.dispatchEvent(pointer('pointercancel', 20, 20, { pointerType: 'touch' })); // discarded, not tracked
-
-    renderer.outer.dispatchEvent(pointer('pointerdown', 21, 21, { pointerType: 'touch' }));
-    document.dispatchEvent(pointer('pointerup', 40, 40, { pointerType: 'touch' }));
-
-    expect(board.drawings).toHaveLength(1); // only the second stroke — first was discarded, not merged
-  });
-
-  it('a fast pointermove reads every getCoalescedEvents() sample, not just the event\'s own final position', () => {
-    // A quick, small gesture (a fast cursive "s" or "e") can have most of
-    // its real Pencil samples bundled into the browser's coalesced-event
-    // list rather than dispatched as their own pointermove — reading only
-    // the outer event under-samples exactly those strokes.
-    const { renderer, board } = setup([]);
-    renderer.enterPenMode();
-    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
-    const move = pointer('pointermove', 100, 100, { pointerType: 'pen' });
-    (move as any).getCoalescedEvents = () => ([
-      { clientX: 30, clientY: 10, pressure: 0.5 },
-      { clientX: 60, clientY: 40, pressure: 0.5 },
-      { clientX: 100, clientY: 100, pressure: 0.5 },
-    ]);
-    document.dispatchEvent(move);
-    document.dispatchEvent(pointer('pointerup', 100, 100, { pointerType: 'pen' }));
-    expect(board.drawings).toHaveLength(1);
-    // The coalesced midpoint (30,10) only exists if every sample was read —
-    // relying on just the outer event's (100,100) would never produce it.
-    expect(board.drawings[0].points.some(p => p.x === 30 && p.y === 10)).toBe(true);
-  });
-
-  it('a Pencil tap with only one captured sample renders as a small dot instead of vanishing', () => {
-    const { renderer, board } = setup([]);
-    renderer.enterPenMode();
-    renderer.outer.dispatchEvent(pointer('pointerdown', 50, 50, { pointerType: 'pen' }));
-    document.dispatchEvent(pointer('pointerup', 50, 50, { pointerType: 'pen' })); // same spot — no 2nd point from the release snap
-    expect(board.drawings).toHaveLength(1);
-  });
-
-  it('a mouse click with only one sample is still discarded, not rendered as a dot', () => {
-    const { renderer, board } = setup([]);
-    renderer.enterPenMode();
-    renderer.outer.dispatchEvent(pointer('pointerdown', 50, 50));
-    document.dispatchEvent(pointer('pointerup', 50, 50));
     expect(board.drawings).toHaveLength(0);
   });
 

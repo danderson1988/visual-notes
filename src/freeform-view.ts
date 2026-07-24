@@ -5,7 +5,7 @@ import {
 import {
   VisualNotesFile, TileCard,
   BookmarkCard,
-  Card, DrawingStroke,
+  Card,
 } from './file-types';
 import { contrastColor } from './color-utils';
 import { NamePromptModal } from './tile-modal';
@@ -144,14 +144,6 @@ export class FreeformRenderer extends Component {
   // waiting for its own pointerup/pointercancel. startInkStroke calls this
   // defensively before starting a new stroke — see the comment there.
   activeStrokeAbort: (() => void) | null = null;
-  // Set right when a Pencil stroke commits (pointerup or pointercancel).
-  // If a new pointerdown resumes the *same* physical contact very soon
-  // after and very close to where it left off, startInkStroke continues
-  // that stroke instead of starting an unrelated new one — WebKit can
-  // apparently drop and reacquire Pencil contact mid-gesture (the same
-  // family of quirks activeStrokeAbort above deals with), which otherwise
-  // splits one continuous letter into several disconnected fragments.
-  lastPenStrokeEnd: { pointerId: number; stroke: DrawingStroke; endedAt: number } | null = null;
   // Holds groupIds (not individual stroke ids) — selection, drag, delete,
   // and recolor all operate on every stroke sharing any of these groups.
   // Box-select and Shift/Ctrl-click can select several separate groups at

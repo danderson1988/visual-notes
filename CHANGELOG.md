@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.65
+
+### Changed
+- Reverted the 1.0.61–1.0.64 Pencil-stroke changes (pointercancel committing partial strokes, coalesced-sample reading, single-sample dot rendering, and the interrupted-stroke resume/stitch mechanism) back to 1.0.60's simpler behavior. Each of those fixes addressed a real, confirmed defect, but together they introduced new rendering artifacts (fragmented dots, then beaded/jagged lines) without fully resolving the underlying issue, so this rolls back to the last known-stable baseline. The 1.0.60 pointerType-scoped touch/Pencil fixes and the iPadOS Scribble documentation (the actual root cause of the original vanishing-stroke reports) are both kept.
+
 ## 1.0.64
 
 ### Fixed

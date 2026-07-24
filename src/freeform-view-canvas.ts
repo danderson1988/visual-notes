@@ -2159,7 +2159,6 @@ export const canvasMethods = {
     // treating it as one was silently discarding whole strokes with no
     // palm or extra finger anywhere near the screen.
     const isTouchStroke = startEvent.pointerType === 'touch';
-    const isPenStroke = startEvent.pointerType === 'pen';
     if (isTouchStroke && (!startEvent.isPrimary || this.activeTouches >= 2)) return;
 
     // Defensive: force-close any stroke still waiting on its own pointerup/
@@ -2174,55 +2173,10 @@ export const canvasMethods = {
     // next stroke's pointerdown, its listeners were left dangling forever,
     // silently absorbing events the new stroke needed. Whatever the exact
     // WebKit sequence, this guarantees the new stroke always starts clean.
-    // (This — or a genuine pointercancel — is also what populates
-    // lastPenStrokeEnd below, just below.)
     this.activeStrokeAbort?.();
 
     const isHighlighter = this.penTool === 'highlighter';
     const rect = this.outer.getBoundingClientRect();
-    const startCp = screenToCanvas(startEvent.clientX - rect.left, startEvent.clientY - rect.top, this.vp);
-
-    // A same-pointerId Pencil stroke that was *interrupted* (pointercancel,
-    // or force-closed above because it never even got that) rather than
-    // deliberately lifted (a clean pointerup — see onUp, which never sets
-    // lastPenStrokeEnd) resumes here instead of starting a fresh, separate
-    // stroke, if it picks back up soon enough and close enough to where the
-    // interrupted one left off. WebKit can apparently drop and reacquire
-    // Pencil contact mid-letter; without this, one continuous "s" or "e"
-    // came apart into several disconnected fragments (rendered as stray
-    // dots once those fragments stopped being silently discarded — see
-    // commitStroke's single-sample case below).
-    //
-    // The distance allowance scales with how long the gap actually was
-    // rather than using one fixed radius: a fixed threshold tight enough to
-    // keep two genuinely separate quick taps apart was, on a fast stroke,
-    // comfortably smaller than the ground the pen covers during even a
-    // brief WebKit hiccup — so most interruptions on fast handwriting were
-    // *just* missing the reconnect and rendering as their own short,
-    // independently round-capped segment instead (a chain of those reads
-    // as beading/jaggedness along what should be one smooth line). A near-
-    // instant reconnection still only gets the tight floor.
-    const RESUME_WINDOW_MS = 300;
-    const RESUME_BASE_DIST = 20; // canvas px floor, for a near-instant reconnect
-    const RESUME_SPEED_PX_PER_MS = 0.3; // generous assumed max drawing speed
-    let resumeStroke: DrawingStroke | null = null;
-    const gapMs = this.lastPenStrokeEnd ? performance.now() - this.lastPenStrokeEnd.endedAt : Infinity;
-    if (isPenStroke && this.lastPenStrokeEnd && this.lastPenStrokeEnd.pointerId === startEvent.pointerId
-      && gapMs < RESUME_WINDOW_MS) {
-      const prev = this.lastPenStrokeEnd.stroke;
-      const prevLast = prev.points[prev.points.length - 1];
-      const resumeDist = RESUME_BASE_DIST + gapMs * RESUME_SPEED_PX_PER_MS;
-      if (prevLast && Math.hypot(startCp.x - prevLast.x, startCp.y - prevLast.y) < resumeDist) {
-        resumeStroke = prev;
-        // Undo prev's eager commit (from onCancel) — this pointerdown
-        // continues it rather than sitting alongside it as a second stroke.
-        this.board.drawings = this.board.drawings.filter(s => s.id !== prev.id);
-        this.inkPaths.get(prev.id)?.remove(); this.inkPaths.delete(prev.id);
-        this.inkHitPaths.get(prev.id)?.remove(); this.inkHitPaths.delete(prev.id);
-      }
-    }
-    this.lastPenStrokeEnd = null;
-
     // Pen strokes drawn close together share a group so a multi-stroke
     // sketch acts as one unit — but a new stroke only joins the current
     // group if it actually starts near it; one that starts far away (e.g.
@@ -2233,16 +2187,15 @@ export const canvasMethods = {
     // independently selectable, movable, and deletable.
     const PEN_GROUP_PROXIMITY = 48; // canvas px
     let groupId: string;
-    if (resumeStroke) {
-      groupId = resumeStroke.groupId;
-    } else if (isHighlighter) {
+    if (isHighlighter) {
       groupId = crypto.randomUUID();
     } else {
+      const startCp = screenToCanvas(startEvent.clientX - rect.left, startEvent.clientY - rect.top, this.vp);
       const nearCurrentGroup = !!this.currentPenGroupId
         && this.isNearGroup(this.currentPenGroupId, startCp, PEN_GROUP_PROXIMITY);
       groupId = nearCurrentGroup ? this.currentPenGroupId! : (this.currentPenGroupId = crypto.randomUUID());
     }
-    const stroke: DrawingStroke = resumeStroke ? { ...resumeStroke, points: [...resumeStroke.points] } : {
+    const stroke: DrawingStroke = {
       id: crypto.randomUUID(),
       groupId,
       points: [],
@@ -2312,11 +2265,6 @@ export const canvasMethods = {
     // detaching could all feed points into the wrong stroke — reported as
     // the second stroke of a quick pair coming out corrupted.
     const pointerId = startEvent.pointerId;
-    // Guarantees pointermove/pointerup/pointercancel keep reaching this
-    // stroke for as long as the same physical contact stays down, wherever
-    // it strays — same reasoning as every other drag gesture in this file
-    // that captures immediately (card drag, resize handles, marquee).
-    this.outer.setPointerCapture(pointerId);
     // Batch live-outline recomputes to one per animation frame — on a
     // 120Hz stylus (iPad) getStroke over the whole growing point array on
     // every single pointermove was heavy enough to visibly lag the line.
@@ -2340,21 +2288,7 @@ export const canvasMethods = {
         smoothed = { x: cp.x, y: cp.y };
       } else {
         shiftLine = false;
-        // A fast, small gesture (a quick cursive "s" or "e") can have most
-        // of its real samples bundled into the browser's coalesced-event
-        // list rather than dispatched as their own pointermove — reading
-        // only e2's own final position under-samples exactly those strokes,
-        // sometimes down to a single point that the length<2 guard below
-        // then discards as a stray click. getCoalescedEvents() exposes
-        // every raw sample since the last dispatch; falling back to the
-        // event itself when the browser reports none keeps this a no-op
-        // everywhere coalescing isn't happening.
-        const samples = e2.getCoalescedEvents?.() ?? [];
-        if (samples.length) {
-          for (const s of samples) addPoint(s.clientX, s.clientY, s.pressure);
-        } else {
-          addPoint(e2.clientX, e2.clientY, e2.pressure);
-        }
+        addPoint(e2.clientX, e2.clientY, e2.pressure);
       }
       if (!rafId) rafId = window.requestAnimationFrame(redrawLive);
     };
@@ -2371,26 +2305,6 @@ export const canvasMethods = {
       // can't null out a newer stroke's still-active entry.
       if (this.activeStrokeAbort === abortThisStroke) this.activeStrokeAbort = null;
     };
-    const commitStroke = () => {
-      if (stroke.points.length < 1) return;
-      if (stroke.points.length < 2) {
-        // A mouse/touch "stroke" with only one sample is almost always an
-        // accidental click, not a drawn mark — still discarded. A Pencil
-        // stroke this short is more likely a deliberate quick tap/dot that
-        // undersampling (or the coalescing above still missing something)
-        // left with too little data to outline; render it as a small dot
-        // rather than silently losing it. buildPenOutlineD already renders
-        // a near-zero-length stroke as a full-width round cap, so a tiny
-        // synthetic second point is enough to make that path fire.
-        if (!isPenStroke) return;
-        const p0 = stroke.points[0];
-        stroke.points.push({ ...p0, x: p0.x + 0.01 });
-      }
-      this.pushUndo();
-      this.board.drawings.push(stroke);
-      this.renderSingleDrawing(stroke);
-      this.scheduleSave();
-    };
     // iOS fires pointercancel (not pointerup) when the OS takes the touch
     // over — palm rejection, a pinch, a system gesture. Without handling
     // it, the move/up listeners above stayed attached and the next stroke
@@ -2398,27 +2312,9 @@ export const canvasMethods = {
     // called directly (no event) from onMove's own pinch-abort check above,
     // and from the next stroke's defensive activeStrokeAbort call — both
     // already only run for the matching pointerId or don't pass one.
-    //
-    // Discarding outright is correct for a *finger* cancel — it's a real
-    // gesture handoff (palm rejection, a pinch taking over), so whatever
-    // got drawn was never a deliberate stroke to begin with. There's no
-    // such handoff for a Pencil: WebKit can still cancel its own tracking
-    // mid-stroke around the same hover/touch quirks noted above, with
-    // nothing else touching the screen at all, and losing the whole stroke
-    // over that is worse than ending it a little early — so Pencil (and
-    // mouse) strokes commit whatever was captured instead of discarding it.
     const onCancel = (e2?: PointerEvent) => {
       if (e2 && e2.pointerId !== pointerId) return;
-      removeListeners();
-      livePath.remove();
-      if (!isTouchStroke) {
-        commitStroke();
-        // Deliberately *not* set in onUp — a clean release means the user
-        // meant to end the stroke there (a dotted "i", finishing a letter),
-        // and the next stroke should stay its own separate, selectable
-        // mark. Only an interruption (this path) is eligible to resume.
-        if (isPenStroke) this.lastPenStrokeEnd = { pointerId, stroke, endedAt: performance.now() };
-      }
+      removeListeners(); livePath.remove();
     };
     const abortThisStroke = () => onCancel();
     this.activeStrokeAbort = abortThisStroke;
@@ -2437,7 +2333,11 @@ export const canvasMethods = {
         stroke.points.push(lastP != null ? { x: cp.x, y: cp.y, p: lastP } : { x: cp.x, y: cp.y });
       }
       livePath.remove();
-      commitStroke();
+      if (stroke.points.length < 2) return;
+      this.pushUndo();
+      this.board.drawings.push(stroke);
+      this.renderSingleDrawing(stroke);
+      this.scheduleSave();
     };
     activeDocument.addEventListener('pointermove', onMove);
     activeDocument.addEventListener('pointerup', onUp);
