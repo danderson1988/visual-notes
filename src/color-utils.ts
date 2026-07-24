@@ -24,6 +24,18 @@ export function contrastColor(hex: string): string {
 }
 
 /**
+ * True when Obsidian's active theme is dark. Used to offer a muted,
+ * dark-appropriate set of card *background* swatches instead of the light
+ * pastels (near-white, pale yellow, pale pink…) that read as glaring/washed
+ * out sitting on a dark canvas — the same complaint doesn't apply to accent/
+ * line colors, which are already fully saturated and read fine in either
+ * theme, so only background-swatch palettes need a dark counterpart.
+ */
+export function isDarkTheme(): boolean {
+  return activeDocument.body.hasClass('theme-dark');
+}
+
+/**
  * True for a plain 6-digit hex color ("#FDE68A"), false for anything else —
  * in particular a CSS var()/keyword reference like "var(--ib-card-bg)",
  * which isDark()/contrastColor() can't meaningfully evaluate (they'd just

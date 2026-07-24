@@ -455,8 +455,8 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
       .setDesc('Colour used when creating new sticky notes.');
 
     const stickyPalette = setting.controlEl.createDiv('visual-notes-settings-sticky-palette');
-    const currentColor = this.plugin.settings.defaultStickyColor ?? STICKY_COLORS[0].color;
-    for (const { color } of STICKY_COLORS) {
+    const currentColor = this.plugin.settings.defaultStickyColor ?? STICKY_COLORS()[0].color;
+    for (const { color } of STICKY_COLORS()) {
       const sw = stickyPalette.createDiv('visual-notes-modal-swatch');
       sw.style.backgroundColor = color;
       if (color === currentColor) sw.addClass('is-selected');

@@ -1225,7 +1225,7 @@ export const cardsBasicMethods = {
   addSticky(this: FreeformRenderer): void { const p = this.centerPos(STICKY_DEFAULT_W, STICKY_DEFAULT_H); this.addStickyAt(p.x, p.y); },
 
   addStickyAt(this: FreeformRenderer, x: number, y: number, initialText = ''): void {
-    const card: StickyCard = { id: crypto.randomUUID(), kind: 'sticky', x, y, w: STICKY_DEFAULT_W, z: this.nextZ(), text: initialText, color: this.defaultStickyColor ?? STICKY_COLORS[0].color };
+    const card: StickyCard = { id: crypto.randomUUID(), kind: 'sticky', x, y, w: STICKY_DEFAULT_W, z: this.nextZ(), text: initialText, color: this.defaultStickyColor ?? STICKY_COLORS()[0].color };
     this.pushUndo(); this.board.cards.push(card); void this.saveNow();
     const el = this.createCardEl(card);
     this.selection.select(card.id); this.refreshSelectionVisuals();

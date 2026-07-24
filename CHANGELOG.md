@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.58
+
+### Changed
+- Card background color pickers (recolor a card, kanban item labels, default sticky color) now offer a muted, dark-friendly palette when your theme is dark, instead of the same washed-out pastels used in light mode. Line, accent, and pen ink colors are unchanged — they were already vivid enough to work in both themes.
+
 ## 1.0.57
 
 ### Fixed

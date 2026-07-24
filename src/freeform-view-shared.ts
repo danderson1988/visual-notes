@@ -14,6 +14,7 @@ import {
   MapCard, SwatchCard, FileCard, CalloutCard, GroupCard,
   CalendarCard, CalendarNoteImportance, CheckersCard,
 } from './file-types';
+import { isDarkTheme } from './color-utils';
 
 
 // ── Constants ──────────────────────────────────────────────────
@@ -112,7 +113,7 @@ export const CONN_COLOR_PRESETS = [
   '#22c55e', '#3b82f6', '#a855f7', '#ec4899',
 ];
 
-export const STICKY_COLORS: { color: string; name: string }[] = [
+const STICKY_COLORS_LIGHT: { color: string; name: string }[] = [
   { color: '#FDE68A', name: 'Yellow' },
   { color: '#FCA5A5', name: 'Rose' },
   { color: '#86EFAC', name: 'Green' },
@@ -124,6 +125,25 @@ export const STICKY_COLORS: { color: string; name: string }[] = [
   { color: '#D1D5DB', name: 'Grey' },
   { color: '#F3F4F6', name: 'Light Grey' },
 ];
+// Same names/slots as the light set, in muted Tailwind 800/900 shades —
+// pale pastels sitting on a dark canvas read as glaring rather than
+// blending in, which is what "colors don't suit dark mode" meant in
+// practice for sticky/kanban-item backgrounds specifically.
+const STICKY_COLORS_DARK: { color: string; name: string }[] = [
+  { color: '#78350F', name: 'Yellow' },
+  { color: '#7F1D1D', name: 'Rose' },
+  { color: '#14532D', name: 'Green' },
+  { color: '#1E3A8A', name: 'Blue' },
+  { color: '#4C1D95', name: 'Purple' },
+  { color: '#831843', name: 'Pink' },
+  { color: '#92400E', name: 'Amber' },
+  { color: '#064E3B', name: 'Mint' },
+  { color: '#374151', name: 'Grey' },
+  { color: '#1F2937', name: 'Light Grey' },
+];
+export function STICKY_COLORS(): { color: string; name: string }[] {
+  return isDarkTheme() ? STICKY_COLORS_DARK : STICKY_COLORS_LIGHT;
+}
 
 export const KANBAN_COLORS: { color: string; name: string }[] = [
   { color: '#6b7280', name: 'Gray' },
@@ -448,10 +468,21 @@ export class KanbanItemImageSuggestModal extends FuzzySuggestModal<TFile> {
   onChooseItem(f: TFile): void { this.onChoose(f); }
 }
 
-export const KANBAN_ITEM_COLORS = [
+const KANBAN_ITEM_COLORS_LIGHT = [
   '#FEE2E2', '#FEF3C7', '#D1FAE5', '#DBEAFE', '#EDE9FE', '#FCE7F3',
   '#FFEDD5', '#E0F2FE', '#F3F4F6', '#EF4444', '#3B82F6', '#22C55E',
 ];
+// First 9 are pale pastels (same "glares on a dark canvas" issue as
+// STICKY_COLORS/BG_COLORS) swapped for muted Tailwind 800/900 shades in
+// the same hue order; the trailing red/blue/green are already fully
+// saturated and read fine in either theme, so they're kept as-is.
+const KANBAN_ITEM_COLORS_DARK = [
+  '#7F1D1D', '#78350F', '#064E3B', '#1E3A8A', '#4C1D95', '#831843',
+  '#7C2D12', '#0C4A6E', '#1F2937', '#EF4444', '#3B82F6', '#22C55E',
+];
+export function KANBAN_ITEM_COLORS(): string[] {
+  return isDarkTheme() ? KANBAN_ITEM_COLORS_DARK : KANBAN_ITEM_COLORS_LIGHT;
+}
 
 export class KanbanItemColorModal extends Modal {
   constructor(app: App, private current: string | undefined, private onSubmit: (hex: string | undefined) => void) { super(app); }
@@ -464,11 +495,14 @@ export class KanbanItemColorModal extends Modal {
     const noneSwatch = grid.createDiv('visual-notes-modal-swatch visual-notes-modal-swatch--none');
     noneSwatch.setAttribute('aria-label', 'Default');
     noneSwatch.addEventListener('click', () => { this.close(); this.onSubmit(undefined); });
-    for (const hex of KANBAN_ITEM_COLORS) {
+    for (const hex of KANBAN_ITEM_COLORS()) {
       const swatch = grid.createDiv('visual-notes-modal-swatch');
       swatch.style.backgroundColor = hex;
       if (hex === this.current) swatch.addClass('is-selected');
-      if (['#F3F4F6', '#DBEAFE', '#E0F2FE'].includes(hex)) swatch.addClass('has-border');
+      // Swatches close enough to the modal's own background (light theme:
+      // near-white; dark theme: the darkest gray option) to need a border
+      // to read as a distinct square rather than blending in.
+      if (['#F3F4F6', '#DBEAFE', '#E0F2FE', '#1F2937'].includes(hex)) swatch.addClass('has-border');
       swatch.addEventListener('click', () => { this.close(); this.onSubmit(hex); });
     }
 

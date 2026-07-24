@@ -17,6 +17,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FreeformRenderer } from '../src/freeform-view';
+import { ContextBar } from '../src/context-bar';
 import { fakeApp } from './fake-app';
 import { Platform, Menu } from 'obsidian';
 import type {
@@ -1732,6 +1733,48 @@ describe('UI smoke: Safari content-visibility workaround (iPad flicker/disappear
     Platform.isIosApp = false;
     const { container } = setup([]);
     expect(container.hasClass('is-safari')).toBe(false);
+  });
+});
+
+describe('UI smoke: card background color palette follows the active theme', () => {
+  // The background-color picker (context bar "Color" button) previously
+  // offered the same pale pastels — near-white, pale yellow, pale pink…
+  // regardless of theme, which glare rather than blend in sitting on a
+  // dark canvas. Under dark theme it should now offer a muted, deep
+  // counterpart instead — same idea as the accent/line palettes, which
+  // are already fully saturated and don't need one.
+  afterEach(() => { document.body.removeClass('theme-dark'); });
+
+  function hexToRgb(hex: string): string {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+  }
+
+  function bgSwatchColors(): string[] {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const bar = new ContextBar(container, () => {});
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    bar.show(sticky);
+    const colorBtn = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-tb-btn'))
+      .find(b => b.getAttribute('aria-label') === 'Color')!;
+    colorBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return Array.from(container.querySelectorAll<HTMLElement>('.ib-ctx-color-swatch'))
+      .map(sw => sw.style.background)
+      .filter(bg => bg.length > 0);
+  }
+
+  it('offers the light pastel palette outside dark theme', () => {
+    document.body.removeClass('theme-dark');
+    expect(bgSwatchColors()).toContain(hexToRgb('#FFFFFF'));
+  });
+
+  it('offers a muted dark-friendly palette instead under dark theme', () => {
+    document.body.addClass('theme-dark');
+    const colors = bgSwatchColors();
+    expect(colors).not.toContain(hexToRgb('#FFFFFF'));
+    expect(colors).not.toContain(hexToRgb('#FEF9C3')); // pale yellow
+    expect(colors).toContain(hexToRgb('#1F2937')); // its muted dark counterpart
   });
 });
 

@@ -1,5 +1,6 @@
 import { setIcon } from 'obsidian';
 import { Card } from './file-types';
+import { isDarkTheme } from './color-utils';
 
 export type CtxEvent =
   | { type: 'delete' }
@@ -36,7 +37,18 @@ export type CtxEvent =
 
 const ACCENT_COLORS  = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899','#6b7280','#14b8a6','#f43f5e','#8b5cf6','#84cc16'];
 
-const BG_COLORS   = ['#FFFFFF','#F3F4F6','#FEF9C3','#FEE2E2','#D1FAE5','#DBEAFE','#EDE9FE','#FCE7F3','#ECFDF5','#FFF7ED','#F0F9FF','#E0F2FE'];
+// Card *background* fills — unlike the accent/strip colors above (already
+// fully saturated, read fine in either theme), these are pale pastels
+// meant to sit under dark text on a light canvas. Sitting on a dark canvas
+// instead, they glare rather than blend in, which is what "colors don't
+// suit dark mode" meant in practice. bgColors() swaps in a muted, deep
+// counterpart per swatch (same hue family, Tailwind's 800/900 shades) once
+// Obsidian's own theme is dark, so light mode keeps the original bright
+// palette untouched.
+const BG_COLORS_LIGHT = ['#FFFFFF','#F3F4F6','#FEF9C3','#FEE2E2','#D1FAE5','#DBEAFE','#EDE9FE','#FCE7F3','#ECFDF5','#FFF7ED','#F0F9FF','#E0F2FE'];
+const BG_COLORS_DARK  = ['#1F2937','#374151','#713F12','#7F1D1D','#064E3B','#1E3A8A','#4C1D95','#831843','#134E4A','#7C2D12','#0C4A6E','#164E63'];
+function BG_COLORS(): string[] { return isDarkTheme() ? BG_COLORS_DARK : BG_COLORS_LIGHT; }
+
 const STRIP_COLORS = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899','#6b7280','#14b8a6','#f43f5e','#1d4ed8','#84cc16'];
 
 // ── ContextBar ────────────────────────────────────────────────────────────────
@@ -106,7 +118,7 @@ export class ContextBar {
         this.mkFmtBtn(p, 'Strike', 'strikethrough',  's');
         this.mkBtn(p, 'Color', 'palette', () => this.openBgTopColorSub(
           p, card,
-          BG_COLORS,
+          BG_COLORS(),
           hex => this.emit({ type: 'sticky-color', hex }),
           STRIP_COLORS,
           hex => this.emit({ type: 'sticky-top-color', hex }),
@@ -116,7 +128,7 @@ export class ContextBar {
       case 'checklist':
         this.mkBtn(p, 'Color', 'palette', () => this.openBgTopColorSub(
           p, card,
-          BG_COLORS,
+          BG_COLORS(),
           hex => this.emit({ type: 'checklist-bg', hex }),
           ACCENT_COLORS,
           hex => this.emit({ type: 'checklist-top-color', hex }),
@@ -125,7 +137,7 @@ export class ContextBar {
         break;
 
       case 'table':
-        this.mkBtn(p, 'Color', 'palette', () => this.openColorSub(p, BG_COLORS, hex => this.emit({ type: 'table-bg', hex }), card));
+        this.mkBtn(p, 'Color', 'palette', () => this.openColorSub(p, BG_COLORS(), hex => this.emit({ type: 'table-bg', hex }), card));
         this.mkBtn(p, 'Title', 'heading', () => this.emit({ type: 'table-title' }));
         break;
 
@@ -151,7 +163,7 @@ export class ContextBar {
       case 'kanban-column':
         this.mkBtn(p, 'Color', 'palette', () => this.openBgTopColorSub(
           p, card,
-          BG_COLORS,
+          BG_COLORS(),
           hex => this.emit({ type: 'kanban-bg', hex }),
           STRIP_COLORS,
           hex => this.emit({ type: 'kanban-top-color', hex }),
