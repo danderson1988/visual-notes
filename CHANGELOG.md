@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.56
+
+### Fixed
+- iPad: drawing a second pen stroke quickly after the first could come out corrupted — the stroke's move/release listeners didn't filter by which touch/pencil contact actually started them, so a palm-rejection contact, a stray second touch, or the next stroke's own pointer starting before the previous one's listeners finished detaching could all feed the wrong coordinates into the wrong stroke. Now filtered to the exact pointer that started each stroke, matching how every other drag gesture in the plugin already works.
+
 ## 1.0.55
 
 ### Fixed

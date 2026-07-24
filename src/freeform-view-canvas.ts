@@ -2235,12 +2235,22 @@ export const canvasMethods = {
     this.inkSvgEl.appendChild(livePath);
 
     let shiftLine = false;
+    // Every other drag-style gesture in this file (card drag, connection
+    // drag, resize handles) filters move/up events to the pointerId that
+    // actually started it — this one didn't. Since these listeners live on
+    // activeDocument (not a narrow element), they heard *any* pointer's
+    // events: a palm-rejection contact, a stray second touch, or the next
+    // stroke's own pointerdown landing before this one's listeners finished
+    // detaching could all feed points into the wrong stroke — reported as
+    // the second stroke of a quick pair coming out corrupted.
+    const pointerId = startEvent.pointerId;
     // Batch live-outline recomputes to one per animation frame — on a
     // 120Hz stylus (iPad) getStroke over the whole growing point array on
     // every single pointermove was heavy enough to visibly lag the line.
     let rafId = 0;
     const redrawLive = () => { rafId = 0; livePath.setAttribute('d', this.buildStrokePathD(stroke)); };
     const onMove = (e2: PointerEvent) => {
+      if (e2.pointerId !== pointerId) return;
       // A second finger landing mid-stroke means this "stroke" is really a
       // pinch — abort it entirely rather than committing a stray line.
       if (this.activeTouches >= 2) { onCancel(); return; }
@@ -2268,9 +2278,15 @@ export const canvasMethods = {
     // iOS fires pointercancel (not pointerup) when the OS takes the touch
     // over — palm rejection, a pinch, a system gesture. Without handling
     // it, the move/up listeners above stayed attached and the next stroke
-    // fought them — the "can't draw again for a second" symptom.
-    const onCancel = () => { removeListeners(); livePath.remove(); };
+    // fought them — the "can't draw again for a second" symptom. Also
+    // called directly (no event) from onMove's own pinch-abort check above,
+    // which already only runs for the matching pointerId.
+    const onCancel = (e2?: PointerEvent) => {
+      if (e2 && e2.pointerId !== pointerId) return;
+      removeListeners(); livePath.remove();
+    };
     const onUp = (e2: PointerEvent) => {
+      if (e2.pointerId !== pointerId) return;
       removeListeners();
       // Snap the very last point to the true release position — highlighter
       // strokes still run through addPoint's trailing smoothing, which
