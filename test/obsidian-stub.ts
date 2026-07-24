@@ -40,6 +40,7 @@ export const Platform = {
   isPhone: false,
   isTablet: false,
   isSafari: false,
+  isIosApp: false,
 };
 
 // Just enough of Obsidian's Setting for modules that build settings UIs

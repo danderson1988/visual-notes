@@ -12,7 +12,13 @@ A visual workspace for [Obsidian](https://obsidian.md) — Milanote/Notion/Trell
 - Optionally replace the icon with a cover image (Milanote-style tile thumbnail) from your vault or a URL
 - Drag to reorder; right-click to edit
 
+### Templates
+- **15 bundled starter templates** (Brainstorm, Project Roadmap, Weekly Planner, Study Hub, Travel Planner, Fitness & Habits, and more) — pick one from **New board from template** to start with a populated board instead of a blank one
+- **Save any board as your own template** via the toolbar's "···" menu or the **Save current board as template** command, then reuse it the same way as a bundled one
+- Your own templates live in `_Templates/` in the vault, as plain `.canvas` files you can inspect or edit directly
+
 ### Freeform Canvas
+- Edge-to-edge canvas, same as Obsidian's native Canvas — no wasted border, with the board-name/back-navigation bar floating as a small pill over the canvas instead of a full-width header
 - A right-click "Add" menu and a left-hand toolbar cover every card type below, grouped into Write / Media & links / Organize
 - A **slash-command quick-add** (`/`) drops a new card of any type at the cursor without leaving the keyboard
 - **Connections** between any two cards — straight or elbow-routed, with colour, thickness, line style, arrowhead, and inline label
@@ -78,7 +84,12 @@ A colour swatch card showing the hex value and a nearest named-colour label. Dou
 Select any text in a sticky note, checklist, kanban item, or image caption to reveal a floating toolbar: bold, italic, underline, strikethrough, text colour (preset + colour picker), and highlight colour.
 
 ### Drawing
-Freehand pen and highlighter strokes directly on the canvas, layered above cards.
+- Freehand **pen** and **highlighter** strokes directly on the canvas, layered above cards
+- Pen strokes are rendered with [perfect-freehand](https://github.com/steveruizok/perfect-freehand), giving genuine pressure-sensitive tapering on a stylus/tablet (simulated from drawing speed for mouse input)
+- Nearby strokes drawn in the same session are grouped into one sketch automatically; a doodle started elsewhere on the canvas gets its own group instead of merging in
+- **Multi-select** strokes via marquee or Shift/Ctrl-click, then move, resize, recolor, or delete them as a group
+- **Eraser** detects your swipe crossing a stroke's actual line, not just proximity to its sample points — works cleanly on straight lines, not just wobbly ones
+- Full **undo/redo** support for every drawing action
 
 ### Asset Management
 - **Auto-sort:** every image, audio clip, video, or document imported into a board is automatically moved to the correct subfolder in the vault root:

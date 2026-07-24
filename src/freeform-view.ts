@@ -259,14 +259,21 @@ export class FreeformRenderer extends Component {
 
   render(): void {
     this.container.addClass('ib-freeform-host');
-    // Safari (incl. the iPadOS/iOS app, both WKWebView) has long-standing
-    // bugs tracking content-visibility: auto's viewport intersection
-    // through a transformed ancestor — cards live inside .visual-notes-
-    // canvas-inner, which pan/zoom sets a CSS transform on, and can end up
-    // wrongly treated as off-screen and skipped, flickering or vanishing
-    // entirely. See the matching CSS override on .is-safari .visual-notes-
-    // freeform-card in styles.css.
-    this.container.toggleClass('is-safari', Platform.isSafari);
+    // WebKit (desktop Safari, and — confirmed on-device — the iPadOS/iOS
+    // app too) has long-standing bugs tracking content-visibility: auto's
+    // viewport intersection through a transformed ancestor — cards live
+    // inside .visual-notes-canvas-inner, which pan/zoom sets a CSS
+    // transform on, and can end up wrongly treated as off-screen and
+    // skipped, flickering or vanishing entirely (reappearing once panning/
+    // zooming forces a fresh intersection check — the reported symptom).
+    // Platform.isSafari alone doesn't catch this: it did not fire inside
+    // Obsidian's iPadOS app in testing, even though that app renders with
+    // the same WKWebView engine desktop Safari does. Platform.isIosApp is
+    // unambiguous — every iOS/iPadOS app is WebKit, no exceptions — so it's
+    // included regardless of what isSafari reports.
+    // See the matching CSS override on .is-safari .visual-notes-freeform-card
+    // in styles.css.
+    this.container.toggleClass('is-safari', Platform.isSafari || Platform.isIosApp);
     this.container.empty();
     this.cardEls.clear();
     this.connectionPaths.clear();

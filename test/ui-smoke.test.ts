@@ -1664,7 +1664,7 @@ describe('UI smoke: pen/marker strokes are undoable', () => {
 });
 
 describe('UI smoke: Safari content-visibility workaround (iPad flicker/disappear fix)', () => {
-  afterEach(() => { Platform.isSafari = false; });
+  afterEach(() => { Platform.isSafari = false; Platform.isIosApp = false; });
 
   it('marks the container is-safari under Platform.isSafari, so the CSS override applies', () => {
     Platform.isSafari = true;
@@ -1672,8 +1672,16 @@ describe('UI smoke: Safari content-visibility workaround (iPad flicker/disappear
     expect(container.hasClass('is-safari')).toBe(true);
   });
 
+  it('also marks the container is-safari under Platform.isIosApp — confirmed on-device that isSafari alone does not fire inside Obsidian\'s iPadOS app, even though it renders with the same WebKit engine', () => {
+    Platform.isSafari = false;
+    Platform.isIosApp = true;
+    const { container } = setup([]);
+    expect(container.hasClass('is-safari')).toBe(true);
+  });
+
   it('does not mark the container is-safari on other platforms', () => {
     Platform.isSafari = false;
+    Platform.isIosApp = false;
     const { container } = setup([]);
     expect(container.hasClass('is-safari')).toBe(false);
   });

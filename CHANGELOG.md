@@ -2,6 +2,14 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.54
+
+### Fixed
+- iPad: cards (sticky notes, etc.) could still flicker or vanish on the canvas despite the 1.0.48 Safari fix — confirmed on-device that `Platform.isSafari` doesn't actually fire inside Obsidian's iPadOS app, so the workaround never applied. Now also triggers under `Platform.isIosApp`, which reliably covers it.
+
+### Docs
+- README: documented the template system (15 bundled starter templates, save-your-own), the pressure-sensitive pen/eraser/multi-select drawing tools, and the edge-to-edge canvas layout — none of which were previously mentioned.
+
 ## 1.0.53
 
 ### Fixed
