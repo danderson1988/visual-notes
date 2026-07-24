@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.57
+
+### Fixed
+- iPad: the Pen tool could still go unresponsive on the second stroke with Apple Pencil specifically (finger was unaffected) — Apple Pencil is tracked as one persistent hoverable device and reuses the same pointer ID across separate taps, unlike a finger touch, which always gets a fresh one. If a stroke's own release event was ever missed, its listeners stayed attached and silently absorbed the next stroke's input instead of letting it start cleanly. A new stroke now force-closes any previous one still waiting on its release before it begins.
+
 ## 1.0.56
 
 ### Fixed

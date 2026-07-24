@@ -2154,6 +2154,20 @@ export const canvasMethods = {
     // line while zooming.
     if (!startEvent.isPrimary || this.activeTouches >= 2) return;
 
+    // Defensive: force-close any stroke still waiting on its own pointerup/
+    // pointercancel before starting a new one. Reported specifically with
+    // hover-capable Apple Pencil (iPad Pro + Pencil 2/Pro) — finger touches
+    // were unaffected — as the Pencil "stopping responding" after the first
+    // stroke. Apple Pencil keeps the same pointerId across separate taps
+    // (it's tracked as one persistent hoverable device, unlike a finger
+    // touch, which always gets a fresh id), and can emit hover-driven
+    // pointer activity around the lift/re-touch transition; if that means
+    // the previous stroke's pointerup is ever missed or delayed past the
+    // next stroke's pointerdown, its listeners were left dangling forever,
+    // silently absorbing events the new stroke needed. Whatever the exact
+    // WebKit sequence, this guarantees the new stroke always starts clean.
+    this.activeStrokeAbort?.();
+
     const isHighlighter = this.penTool === 'highlighter';
     const rect = this.outer.getBoundingClientRect();
     // Pen strokes drawn close together share a group so a multi-stroke
@@ -2274,17 +2288,27 @@ export const canvasMethods = {
       activeDocument.removeEventListener('pointerup', onUp);
       activeDocument.removeEventListener('pointercancel', onCancel);
       if (rafId) { window.cancelAnimationFrame(rafId); rafId = 0; }
+      // Only clear if this stroke is still the one on record — the
+      // defensive call in startInkStroke already reassigns this to the
+      // *new* stroke's own abort before that new stroke's setup finishes,
+      // so an old, already-superseded removeListeners running late (there
+      // shouldn't be a path where it does, but this is cheap insurance)
+      // can't null out a newer stroke's still-active entry.
+      if (this.activeStrokeAbort === abortThisStroke) this.activeStrokeAbort = null;
     };
     // iOS fires pointercancel (not pointerup) when the OS takes the touch
     // over — palm rejection, a pinch, a system gesture. Without handling
     // it, the move/up listeners above stayed attached and the next stroke
     // fought them — the "can't draw again for a second" symptom. Also
     // called directly (no event) from onMove's own pinch-abort check above,
-    // which already only runs for the matching pointerId.
+    // and from the next stroke's defensive activeStrokeAbort call — both
+    // already only run for the matching pointerId or don't pass one.
     const onCancel = (e2?: PointerEvent) => {
       if (e2 && e2.pointerId !== pointerId) return;
       removeListeners(); livePath.remove();
     };
+    const abortThisStroke = () => onCancel();
+    this.activeStrokeAbort = abortThisStroke;
     const onUp = (e2: PointerEvent) => {
       if (e2.pointerId !== pointerId) return;
       removeListeners();

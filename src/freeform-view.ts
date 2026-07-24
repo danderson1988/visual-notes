@@ -139,6 +139,11 @@ export class FreeformRenderer extends Component {
   // one selectable/draggable/deletable unit — a new stroke starting far
   // away gets a fresh group instead of joining this one.
   currentPenGroupId: string | null = null;
+  // Set for the duration of an in-progress pen stroke; calling it force-
+  // aborts that stroke (removes its listeners and live preview) without
+  // waiting for its own pointerup/pointercancel. startInkStroke calls this
+  // defensively before starting a new stroke — see the comment there.
+  activeStrokeAbort: (() => void) | null = null;
   // Holds groupIds (not individual stroke ids) — selection, drag, delete,
   // and recolor all operate on every stroke sharing any of these groups.
   // Box-select and Shift/Ctrl-click can select several separate groups at

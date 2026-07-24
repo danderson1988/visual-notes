@@ -1389,30 +1389,30 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     expect(board.drawings[1].groupId).not.toBe(board.drawings[0].groupId);
   });
 
-  it('overlapping strokes (second starts before the first\'s listeners detach) do not cross-contaminate each other\'s points', () => {
-    // startInkStroke's move/up/cancel listeners live on the document, not a
-    // narrow element, and previously didn't filter by pointerId — so if a
-    // second stroke starts (a new touch, e.g. quick back-to-back strokes on
-    // iPad) before the first stroke's pointerup has fully detached its
-    // listeners, both strokes' handlers would hear *every* pointer's
-    // events, feeding the wrong coordinates into the wrong stroke.
+  it('a new stroke force-closes any stroke still open from an unfinished previous tap, even when it reuses the same pointerId', () => {
+    // A real sequential lift-then-touch-again always delivers a pointerup
+    // before the next pointerdown — but hover-capable Apple Pencil (finger
+    // touches were unaffected) can apparently miss that boundary, leaving
+    // the previous stroke's listeners dangling and silently absorbing the
+    // next stroke's events, which reads as the Pencil going unresponsive.
+    // Critically, Apple Pencil is tracked as one persistent hoverable
+    // device and reuses the *same* pointerId across separate taps (unlike
+    // a finger touch, which always gets a fresh one) — so the two taps
+    // here deliberately share an id, matching that behavior; a plain
+    // pointerId filter alone can't distinguish them. startInkStroke now
+    // force-aborts any still-open stroke before starting a new one.
     const { renderer, board } = setup([]);
     renderer.enterPenMode();
 
     renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerId: 1 }));
-    renderer.outer.dispatchEvent(pointer('pointerdown', 500, 500, { pointerId: 2 }));
-    document.dispatchEvent(pointer('pointermove', 10, 10, { pointerId: 1 }));
-    document.dispatchEvent(pointer('pointermove', 510, 510, { pointerId: 2 }));
-    document.dispatchEvent(pointer('pointerup', 10, 10, { pointerId: 1 }));
-    document.dispatchEvent(pointer('pointerup', 510, 510, { pointerId: 2 }));
+    document.dispatchEvent(pointer('pointermove', 10, 10, { pointerId: 1 })); // stroke 1 in progress, no pointerup yet
 
-    expect(board.drawings).toHaveLength(2);
-    const s1 = board.drawings.find(d => d.points[0].x === 0)!;
-    const s2 = board.drawings.find(d => d.points[0].x === 500)!;
-    expect(s1).toBeTruthy();
-    expect(s2).toBeTruthy();
-    for (const p of s1.points) expect(p.x).toBeLessThan(100);
-    for (const p of s2.points) expect(p.x).toBeGreaterThan(400);
+    // Stroke 2 starts on the *same* pointerId while stroke 1 is still open.
+    renderer.outer.dispatchEvent(pointer('pointerdown', 500, 500, { pointerId: 1 }));
+    document.dispatchEvent(pointer('pointerup', 510, 510, { pointerId: 1 }));
+
+    expect(board.drawings).toHaveLength(1);
+    for (const p of board.drawings[0].points) expect(p.x).toBeGreaterThan(400);
   });
 
   it('eraser swiped across the middle of a straight line erases it (segment hit, not just stored points)', () => {
