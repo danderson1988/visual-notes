@@ -2265,6 +2265,11 @@ export const canvasMethods = {
     // detaching could all feed points into the wrong stroke — reported as
     // the second stroke of a quick pair coming out corrupted.
     const pointerId = startEvent.pointerId;
+    // Guarantees pointermove/pointerup/pointercancel keep reaching this
+    // stroke for as long as the same physical contact stays down, wherever
+    // it strays — same reasoning as every other drag gesture in this file
+    // that captures immediately (card drag, resize handles, marquee).
+    this.outer.setPointerCapture(pointerId);
     // Batch live-outline recomputes to one per animation frame — on a
     // 120Hz stylus (iPad) getStroke over the whole growing point array on
     // every single pointermove was heavy enough to visibly lag the line.
@@ -2305,6 +2310,13 @@ export const canvasMethods = {
       // can't null out a newer stroke's still-active entry.
       if (this.activeStrokeAbort === abortThisStroke) this.activeStrokeAbort = null;
     };
+    const commitStroke = () => {
+      if (stroke.points.length < 2) return;
+      this.pushUndo();
+      this.board.drawings.push(stroke);
+      this.renderSingleDrawing(stroke);
+      this.scheduleSave();
+    };
     // iOS fires pointercancel (not pointerup) when the OS takes the touch
     // over — palm rejection, a pinch, a system gesture. Without handling
     // it, the move/up listeners above stayed attached and the next stroke
@@ -2312,9 +2324,20 @@ export const canvasMethods = {
     // called directly (no event) from onMove's own pinch-abort check above,
     // and from the next stroke's defensive activeStrokeAbort call — both
     // already only run for the matching pointerId or don't pass one.
+    //
+    // Discarding outright is correct for a *finger* cancel — it's a real
+    // gesture handoff (palm rejection, a pinch taking over), so whatever
+    // got drawn was never a deliberate stroke to begin with. There's no
+    // such handoff for a Pencil: WebKit can still cancel its own tracking
+    // mid-stroke around the same hover/touch quirks noted above, with
+    // nothing else touching the screen at all, and losing the whole stroke
+    // over that is worse than ending it a little early — so Pencil (and
+    // mouse) strokes commit whatever was captured instead of discarding it.
     const onCancel = (e2?: PointerEvent) => {
       if (e2 && e2.pointerId !== pointerId) return;
-      removeListeners(); livePath.remove();
+      removeListeners();
+      livePath.remove();
+      if (!isTouchStroke) commitStroke();
     };
     const abortThisStroke = () => onCancel();
     this.activeStrokeAbort = abortThisStroke;
@@ -2333,11 +2356,7 @@ export const canvasMethods = {
         stroke.points.push(lastP != null ? { x: cp.x, y: cp.y, p: lastP } : { x: cp.x, y: cp.y });
       }
       livePath.remove();
-      if (stroke.points.length < 2) return;
-      this.pushUndo();
-      this.board.drawings.push(stroke);
-      this.renderSingleDrawing(stroke);
-      this.scheduleSave();
+      commitStroke();
     };
     activeDocument.addEventListener('pointermove', onMove);
     activeDocument.addEventListener('pointerup', onUp);

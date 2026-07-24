@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.61
+
+### Fixed
+- iPad: a Pencil stroke could still be silently lost if WebKit cancelled its tracking mid-stroke (pointercancel) rather than ending it normally — the whole stroke was discarded outright, same as when a finger gesture genuinely takes over. Pencil (and mouse) strokes now commit whatever was drawn up to that point instead of throwing it away; finger strokes still discard on cancel, since that's a real gesture handoff. The canvas also captures the pointer at stroke start so move/release events keep reaching it reliably wherever the contact strays.
+
 ## 1.0.60
 
 ### Fixed

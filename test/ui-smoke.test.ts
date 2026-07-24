@@ -1402,7 +1402,12 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     // a finger touch, which always gets a fresh one) — so the two taps
     // here deliberately share an id, matching that behavior; a plain
     // pointerId filter alone can't distinguish them. startInkStroke now
-    // force-aborts any still-open stroke before starting a new one.
+    // force-aborts any still-open stroke before starting a new one — and,
+    // since that force-close shares the same commit-not-discard path a
+    // real pointercancel uses for non-touch strokes, the abandoned first
+    // stroke is preserved (as whatever was captured up to that point)
+    // rather than silently lost, alongside the second stroke completing
+    // normally.
     const { renderer, board } = setup([]);
     renderer.enterPenMode();
 
@@ -1413,8 +1418,9 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     renderer.outer.dispatchEvent(pointer('pointerdown', 500, 500, { pointerId: 1 }));
     document.dispatchEvent(pointer('pointerup', 510, 510, { pointerId: 1 }));
 
-    expect(board.drawings).toHaveLength(1);
-    for (const p of board.drawings[0].points) expect(p.x).toBeGreaterThan(400);
+    expect(board.drawings).toHaveLength(2);
+    expect(board.drawings[0].points.every(p => p.x <= 10)).toBe(true); // force-closed stroke 1, preserved
+    expect(board.drawings[1].points.every(p => p.x >= 500)).toBe(true); // stroke 2, unaffected
   });
 
   it('a Pencil stroke is not blocked from starting by incidental touches (palm resting nearby)', () => {
@@ -1464,6 +1470,31 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     renderer.enterPenMode();
     renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'touch', isPrimary: false }));
     document.dispatchEvent(pointer('pointerup', 100, 100, { pointerType: 'touch', isPrimary: false }));
+    expect(board.drawings).toHaveLength(0);
+  });
+
+  it('a Pencil stroke commits the points captured so far when pointercancel fires instead of pointerup', () => {
+    // WebKit can cancel a Pencil's own tracking mid-stroke around the same
+    // hover/touch quirks as elsewhere in this file, with nothing else
+    // touching the screen — discarding the whole stroke over that (the old
+    // behavior, shared with finger pinch-handoff cancels) was worse than
+    // just ending it a little early.
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointermove', 50, 50, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointercancel', 999, 999, { pointerType: 'pen' })); // position should be ignored
+    expect(board.drawings).toHaveLength(1);
+    expect(board.drawings[0].points.some(p => p.x >= 50)).toBe(true);
+    expect(board.drawings[0].points.some(p => p.x === 999)).toBe(false);
+  });
+
+  it('a finger-drawn stroke is still discarded (not committed) when pointercancel fires', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'touch' }));
+    document.dispatchEvent(pointer('pointermove', 50, 50, { pointerType: 'touch' }));
+    document.dispatchEvent(pointer('pointercancel', 100, 100, { pointerType: 'touch' }));
     expect(board.drawings).toHaveLength(0);
   });
 
