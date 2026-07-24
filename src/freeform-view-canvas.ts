@@ -2192,14 +2192,27 @@ export const canvasMethods = {
     // came apart into several disconnected fragments (rendered as stray
     // dots once those fragments stopped being silently discarded — see
     // commitStroke's single-sample case below).
+    //
+    // The distance allowance scales with how long the gap actually was
+    // rather than using one fixed radius: a fixed threshold tight enough to
+    // keep two genuinely separate quick taps apart was, on a fast stroke,
+    // comfortably smaller than the ground the pen covers during even a
+    // brief WebKit hiccup — so most interruptions on fast handwriting were
+    // *just* missing the reconnect and rendering as their own short,
+    // independently round-capped segment instead (a chain of those reads
+    // as beading/jaggedness along what should be one smooth line). A near-
+    // instant reconnection still only gets the tight floor.
     const RESUME_WINDOW_MS = 300;
-    const RESUME_DIST = 16; // canvas px
+    const RESUME_BASE_DIST = 20; // canvas px floor, for a near-instant reconnect
+    const RESUME_SPEED_PX_PER_MS = 0.3; // generous assumed max drawing speed
     let resumeStroke: DrawingStroke | null = null;
+    const gapMs = this.lastPenStrokeEnd ? performance.now() - this.lastPenStrokeEnd.endedAt : Infinity;
     if (isPenStroke && this.lastPenStrokeEnd && this.lastPenStrokeEnd.pointerId === startEvent.pointerId
-      && performance.now() - this.lastPenStrokeEnd.endedAt < RESUME_WINDOW_MS) {
+      && gapMs < RESUME_WINDOW_MS) {
       const prev = this.lastPenStrokeEnd.stroke;
       const prevLast = prev.points[prev.points.length - 1];
-      if (prevLast && Math.hypot(startCp.x - prevLast.x, startCp.y - prevLast.y) < RESUME_DIST) {
+      const resumeDist = RESUME_BASE_DIST + gapMs * RESUME_SPEED_PX_PER_MS;
+      if (prevLast && Math.hypot(startCp.x - prevLast.x, startCp.y - prevLast.y) < resumeDist) {
         resumeStroke = prev;
         // Undo prev's eager commit (from onCancel) — this pointerdown
         // continues it rather than sitting alongside it as a second stroke.

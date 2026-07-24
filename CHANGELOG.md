@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.64
+
+### Fixed
+- iPad: fast Pencil strokes could still come out looking beaded/jagged instead of one smooth line — the 1.0.63 fix that resumes a stroke interrupted mid-letter used one fixed reconnect distance, which a fast stroke could easily outrun during even a brief WebKit hiccup, so most of those interruptions were narrowly failing to reconnect and rendering as a chain of short, independently round-capped segments instead. The allowed reconnect distance now scales with how long the interruption actually lasted.
+
 ## 1.0.63
 
 ### Fixed

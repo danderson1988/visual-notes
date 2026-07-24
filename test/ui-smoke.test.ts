@@ -1535,6 +1535,45 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     expect(board.drawings).toHaveLength(2); // unrelated strokes, stayed separate
   });
 
+  it('scales the resume distance allowance with how long the gap was, for fast strokes', async () => {
+    // A fixed radius tight enough to keep two genuinely separate quick taps
+    // apart is, on a fast stroke, comfortably smaller than the ground the
+    // pen covers during even a brief WebKit hiccup — so the allowance
+    // grows with the gap instead of using one fixed distance for every
+    // stroke speed.
+    vi.useFakeTimers();
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointermove', 20, 20, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointercancel', 20, 20, { pointerType: 'pen' }));
+
+    await vi.advanceTimersByTimeAsync(150); // a longer, but still-recoverable, hiccup
+    // 50px away — well past a fixed 16px radius, but within the allowance
+    // for a 150ms gap (20 + 150*0.3 = 65px).
+    renderer.outer.dispatchEvent(pointer('pointerdown', 50, 50, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointerup', 70, 70, { pointerType: 'pen' }));
+
+    expect(board.drawings).toHaveLength(1);
+    vi.useRealTimers();
+  });
+
+  it('still refuses to resume when the distance is too far even accounting for the gap', async () => {
+    vi.useFakeTimers();
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointermove', 20, 20, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointercancel', 20, 20, { pointerType: 'pen' }));
+
+    await vi.advanceTimersByTimeAsync(150); // allowance is only ~65px at this gap
+    renderer.outer.dispatchEvent(pointer('pointerdown', 500, 500, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointerup', 520, 520, { pointerType: 'pen' }));
+
+    expect(board.drawings).toHaveLength(2);
+    vi.useRealTimers();
+  });
+
   it('does not resume after a deliberate pointerup (finishing a letter, dotting an "i")', () => {
     const { renderer, board } = setup([]);
     renderer.enterPenMode();
