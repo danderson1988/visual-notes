@@ -12,8 +12,17 @@ body {
      respects Obsidian's Appearance → Font settings. */
   --ib-font-display: var(--font-text);
   --ib-font-body: var(--font-text);
-  --ib-card-bg: #FFFFFF;
-  --ib-card-text: #323B4A;
+  /* Card surface + text, and the canvas backdrop it sits on, all resolve
+     from Obsidian's own tiered background variables instead of a hardcoded
+     light palette + a separate hardcoded dark palette — Obsidian already
+     recomputes these two per the *actual* active theme (built-in or
+     community, light or dark), so this one declaration is correct in every
+     theme instead of just approximating "light" and "dark" as two fixed
+     hex pairs. --background-primary/--background-secondary are reliably
+     distinct in virtually every theme (that's the whole point of the two
+     tiers), which is what keeps a card visually "on top of" the canvas. */
+  --ib-card-bg: var(--background-primary);
+  --ib-card-text: var(--text-normal);
   /* Column/board container shells (kanban lists, kanban board columns, the
      generic "Column" card) — a real Obsidian theme variable rather than a
      hardcoded gray, so it matches the active theme instead of looking like
@@ -22,23 +31,14 @@ body {
   /* Canvas background + grid-dot color when the user hasn't set a custom
      one in Settings (main.ts only ever sets these two as an *inline*
      override, which still wins over this class-level default either way). */
-  --ib-canvas-bg: #e6e6e6;
-  --ib-dot-color: #d2d2d2;
+  --ib-canvas-bg: var(--background-secondary);
+  --ib-dot-color: var(--background-modifier-border);
   --ib-shadow-low:  0 1px 3px rgba(0,0,0,0.08), 0 1px 6px rgba(0,0,0,0.06);
   --ib-shadow-mid:  0 3px 10px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.08);
   --ib-shadow-high: 0 8px 28px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.10);
 }
 
 body.theme-dark {
-  --ib-card-bg: #333333;
-  --ib-card-text: #F2F2F2;
-  /* Obsidian's own theme variables (not a hardcoded dark hex) so this
-     matches whatever the user's actual dark theme looks like, rather than
-     one fixed dark gray that could clash with a dark-blue/purple/etc.
-     community theme. Previously unset here at all — canvas background and
-     dots stayed the *light*-theme hardcoded values even in dark mode. */
-  --ib-canvas-bg: var(--background-primary);
-  --ib-dot-color: var(--background-modifier-border);
   --ib-shadow-low:  0 1px 3px rgba(0,0,0,0.28), 0 1px 6px rgba(0,0,0,0.18);
   --ib-shadow-mid:  0 3px 10px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.22);
   --ib-shadow-high: 0 8px 28px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.30);

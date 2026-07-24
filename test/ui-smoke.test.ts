@@ -612,6 +612,25 @@ describe('UI smoke: keyboard shortcut', () => {
     expect(board.cards).toHaveLength(1);
     expect(renderer.selection.isEmpty()).toBe(true);
   });
+
+  it('undo (Ctrl+Z) still works when focus is on a toolbar/picker button, not the canvas itself', () => {
+    // The toolbar and pen-picker are siblings of .outer under .container,
+    // not descendants of it — clicking one moves focus there, which used
+    // to mean shortcuts wired to a keydown listener on .outer alone (undo/
+    // redo, delete, select-all…) went silent until you clicked back into
+    // empty canvas space. Dispatching from the toolbar element itself
+    // reproduces exactly that focus state.
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { renderer, board } = setup([sticky]);
+
+    renderer.selection.select('s1');
+    renderer.refreshSelectionVisuals();
+    renderer.outer.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+    expect(board.cards).toHaveLength(0);
+
+    renderer.toolbarEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true }));
+    expect(board.cards).toHaveLength(1);
+  });
 });
 
 describe('UI smoke: connection culling on large boards', () => {
@@ -1042,16 +1061,19 @@ describe('UI smoke: sticky/note text auto-contrast against background', () => {
 describe('UI smoke: pen default ink color follows the active theme', () => {
   afterEach(() => { document.body.removeClass('theme-dark'); });
 
-  it('defaults to a dark ink color outside a dark theme', () => {
+  // A resolved hex computed once at construction (the old approach) never
+  // adapted if the user switched theme mid-session — reported as new
+  // strokes staying whatever color the board opened with. A literal CSS
+  // variable reference re-resolves live with the theme, in either mode,
+  // with no JS-side detection needed at all.
+  it('defaults to a live-resolving CSS variable, not a hex baked in at construction time', () => {
     document.body.removeClass('theme-dark');
-    const { renderer } = setup([]);
-    expect(renderer.currentInkColor).toBe('#1f2937');
-  });
+    const { renderer: light } = setup([]);
+    expect(light.currentInkColor).toBe('var(--text-normal)');
 
-  it('defaults to a light ink color under a dark theme, so strokes stay visible on a dark canvas', () => {
     document.body.addClass('theme-dark');
-    const { renderer } = setup([]);
-    expect(renderer.currentInkColor).toBe('#F2F2F2');
+    const { renderer: dark } = setup([]);
+    expect(dark.currentInkColor).toBe('var(--text-normal)');
   });
 });
 

@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.55
+
+### Fixed
+- Undo/redo, delete, select-all, duplicate, group, and Escape-to-clear-selection went silent after clicking any toolbar or pen-picker button, until you clicked back into empty canvas space first — those shortcuts only listened while the canvas element itself had focus, but the toolbar/picker are separate elements next to it, not inside it. They now work anywhere focus lands within the board.
+- The canvas, cards, and pen ink color now genuinely follow your active Obsidian theme (built-in or community, light or dark) instead of switching between two fixed hardcoded palettes — including updating live if you switch theme without reloading the board.
+
 ## 1.0.54
 
 ### Fixed

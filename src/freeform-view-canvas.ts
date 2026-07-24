@@ -302,7 +302,6 @@ export const canvasMethods = {
 
     this.outer.addEventListener('touchend', (e) => { this.activeTouches = e.touches.length; this.pinchDist = null; this.scheduleSave(); });
     this.outer.addEventListener('touchcancel', (e) => { this.activeTouches = e.touches.length; this.pinchDist = null; });
-    this.outer.addEventListener('keydown', (e) => this.onKeyDown(e));
 
     this.docKeyDown = (e: KeyboardEvent) => {
       // Pen-mode exit must work document-wide, not just while the canvas
@@ -312,6 +311,21 @@ export const canvasMethods = {
       if (this.penModeActive && (e.key === 'Escape' || e.key === 'Enter')) {
         e.preventDefault(); this.exitPenMode(); return;
       }
+      // The board's other shortcuts (undo/redo, delete, select-all,
+      // duplicate, group, Escape-to-clear-selection…) live in onKeyDown,
+      // which used to be wired as a keydown listener on `.outer` alone —
+      // that silently broke the moment focus left the canvas element
+      // itself, e.g. after clicking any toolbar or pen-picker button
+      // (both live outside `.outer`, as siblings under `.container`):
+      // reported as undo/redo doing nothing until you clicked back into
+      // empty canvas space to refocus it. Routing through here instead,
+      // gated on focus being anywhere within this board specifically (not
+      // just the canvas, but not some *other* board/pane sharing the same
+      // document either), fixes that for all of them at once. e.target
+      // (what the key event actually fired on) rather than
+      // activeDocument.activeElement — the two always agree for a real
+      // keypress, but target is what's actually available here.
+      if (e.target instanceof Node && this.container.contains(e.target)) this.onKeyDown(e);
       if (e.code === 'Space' && activeDocument.activeElement === this.outer) {
         e.preventDefault(); this.spaceDown = true;
         if (!this.isPanning) this.setCursor('grab');
@@ -1299,18 +1313,9 @@ export const canvasMethods = {
     el.addEventListener('pointercancel', onUp);
   },
 
+  // Only ever called from docKeyDown, which already handles pen-mode exit
+  // (Escape/Enter) unconditionally before reaching here — see there.
   onKeyDown(this: FreeformRenderer, e: KeyboardEvent): void {
-    // Checked before the isTyping guard below, and unconditionally: an
-    // accidental click on a card while drawing can leave some input or
-    // contenteditable element focused (e.g. entering a sticky's inline
-    // editor), which used to make isTyping swallow Escape/Enter before they
-    // ever reached the pen-mode check — leaving the user stuck in pen mode
-    // with no apparent way out. Exiting pen mode always wins over whatever
-    // else happens to have focus.
-    if (this.penModeActive && (e.key === 'Escape' || e.key === 'Enter')) {
-      e.preventDefault(); this.exitPenMode(); return;
-    }
-
     const active = activeDocument.activeElement;
     const isTyping = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement
       || (active instanceof HTMLElement && active.getAttribute('contenteditable') != null);
@@ -2469,10 +2474,9 @@ export const canvasMethods = {
 
     const isHl = this.penTool === 'highlighter';
     const swatchRow = picker.createDiv('visual-notes-pen-picker-row');
-    // First entry matches currentInkColor's own light/dark default so the
-    // is-selected ring below has something to land on out of the box.
-    const defaultInk = activeDocument.body.hasClass('theme-dark') ? '#F2F2F2' : '#1f2937';
-    const PEN_COLORS = [defaultInk, '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ffffff'];
+    // First entry matches currentInkColor's own default so the is-selected
+    // ring below has something to land on out of the box.
+    const PEN_COLORS = ['var(--text-normal)', '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ffffff'];
     // The colors an actual highlighter set comes in — fluoro yellow first.
     const HIGHLIGHT_COLORS = ['#ffeb3b', '#b2ff59', '#ff80ab', '#ffb74d', '#81d4fa', '#ce93d8'];
     const palette = isHl ? HIGHLIGHT_COLORS : PEN_COLORS;
