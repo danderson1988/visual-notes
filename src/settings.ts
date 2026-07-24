@@ -3,7 +3,7 @@ import type VisualNotesPlugin from './main';
 import { ConfirmModal } from './tile-modal';
 import { Tile } from './types';
 import { relinkAllBoards } from './asset-manager';
-import { STICKY_COLORS } from './freeform-view-shared';
+import { STICKY_COLORS, resolveDefaultStickyColor } from './freeform-view-shared';
 
 // ── Board picker modal ────────────────────────────────────────
 
@@ -455,7 +455,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
       .setDesc('Colour used when creating new sticky notes.');
 
     const stickyPalette = setting.controlEl.createDiv('visual-notes-settings-sticky-palette');
-    const currentColor = this.plugin.settings.defaultStickyColor ?? STICKY_COLORS()[0].color;
+    const currentColor = resolveDefaultStickyColor(this.plugin.settings.defaultStickyColor);
     for (const { color } of STICKY_COLORS()) {
       const sw = stickyPalette.createDiv('visual-notes-modal-swatch');
       sw.style.backgroundColor = color;

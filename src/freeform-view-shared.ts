@@ -145,6 +145,20 @@ export function STICKY_COLORS(): { color: string; name: string }[] {
   return isDarkTheme() ? STICKY_COLORS_DARK : STICKY_COLORS_LIGHT;
 }
 
+// A saved "default sticky color" is a literal hex captured at the moment the
+// user picked it, so a choice made under one theme would otherwise stay
+// stuck at that hex forever — including after switching theme. Since the
+// picker only ever offers palette swatches, re-map a stored hex to its
+// same-named swatch in the *current* theme's palette instead of returning it
+// verbatim.
+export function resolveDefaultStickyColor(stored: string | undefined): string {
+  if (!stored) return STICKY_COLORS()[0].color;
+  const lower = stored.toLowerCase();
+  const idx = STICKY_COLORS_LIGHT.findIndex(c => c.color.toLowerCase() === lower);
+  const resolvedIdx = idx !== -1 ? idx : STICKY_COLORS_DARK.findIndex(c => c.color.toLowerCase() === lower);
+  return resolvedIdx !== -1 ? STICKY_COLORS()[resolvedIdx].color : stored;
+}
+
 export const KANBAN_COLORS: { color: string; name: string }[] = [
   { color: '#6b7280', name: 'Gray' },
   { color: '#ef4444', name: 'Red' },

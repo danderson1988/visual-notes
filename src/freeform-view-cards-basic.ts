@@ -26,7 +26,7 @@ import {
   CALLOUT_DEFAULT_W, CALLOUT_DEFAULT_H, GROUP_DEFAULT_W, GROUP_DEFAULT_H,
   GROUP_PAD, AUDIO_EXTS,
   IMAGE_EXTS,
-  STICKY_COLORS, commentInitial, formatCommentTime,
+  resolveDefaultStickyColor, commentInitial, formatCommentTime,
   NoteLinkPickerModal, VaultAnyFilePickerModal,
   MediaSourceModal,
 } from './freeform-view-shared';
@@ -1225,7 +1225,7 @@ export const cardsBasicMethods = {
   addSticky(this: FreeformRenderer): void { const p = this.centerPos(STICKY_DEFAULT_W, STICKY_DEFAULT_H); this.addStickyAt(p.x, p.y); },
 
   addStickyAt(this: FreeformRenderer, x: number, y: number, initialText = ''): void {
-    const card: StickyCard = { id: crypto.randomUUID(), kind: 'sticky', x, y, w: STICKY_DEFAULT_W, z: this.nextZ(), text: initialText, color: this.defaultStickyColor ?? STICKY_COLORS()[0].color };
+    const card: StickyCard = { id: crypto.randomUUID(), kind: 'sticky', x, y, w: STICKY_DEFAULT_W, z: this.nextZ(), text: initialText, color: resolveDefaultStickyColor(this.defaultStickyColor) };
     this.pushUndo(); this.board.cards.push(card); void this.saveNow();
     const el = this.createCardEl(card);
     this.selection.select(card.id); this.refreshSelectionVisuals();

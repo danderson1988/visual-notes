@@ -26,7 +26,7 @@ import {
   AUDIO_EXTS,
   KANBAN_DEFAULT_W, KANBAN_DEFAULT_H,
   DRAG_THRESHOLD, IMAGE_EXTS,
-  STICKY_COLORS,
+  resolveDefaultStickyColor,
   AppWithPrivateAPIs, KANBAN_BOARD_MIN_W, KanbanItemsOwner,
   isValidURL, NoteLinkPickerModal, VaultAudioPickerModal, formatDueDate,
   dueUrgency, DueDateModal,
@@ -727,7 +727,7 @@ export const cardsKanbanMethods = {
     // it creates for a colorless item, so seeing it here means the color
     // was never deliberately set — reset it back to unset rather than
     // force a color onto an item that didn't have one.
-    const fallbackColor = this.defaultStickyColor ?? STICKY_COLORS()[0].color;
+    const fallbackColor = resolveDefaultStickyColor(this.defaultStickyColor);
     const item: KanbanItem = { id: crypto.randomUUID(), text: '', color: card.color === fallbackColor ? undefined : card.color };
     const textParts: string[] = [];
     const tags: string[] = [];
@@ -777,7 +777,7 @@ export const cardsKanbanMethods = {
       id: crypto.randomUUID(), kind: 'sticky',
       x: this.applySnap(cp.x), y: this.applySnap(cp.y), w: STICKY_DEFAULT_W, z: this.nextZ(),
       text: this.kanbanItemToStickyText(item),
-      color: item.color ?? this.defaultStickyColor ?? STICKY_COLORS()[0].color,
+      color: item.color ?? resolveDefaultStickyColor(this.defaultStickyColor),
     };
     this.board.cards.push(card);
     this.createCardEl(card);

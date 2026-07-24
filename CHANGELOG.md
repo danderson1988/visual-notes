@@ -2,6 +2,13 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.59
+
+### Fixed
+- iPad: Apple Pencil strokes could be silently discarded — refused to start, or cancelled mid-stroke — whenever a resting palm or supporting finger counted as a second touch. The pinch-zoom guard that cancels a stroke on a second finger only makes sense for finger-drawn strokes; it's now scoped to touch input only, so normal handwriting posture with the Pencil no longer trips it.
+- iPad: drawing could feel like it paused for a beat before the stroke actually appeared — the canvas had no `touch-action` set, so WebKit briefly held each touch/Pencil-down to decide whether it might be the start of a scroll or pinch before committing it to the page. Pen mode already handles pinch detection itself, so it now opts out of that native gesture recognition entirely while active.
+- A saved "default sticky color" picked under one theme stayed stuck at that exact color even after switching theme, since it's stored as a literal hex — new sticky notes (and kanban items falling back to it) could end up jarringly bright on a dark canvas. It now re-resolves to the equivalent swatch in whichever theme is currently active.
+
 ## 1.0.58
 
 ### Changed

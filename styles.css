@@ -5880,6 +5880,13 @@ input.visual-notes-accent-pop-hex {
 
 .visual-notes-canvas-outer.is-pen-mode {
   cursor: crosshair;
+  /* Without this, iOS/iPadOS holds each touch or Pencil-down briefly to
+     decide whether it might be the start of a scroll/pinch gesture before
+     committing it to the page — felt as a startup pause before the stroke
+     appears. Pen mode already owns pinch detection itself (aborts the
+     stroke on a second finger, see startInkStroke), so it never needs the
+     browser's native gesture recognition here. */
+  touch-action: none;
 }
 
 .visual-notes-pen-banner {

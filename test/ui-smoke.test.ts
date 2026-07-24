@@ -18,6 +18,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FreeformRenderer } from '../src/freeform-view';
 import { ContextBar } from '../src/context-bar';
+import { resolveDefaultStickyColor, STICKY_COLORS } from '../src/freeform-view-shared';
 import { fakeApp } from './fake-app';
 import { Platform, Menu } from 'obsidian';
 import type {
@@ -1416,6 +1417,52 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     for (const p of board.drawings[0].points) expect(p.x).toBeGreaterThan(400);
   });
 
+  it('a Pencil stroke is not blocked from starting by incidental touches (palm resting nearby)', () => {
+    // activeTouches counts contacts from the native touch pipeline, which
+    // Apple Pencil itself never appears in — so a resting palm or
+    // supporting finger during normal handwriting posture can put
+    // activeTouches at 2 while drawing with the Pencil. The pinch-abort
+    // guard exists to protect *finger*-drawn strokes from a real second
+    // finger; it has no business over the Pencil just because a hand
+    // happens to be resting on the glass.
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.activeTouches = 2; // palm already down before the Pencil touches
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointerup', 100, 100, { pointerType: 'pen' }));
+    expect(board.drawings).toHaveLength(1);
+  });
+
+  it('a Pencil stroke is not cancelled mid-draw when a palm/finger touch joins', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
+    renderer.activeTouches = 2; // palm settles onto the glass mid-stroke
+    document.dispatchEvent(pointer('pointermove', 50, 50, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointerup', 100, 100, { pointerType: 'pen' }));
+    expect(board.drawings).toHaveLength(1);
+    expect(board.drawings[0].points.some(p => p.x >= 50)).toBe(true);
+  });
+
+  it('a finger-drawn stroke still refuses to start with a second finger already down (pinch protection preserved)', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.activeTouches = 2;
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'touch' }));
+    document.dispatchEvent(pointer('pointerup', 100, 100, { pointerType: 'touch' }));
+    expect(board.drawings).toHaveLength(0);
+  });
+
+  it('a finger-drawn stroke is still cancelled when a second finger joins mid-draw (pinch protection preserved)', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'touch' }));
+    renderer.activeTouches = 2; // second finger lands mid-stroke
+    document.dispatchEvent(pointer('pointermove', 50, 50, { pointerType: 'touch' }));
+    document.dispatchEvent(pointer('pointerup', 100, 100, { pointerType: 'touch' }));
+    expect(board.drawings).toHaveLength(0);
+  });
+
   it('eraser swiped across the middle of a straight line erases it (segment hit, not just stored points)', () => {
     // A straight line is stored as only its two endpoints — the old eraser
     // measured distance to stored *points*, so criss-crossing its middle
@@ -1775,6 +1822,29 @@ describe('UI smoke: card background color palette follows the active theme', () 
     expect(colors).not.toContain(hexToRgb('#FFFFFF'));
     expect(colors).not.toContain(hexToRgb('#FEF9C3')); // pale yellow
     expect(colors).toContain(hexToRgb('#1F2937')); // its muted dark counterpart
+  });
+});
+
+describe('UI smoke: saved default sticky color re-maps to the active theme', () => {
+  // A "default sticky color" saved from a past light-theme pick is a literal
+  // hex (e.g. the bright yellow swatch) baked into settings. Naively
+  // falling back to that stored hex under dark theme would keep new sticky
+  // notes stuck bright forever, defeating the theme-aware palette entirely.
+  afterEach(() => { document.body.removeClass('theme-dark'); });
+
+  it('keeps the light swatch verbatim outside dark theme', () => {
+    document.body.removeClass('theme-dark');
+    expect(resolveDefaultStickyColor('#FDE68A')).toBe('#FDE68A');
+  });
+
+  it('re-maps a saved light-theme default to its dark counterpart', () => {
+    document.body.addClass('theme-dark');
+    expect(resolveDefaultStickyColor('#FDE68A')).toBe('#78350F');
+  });
+
+  it('falls back to the theme palette default when nothing is saved', () => {
+    document.body.addClass('theme-dark');
+    expect(resolveDefaultStickyColor(undefined)).toBe(STICKY_COLORS()[0].color);
   });
 });
 

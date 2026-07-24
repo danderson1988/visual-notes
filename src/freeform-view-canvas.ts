@@ -2151,8 +2151,13 @@ export const canvasMethods = {
 
     // Never start a stroke from a secondary touch — the second finger of a
     // pinch-zoom gesture fires its own pointerdown, which used to draw a
-    // line while zooming.
-    if (!startEvent.isPrimary || this.activeTouches >= 2) return;
+    // line while zooming. Only gated for finger input though: Apple Pencil
+    // reports its own pointerType and never shows up in the native touch
+    // list, so a resting palm or supporting finger nearby — completely
+    // normal handwriting posture — was being counted as "a second finger"
+    // and silently refusing to start the stroke at all.
+    const isTouchStroke = startEvent.pointerType === 'touch';
+    if (!startEvent.isPrimary || (isTouchStroke && this.activeTouches >= 2)) return;
 
     // Defensive: force-close any stroke still waiting on its own pointerup/
     // pointercancel before starting a new one. Reported specifically with
@@ -2267,7 +2272,9 @@ export const canvasMethods = {
       if (e2.pointerId !== pointerId) return;
       // A second finger landing mid-stroke means this "stroke" is really a
       // pinch — abort it entirely rather than committing a stray line.
-      if (this.activeTouches >= 2) { onCancel(); return; }
+      // Same finger-only gate as the start check above: a Pencil stroke
+      // shouldn't be discarded because a palm settled onto the glass mid-word.
+      if (isTouchStroke && this.activeTouches >= 2) { onCancel(); return; }
       if (e2.shiftKey) {
         // Ruler mode: while Shift is held the stroke is just anchor →
         // pointer, redrawn live as a perfectly straight segment. Releasing
