@@ -579,16 +579,17 @@ describe('UI smoke: deleting a card resets the floating format bar (bug #5)', ()
     // just-deleted card) stayed visible until something else — e.g. clicking
     // the empty canvas — happened to refresh it.
     const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
-    const { renderer, board } = setup([sticky]);
+    const { renderer, board, container } = setup([sticky]);
 
     renderer.selection.select('s1');
     renderer.refreshSelectionVisuals();
-    expect(renderer.toolbarEl.hasClass('ib-ctx-active')).toBe(true);
+    const panel = container.querySelector<HTMLElement>('.visual-notes-ctx-bar-panel')!;
+    expect(panel.querySelector('.visual-notes-tb-btn')).toBeTruthy(); // populated for the selected card
 
     renderer.deleteSelected();
 
     expect(board.cards).toHaveLength(0);
-    expect(renderer.toolbarEl.hasClass('ib-ctx-active')).toBe(false);
+    expect(panel.hasClass('ib-invisible')).toBe(true); // hidden immediately, not left showing stale buttons
   });
 });
 
@@ -1833,9 +1834,9 @@ describe('UI smoke: card background color palette follows the active theme', () 
   function bgSwatchColors(): string[] {
     const container = document.createElement('div');
     document.body.appendChild(container);
-    const bar = new ContextBar(container, () => {});
+    const bar = new ContextBar(document.createElement('div'), container, () => null, () => {});
     const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
-    bar.show(sticky);
+    bar.show(sticky, document.createElement('div'));
     const colorBtn = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-tb-btn'))
       .find(b => b.getAttribute('aria-label') === 'Color')!;
     colorBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -1855,6 +1856,157 @@ describe('UI smoke: card background color palette follows the active theme', () 
     expect(colors).not.toContain(hexToRgb('#FFFFFF'));
     expect(colors).not.toContain(hexToRgb('#FEF9C3')); // pale yellow
     expect(colors).toContain(hexToRgb('#1F2937')); // its muted dark counterpart
+  });
+});
+
+describe('UI smoke: sticky context bar no longer shows the broken Bold/Italic/Underline/Strike buttons', () => {
+  // They called this.activeStickyApplyTag?.(cmd), which was only ever set
+  // while the sticky was already in text-edit mode (it applied to the
+  // editor's current text selection) — selecting the card without entering
+  // edit mode left it null, so the buttons silently did nothing.
+  // TextFormatToolbar already covers the same commands (plus Color/
+  // Highlight) the instant text is actually selected, so removed as
+  // duplicated, broken functionality rather than trying to make them work
+  // on a whole-card selection.
+  it('only shows Edit and Color for a sticky, not the old format buttons', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const bar = new ContextBar(document.createElement('div'), container, () => null, () => {});
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    bar.show(sticky, document.createElement('div'));
+    const labels = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-tb-btn'))
+      .map(b => b.getAttribute('aria-label'));
+    expect(labels).toEqual(['Edit', 'Color', 'Delete']);
+  });
+});
+
+describe('UI smoke: floating context bar positions above the selected card', () => {
+  function rect(l: number, t: number, w: number, h: number): DOMRect {
+    return { x: l, y: t, width: w, height: h, top: t, left: l, right: l + w, bottom: t + h, toJSON: () => undefined } as DOMRect;
+  }
+  // Stubs the element's own getBoundingClientRect (an own-property override
+  // always wins over the prototype one, so this works regardless of
+  // anything else touching Element.prototype elsewhere in this file).
+  function stubRect(el: Element, r: DOMRect): void {
+    (el as unknown as { getBoundingClientRect: () => DOMRect }).getBoundingClientRect = () => r;
+  }
+  // applyPosition reads the panel's own size from offsetWidth/offsetHeight
+  // (matching TextFormatToolbar.position's approach), not getBoundingClientRect.
+  function stubSize(el: HTMLElement, w: number, h: number): void {
+    Object.defineProperty(el, 'offsetWidth', { value: w, configurable: true });
+    Object.defineProperty(el, 'offsetHeight', { value: h, configurable: true });
+  }
+  // position() defers to the next animation frame (avoids a flash at a
+  // stale spot) — reposition() (drag/resize/pan) doesn't, so only tests
+  // exercising the initial show() need this.
+  function nextFrame(): Promise<void> {
+    return new Promise(r => window.requestAnimationFrame(() => r()));
+  }
+
+  afterEach(() => { Platform.isPhone = false; });
+
+  it('creates the panel in the container, not inside the toolbar element', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { renderer, container } = setup([sticky]);
+    renderer.selection.select('s1');
+    renderer.refreshSelectionVisuals();
+    const panel = container.querySelector('.visual-notes-ctx-bar-panel');
+    expect(panel).toBeTruthy();
+    expect(renderer.toolbarEl.contains(panel)).toBe(false);
+  });
+
+  it('positions above the card when there is room', async () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { renderer, container } = setup([sticky]);
+    const cardEl = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+    const panel = container.querySelector<HTMLElement>('.visual-notes-ctx-bar-panel')!;
+    stubRect(container, rect(0, 0, 1000, 800));
+    stubRect(cardEl, rect(400, 300, 240, 160));
+    stubSize(panel, 200, 44);
+    stubRect(renderer.trashZoneEl!, rect(-1000, -1000, 10, 10)); // far away — never overlaps
+    renderer.selection.select('s1');
+    renderer.refreshSelectionVisuals();
+    await nextFrame();
+    // Above the card: bottom edge sits at cardTop(300) - gap(8) = 292.
+    expect(parseFloat(panel.style.top)).toBeCloseTo(292 - 44, 1);
+  });
+
+  it('flips below the card when there is no room above', async () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { renderer, container } = setup([sticky]);
+    const cardEl = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+    const panel = container.querySelector<HTMLElement>('.visual-notes-ctx-bar-panel')!;
+    stubRect(container, rect(0, 0, 1000, 800));
+    stubRect(cardEl, rect(400, 10, 240, 160)); // near the very top — no room above
+    stubSize(panel, 200, 44);
+    stubRect(renderer.trashZoneEl!, rect(-1000, -1000, 10, 10));
+    renderer.selection.select('s1');
+    renderer.refreshSelectionVisuals();
+    await nextFrame();
+    // Below the card: top edge sits at cardBottom(170) + gap(8) = 178.
+    expect(parseFloat(panel.style.top)).toBeCloseTo(178, 1);
+  });
+
+  it('reposition() re-measures the current card and updates the panel (what drag/resize/pan hook into)', async () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { renderer, container } = setup([sticky]);
+    const cardEl = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+    const panel = container.querySelector<HTMLElement>('.visual-notes-ctx-bar-panel')!;
+    stubRect(container, rect(0, 0, 1000, 800));
+    stubRect(cardEl, rect(400, 300, 240, 160));
+    stubSize(panel, 200, 44);
+    stubRect(renderer.trashZoneEl!, rect(-1000, -1000, 10, 10));
+    renderer.selection.select('s1');
+    renderer.refreshSelectionVisuals();
+    await nextFrame();
+
+    stubRect(cardEl, rect(600, 500, 240, 160)); // card "moved" (drag/pan/resize)
+    renderer.contextBar.reposition();
+    expect(parseFloat(panel.style.top)).toBeCloseTo(500 - 8 - 44, 1);
+    expect(parseFloat(panel.style.left)).toBeCloseTo(600 + 240 / 2 - 200 / 2, 1);
+  });
+
+  it('dragging a selected card keeps the floating bar aligned with it', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { renderer, container } = setup([sticky]);
+    const cardEl = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+    stubRect(container, rect(0, 0, 1000, 800));
+    stubRect(cardEl, rect(0, 300, 240, 160));
+    const spyReposition = vi.spyOn(renderer.contextBar, 'reposition');
+    renderer.selection.select('s1');
+    renderer.refreshSelectionVisuals();
+
+    cardEl.dispatchEvent(pointer('pointerdown', 50, 350));
+    cardEl.dispatchEvent(pointer('pointermove', 90, 390)); // past DRAG_THRESHOLD
+    cardEl.dispatchEvent(pointer('pointerup', 90, 390)); // onUp flushes any pending rAF frame synchronously
+
+    expect(spyReposition).toHaveBeenCalled();
+  });
+
+  it('panning the canvas repositions the shown context bar', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { renderer, container } = setup([sticky]);
+    const cardEl = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+    stubRect(container, rect(0, 0, 1000, 800));
+    stubRect(cardEl, rect(400, 300, 240, 160));
+    renderer.selection.select('s1');
+    renderer.refreshSelectionVisuals();
+    const spyReposition = vi.spyOn(renderer.contextBar, 'reposition');
+
+    renderer.vp = { ...renderer.vp, x: renderer.vp.x - 50, y: renderer.vp.y - 50 };
+    renderer.applyViewport();
+
+    expect(spyReposition).toHaveBeenCalled();
+  });
+
+  it('falls back to the original docked toolbar behavior on phone, with no floating panel', () => {
+    Platform.isPhone = true;
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { renderer, container } = setup([sticky]);
+    renderer.selection.select('s1');
+    renderer.refreshSelectionVisuals();
+    expect(container.querySelector('.visual-notes-ctx-bar-panel')).toBeNull();
+    expect(renderer.toolbarEl.hasClass('ib-ctx-active')).toBe(true);
   });
 });
 

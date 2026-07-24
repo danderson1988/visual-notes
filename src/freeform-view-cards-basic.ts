@@ -214,12 +214,10 @@ export const cardsBasicMethods = {
 
     // Selection-triggered Bold/Italic/Strike/Underline + text Color/Highlight
     // bubble menu — every other inline text editor (checklist item, kanban
-    // item, …) already gets this; the note editor only had its own separate
-    // persistent-toolbar bold/italic/underline/strike wiring below (via
-    // activeStickyApplyTag) and no font colour option at all.
+    // item, …) already gets this too.
     const fmtToolbar = new TextFormatToolbar(editor, el, this.container);
 
-    // ── Inline tag toggle ─────────────────────────────────────────
+    // ── Inline tag toggle (Cmd/Ctrl+B/I/U, Cmd/Ctrl+Shift+S) ───────
     let savedRange: Range | null = null;
 
     const applyTag = (tag: string) => {
@@ -268,9 +266,8 @@ export const cardsBasicMethods = {
       editor.focus();
     };
 
-    this.activeStickyApplyTag = applyTag;
-
-    // Track selection so context-bar buttons can restore it after stealing focus
+    // Tracks the live selection so applyTag (below, via the Cmd+B/I/U/
+    // Shift+S shortcuts) always has a real range to work with.
     const onSelChange = () => {
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed || !editor.contains(sel.anchorNode)) { savedRange = null; return; }
@@ -294,7 +291,6 @@ export const cardsBasicMethods = {
     const cleanup = () => {
       activeDocument.removeEventListener('selectionchange', onSelChange);
       window.removeEventListener('keydown', onFormatKey, true);
-      this.activeStickyApplyTag = null;
       fmtToolbar.destroy();
     };
 

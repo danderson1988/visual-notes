@@ -801,7 +801,8 @@ export const canvasMethods = {
     const ctxBarActive = ids.length === 1 && !!this.board.cards.find(c => c.id === ids[0]);
     if (ids.length === 1) {
       const card = this.board.cards.find(c => c.id === ids[0]);
-      if (card) this.contextBar?.show(card);
+      const cardEl = card ? this.cardEls.get(card.id) : undefined;
+      if (card && cardEl) this.contextBar?.show(card, cardEl);
       else this.contextBar?.hide();
     } else {
       this.contextBar?.hide();
@@ -1053,6 +1054,11 @@ export const canvasMethods = {
             if (foundId) this.cardEls.get(foundId)?.addClass('is-kanban-drop-target');
           }
         }
+        // No-ops for multi-select (context bar only ever shows for a single
+        // selected card) or when nothing's shown — otherwise keeps the
+        // floating bar aligned with the card as it moves, same rAF batching
+        // as everything else in this flush.
+        this.contextBar?.reposition();
       };
 
       const onMove = (e: PointerEvent) => {
@@ -1294,6 +1300,7 @@ export const canvasMethods = {
         }
       }
       this.updateConnectionsForCard(card.id);
+      this.contextBar?.reposition(); // keeps the floating bar aligned as the card resizes
     };
     const onMove = (ev: PointerEvent) => {
       latestEv = ev;

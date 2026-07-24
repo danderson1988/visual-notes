@@ -1298,6 +1298,93 @@ path.is-marquee-selected {
   height: 100%;
 }
 
+/* ── Floating context bar (desktop/iPad) ─────────────────────────
+   Above the selected card instead of occupying the fixed toolbar's own
+   slot — see ContextBar's `floating` mode. Content classes (.ib-ctx-panel
+   and its children) are shared with the docked/phone mode; the tb-pos-*
+   ancestor selectors above that pick row vs. column layout can't match
+   here (this panel isn't inside .visual-notes-freeform-toolbar at all),
+   so every one of them gets an explicit row-mode equivalent below — this
+   panel is always a compact horizontal pill regardless of toolbarPosition.
+   Icon-only and tightly packed, matching native Obsidian Canvas's
+   selection toolbar rather than the main add-card toolbar's larger
+   icon+label buttons — labels move to native hover tooltips instead
+   (see ContextBar's setTooltip calls), and .ib-ctx-color-grid switches
+   from column-wrap flex (which relies on a parent height it doesn't have
+   here — see below) to a fixed-column CSS grid, so it lays out as an
+   actual box instead of one tall single-file column. */
+.visual-notes-ctx-bar-panel {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  box-shadow: var(--ib-shadow-high);
+  z-index: 150;
+  pointer-events: auto;
+}
+.visual-notes-ctx-bar-panel.ib-ctx-panel {
+  flex-direction: row;
+}
+.visual-notes-ctx-bar-panel .visual-notes-tb-btn {
+  flex-direction: row;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  gap: 0;
+}
+.visual-notes-ctx-bar-panel .visual-notes-tb-btn-label {
+  display: none;
+}
+.visual-notes-ctx-bar-panel .visual-notes-tb-btn-icon {
+  width: 18px;
+  height: 18px;
+}
+.visual-notes-ctx-bar-panel .visual-notes-tb-btn-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.visual-notes-ctx-bar-panel .ib-ctx-back-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+}
+.visual-notes-ctx-bar-panel .ib-ctx-spacer {
+  width: 4px;
+}
+.visual-notes-ctx-bar-panel .ib-ctx-trash-sep {
+  width: 1px;
+  height: 24px;
+  margin: 0 2px;
+}
+/* Fixed-column grid box instead of the docked panel's flex column-wrap —
+   that relies on `height: 100%` resolving from a toolbar's fixed height,
+   which the floating panel (sized to its own auto-height content) doesn't
+   have, so column-wrap here never actually wrapped. */
+.visual-notes-ctx-bar-panel .ib-ctx-color-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 18px);
+  gap: 6px;
+  padding: 4px;
+  justify-content: center;
+}
+.visual-notes-ctx-bar-panel .ib-ctx-color-swatch {
+  width: 18px;
+  height: 18px;
+}
+.visual-notes-ctx-bar-panel .ib-ctx-tab-row {
+  flex-direction: row;
+}
+.visual-notes-ctx-bar-panel .ib-ctx-tab {
+  flex: 1;
+}
+.visual-notes-ctx-bar-panel .ib-ctx-swatch-area {
+  flex-direction: row;
+}
+
 /* Custom color wheel input — invisible, triggered by its sibling button */
 .ib-ctx-color-wheel-input {
   position: absolute;

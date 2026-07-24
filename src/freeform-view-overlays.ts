@@ -644,7 +644,7 @@ export const overlaysMethods = {
     });
 
     // ── Context bar (occupies the same slot, shown when a card is selected) ──
-    this.contextBar = new ContextBar(tb, e => this.handleCtxEvent(e));
+    this.contextBar = new ContextBar(tb, this.container, () => this.trashZoneEl, e => this.handleCtxEvent(e));
   },
 
   renderTrashZone(this: FreeformRenderer): void {
@@ -1413,10 +1413,6 @@ export const overlaysMethods = {
             break;
           }
         }
-        break;
-      }
-      case 'sticky-format': {
-        this.activeStickyApplyTag?.(e.cmd);
         break;
       }
       case 'sticky-color': {

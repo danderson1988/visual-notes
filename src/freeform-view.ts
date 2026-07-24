@@ -201,7 +201,6 @@ export class FreeformRenderer extends Component {
   pendingToolBtn: HTMLElement | null = null;
   overflowPopover: HTMLElement | null = null;
   contextBar!: ContextBar;
-  activeStickyApplyTag: ((tag: string) => void) | null = null;
 
   docKeyDown!: (e: KeyboardEvent) => void;
   docKeyUp!: (e: KeyboardEvent) => void;
@@ -390,6 +389,7 @@ export class FreeformRenderer extends Component {
     this.zoomPill?.setText(`${Math.round(this.vp.zoom * 100)}%`);
     if (this.minimapOpen) this.updateMinimapViewportRect();
     this.scheduleCullingRefresh();
+    this.contextBar?.reposition(); // keeps the floating bar aligned with the card through pan/zoom
   }
 
   // ── Canvas event binding ───────────────────────────────────────

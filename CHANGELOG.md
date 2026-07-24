@@ -2,6 +2,13 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.67
+
+### Changed
+- The card context bar (Edit/Color/Delete, etc.) now floats directly above the selected card on desktop/iPad instead of taking over the fixed toolbar's slot — it tracks live while you drag, resize, or pan/zoom the canvas, flips below the card if there's no room above, and steers clear of the trash zone. Phone keeps its original bottom-docked bar unchanged.
+- The context bar is now compact and icon-only, matching native Obsidian Canvas's selection toolbar — hover for a tooltip instead of a text label underneath each icon.
+- Color swatches now lay out as a proper grid box instead of a single tall column.
+
 ## 1.0.66
 
 ### Added

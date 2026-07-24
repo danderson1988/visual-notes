@@ -29,6 +29,8 @@ export class Notice {
 
 export function setIcon(_el: HTMLElement, _iconId: string): void {}
 
+export function setTooltip(_el: HTMLElement, _tooltip: string, _options?: unknown): void {}
+
 export function getIconIds(): string[] { return []; }
 
 // Real Obsidian's Platform is a plain (non-readonly-typed) object of

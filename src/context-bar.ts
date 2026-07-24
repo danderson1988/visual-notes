@@ -1,4 +1,4 @@
-import { setIcon } from 'obsidian';
+import { setIcon, setTooltip, Platform } from 'obsidian';
 import { Card } from './file-types';
 import { isDarkTheme } from './color-utils';
 
@@ -10,7 +10,6 @@ export type CtxEvent =
   // reaches edit mode on touch devices, where the dblclick that normally
   // starts these editors is unreliable/undiscoverable.
   | { type: 'edit-card' }
-  | { type: 'sticky-format'; cmd: string }
   | { type: 'sticky-color'; hex: string }
   | { type: 'sticky-top-color'; hex: string | null }
   | { type: 'checklist-accent'; hex: string }
@@ -58,32 +57,64 @@ export class ContextBar {
   private trashConfirmActive = false;
   private trashTimeout: number | null = null;
   private currentCard: Card | null = null;
+  private currentCardEl: HTMLElement | null = null;
+  // A floating panel above the selection has nowhere good to go on a phone
+  // screen (same reasoning TextFormatToolbar is disabled there) — phone
+  // keeps the original design: the same fixed toolbar element repurposed in
+  // place, reflowed into a bottom-docked bar by the existing CSS media
+  // query. Decided once; a phone doesn't turn into a desktop mid-session.
+  private readonly floating = !Platform.isPhone;
 
   constructor(
     private readonly toolbarEl: HTMLElement,
+    private readonly container: HTMLElement,
+    private readonly getTrashZoneEl: () => HTMLElement | null,
     private readonly emit: (e: CtxEvent) => void,
   ) {
-    this.ctxPanelEl = this.toolbarEl.createDiv('ib-ctx-panel');
+    if (this.floating) {
+      // Screen-space sibling of the pen picker / connection-props panel /
+      // pen options panel, not an in-flow toolbar child — created once and
+      // toggled invisible rather than removed/recreated per show(), same
+      // as the docked panel below never gets torn down either.
+      this.ctxPanelEl = this.container.createDiv('visual-notes-ctx-bar-panel ib-ctx-panel');
+      this.ctxPanelEl.addClass('ib-invisible');
+    } else {
+      this.ctxPanelEl = this.toolbarEl.createDiv('ib-ctx-panel');
+    }
   }
 
   // ── Public API ───────────────────────────────────────────────────────────────
 
-  show(card: Card): void {
+  show(card: Card, cardEl: HTMLElement): void {
     this.currentCard = card;
+    this.currentCardEl = cardEl;
     this.fill(card);
-    this.activate();
+    if (this.floating) this.position(); else this.activate();
   }
 
   hide(): void {
     this.currentCard = null;
-    this.deactivate();
+    this.currentCardEl = null;
+    if (this.floating) { this.ctxPanelEl.addClass('ib-invisible'); this.cancelTrashConfirm(); }
+    else this.deactivate();
+  }
+
+  // Called after the selected card's on-screen rect changes for a reason
+  // that isn't a fresh show() — dragged, resized, or the canvas itself was
+  // panned/zoomed. No-op on phone (nothing floats there) or when nothing is
+  // currently shown. Unlike position(), this runs synchronously with no
+  // invisible/rAF flash-prevention step: the panel is already visible and
+  // already close to right, this just nudges it to stay aligned.
+  reposition(): void {
+    if (!this.floating || !this.currentCardEl) return;
+    this.applyPosition();
   }
 
   destroy(): void {
     if (this.trashTimeout !== null) window.clearTimeout(this.trashTimeout);
   }
 
-  // ── Panel activation ─────────────────────────────────────────────────────────
+  // ── Panel activation (docked/phone mode only) ───────────────────────────────
 
   private activate(): void {
     this.toolbarEl.addClass('ib-ctx-active');
@@ -92,6 +123,59 @@ export class ContextBar {
   private deactivate(): void {
     this.toolbarEl.removeClass('ib-ctx-active');
     this.cancelTrashConfirm();
+  }
+
+  // ── Positioning (floating mode only) ────────────────────────────────────────
+
+  // Same measure-then-clamp approach as TextFormatToolbar.position(): hide,
+  // measure on the next frame (so the just-rebuilt content has real
+  // dimensions), position, reveal — avoids a visible flash at a stale spot
+  // when show() targets a different card than whatever was last positioned.
+  private position(): void {
+    this.ctxPanelEl.addClass('ib-invisible');
+    window.requestAnimationFrame(() => {
+      this.applyPosition();
+      this.ctxPanelEl.removeClass('ib-invisible');
+    });
+  }
+
+  private applyPosition(): void {
+    const cardEl = this.currentCardEl;
+    if (!cardEl) return;
+    const cardRect = cardEl.getBoundingClientRect();
+    const contRect = this.container.getBoundingClientRect();
+    const panelW = this.ctxPanelEl.offsetWidth;
+    const panelH = this.ctxPanelEl.offsetHeight;
+    const gap = 8;
+    let left = (cardRect.left + cardRect.right) / 2 - contRect.left - panelW / 2;
+    let top = cardRect.top - contRect.top - panelH - gap;
+    if (top < 4) top = cardRect.bottom - contRect.top + gap; // no room above — flip below
+    const margin = 4;
+    left = Math.max(margin, Math.min(left, contRect.width - margin - panelW));
+    top = Math.max(margin, Math.min(top, contRect.height - margin - panelH));
+    this.ctxPanelEl.setCssStyles({ top: `${top}px`, left: `${left}px`, right: '', bottom: '' });
+
+    // Still overlapping the bottom-left trash zone? Nudge above it instead
+    // of just clamping sideways — same fix positionPenPicker already needed.
+    const trash = this.getTrashZoneEl();
+    if (!trash) return;
+    const pRect = this.ctxPanelEl.getBoundingClientRect();
+    const tRect = trash.getBoundingClientRect();
+    const overlaps = pRect.left < tRect.right + margin && pRect.right > tRect.left - margin
+      && pRect.top < tRect.bottom + margin && pRect.bottom > tRect.top - margin;
+    if (overlaps) {
+      const flippedTop = Math.max(margin, tRect.top - contRect.top - panelH - margin);
+      this.ctxPanelEl.setCssStyles({ top: `${flippedTop}px` });
+    }
+  }
+
+  // Sub-panels (color grid, bg/strip tabs) resize the already-visible panel
+  // well beyond its initial icon-row footprint — re-measure in place so it
+  // doesn't end up positioned for a panel half its eventual size. Safe to
+  // call synchronously (unlike position()): the panel is already visible,
+  // so there's nothing to flash.
+  private syncPos(): void {
+    if (this.floating) this.applyPosition();
   }
 
   // ── Fill by card type ────────────────────────────────────────────────────────
@@ -110,12 +194,14 @@ export class ContextBar {
 
       case 'sticky':
         // Explicit entry into edit mode — dblclick (the only other way in)
-        // is unreliable on touch devices.
+        // is unreliable on touch devices. Bold/Italic/Underline/Strike used
+        // to live here too, but they only ever worked while the sticky was
+        // already in text-edit mode (they applied to the current text
+        // selection) — selecting the card without entering edit mode left
+        // them silently doing nothing. TextFormatToolbar already covers the
+        // same commands (plus Color/Highlight) the moment text is actually
+        // selected, so they were pure duplication once genuinely fixed.
         this.mkBtn(p, 'Edit', 'edit-2', () => this.emit({ type: 'edit-card' }));
-        this.mkFmtBtn(p, 'Bold',   'bold',          'strong');
-        this.mkFmtBtn(p, 'Italic', 'italic',         'em');
-        this.mkFmtBtn(p, 'Under',  'underline',      'u');
-        this.mkFmtBtn(p, 'Strike', 'strikethrough',  's');
         this.mkBtn(p, 'Color', 'palette', () => this.openBgTopColorSub(
           p, card,
           BG_COLORS(),
@@ -206,6 +292,7 @@ export class ContextBar {
     }
 
     this.mkTrash(p);
+    this.syncPos();
   }
 
   // ── Background + Top strip two-tab picker ────────────────────────────────────
@@ -263,15 +350,18 @@ export class ContextBar {
       bgTab.addClass('ib-ctx-tab--active');
       stripTab.removeClass('ib-ctx-tab--active');
       renderSwatches('bg');
+      this.syncPos();
     });
     stripTab.addEventListener('click', () => {
       stripTab.addClass('ib-ctx-tab--active');
       bgTab.removeClass('ib-ctx-tab--active');
       renderSwatches('strip');
+      this.syncPos();
     });
 
     renderSwatches('bg');
     this.mkTrash(p);
+    this.syncPos();
   }
 
   // ── Color sub-panel ──────────────────────────────────────────────────────────
@@ -297,6 +387,7 @@ export class ContextBar {
 
     this.mkCustomColor(p, onSelect, () => this.fill(card));
     this.mkTrash(p);
+    this.syncPos();
   }
 
   private mkCustomColor(p: HTMLElement, onSelect: (hex: string) => void, onBack: () => void): void {
@@ -312,17 +403,15 @@ export class ContextBar {
 
   // ── Button helpers ───────────────────────────────────────────────────────────
 
-  private mkFmtBtn(parent: HTMLElement, label: string, icon: string, tag: string): HTMLElement {
-    const btn = this.mkBtn(parent, label, icon, () => this.emit({ type: 'sticky-format', cmd: tag }));
-    // Prevent focus from leaving the sticky editor when the button is clicked
-    btn.addEventListener('pointerdown', e => e.preventDefault());
-    return btn;
-  }
-
+  // The floating panel hides .visual-notes-tb-btn-label via CSS (icon-only,
+  // matching native Canvas's compact selection toolbar) — setTooltip gives
+  // it back as a native hover tooltip instead. Harmless to set unconditionally
+  // for the docked/phone panel too, where the label is already visible.
   private mkBtn(parent: HTMLElement, label: string, icon: string, handler: () => void): HTMLElement {
     const btn = parent.createDiv('visual-notes-tb-btn');
     btn.setAttribute('tabindex', '0');
     btn.setAttribute('aria-label', label);
+    setTooltip(btn, label);
     const ic = btn.createDiv('visual-notes-tb-btn-icon');
     setIcon(ic, icon);
     const labelSpan = btn.createSpan('visual-notes-tb-btn-label');
@@ -336,6 +425,7 @@ export class ContextBar {
     const back = parent.createDiv('ib-ctx-back-btn');
     back.setAttribute('tabindex', '0');
     back.setAttribute('aria-label', 'Back');
+    setTooltip(back, 'Back');
     setIcon(back, 'arrow-left');
     back.addEventListener('click', handler);
     back.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
@@ -345,22 +435,33 @@ export class ContextBar {
     parent.createDiv('ib-ctx-spacer');
     parent.createDiv('ib-ctx-trash-sep');
 
-    let labelEl: HTMLElement;
     const btn = parent.createDiv('visual-notes-tb-btn ib-ctx-trash-btn');
     btn.setAttribute('tabindex', '0');
     btn.setAttribute('aria-label', 'Delete');
+    setTooltip(btn, 'Delete');
     const ic = btn.createDiv('visual-notes-tb-btn-icon');
     setIcon(ic, 'trash-2');
-    labelEl = btn.createSpan('visual-notes-tb-btn-label');
+    const labelEl = btn.createSpan('visual-notes-tb-btn-label');
     labelEl.setText('Delete');
 
+    // Icon-only mode has no visible label to show "Sure?" on, so the red
+    // ib-ctx-trash--confirm background is the primary confirm signal there;
+    // the label/tooltip text still updates too, for the docked panel and
+    // for anyone hovering the floating one.
     const confirm = () => {
       if (this.trashConfirmActive) { this.emit({ type: 'delete' }); return; }
       this.trashConfirmActive = true;
       labelEl.setText('Sure?');
+      setTooltip(btn, 'Sure?');
       btn.addClass('ib-ctx-trash--confirm');
       if (this.trashTimeout !== null) window.clearTimeout(this.trashTimeout);
-      this.trashTimeout = window.setTimeout(() => this.cancelTrashConfirm(), 3000);
+      this.trashTimeout = window.setTimeout(() => {
+        this.trashTimeout = null;
+        this.trashConfirmActive = false;
+        labelEl.setText('Delete');
+        setTooltip(btn, 'Delete');
+        btn.removeClass('ib-ctx-trash--confirm');
+      }, 3000);
     };
 
     btn.addEventListener('click', confirm);
