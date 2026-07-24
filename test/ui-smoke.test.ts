@@ -1498,6 +1498,44 @@ describe('UI smoke: pen strokes only merge into one group when drawn close toget
     expect(board.drawings).toHaveLength(0);
   });
 
+  it('a fast pointermove reads every getCoalescedEvents() sample, not just the event\'s own final position', () => {
+    // A quick, small gesture (a fast cursive "s" or "e") can have most of
+    // its real Pencil samples bundled into the browser's coalesced-event
+    // list rather than dispatched as their own pointermove — reading only
+    // the outer event under-samples exactly those strokes.
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0, { pointerType: 'pen' }));
+    const move = pointer('pointermove', 100, 100, { pointerType: 'pen' });
+    (move as any).getCoalescedEvents = () => ([
+      { clientX: 30, clientY: 10, pressure: 0.5 },
+      { clientX: 60, clientY: 40, pressure: 0.5 },
+      { clientX: 100, clientY: 100, pressure: 0.5 },
+    ]);
+    document.dispatchEvent(move);
+    document.dispatchEvent(pointer('pointerup', 100, 100, { pointerType: 'pen' }));
+    expect(board.drawings).toHaveLength(1);
+    // The coalesced midpoint (30,10) only exists if every sample was read —
+    // relying on just the outer event's (100,100) would never produce it.
+    expect(board.drawings[0].points.some(p => p.x === 30 && p.y === 10)).toBe(true);
+  });
+
+  it('a Pencil tap with only one captured sample renders as a small dot instead of vanishing', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 50, 50, { pointerType: 'pen' }));
+    document.dispatchEvent(pointer('pointerup', 50, 50, { pointerType: 'pen' })); // same spot — no 2nd point from the release snap
+    expect(board.drawings).toHaveLength(1);
+  });
+
+  it('a mouse click with only one sample is still discarded, not rendered as a dot', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 50, 50));
+    document.dispatchEvent(pointer('pointerup', 50, 50));
+    expect(board.drawings).toHaveLength(0);
+  });
+
   it('a finger-drawn stroke still refuses to start with a second finger already down (pinch protection preserved)', () => {
     const { renderer, board } = setup([]);
     renderer.enterPenMode();

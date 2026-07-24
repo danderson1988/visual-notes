@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.62
+
+### Fixed
+- iPad: fast, small Pencil strokes (a quick cursive "s" or "e") could still vanish entirely — most of their real samples were likely getting bundled into the browser's coalesced-event list rather than dispatched as their own pointermove, so only reading each event's own final position under-sampled exactly those strokes, sometimes down to too little data to keep. Every coalesced sample is now read, and a Pencil stroke that still ends up with just one sample renders as a small dot instead of being silently dropped.
+
 ## 1.0.61
 
 ### Fixed

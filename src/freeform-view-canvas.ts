@@ -2293,7 +2293,21 @@ export const canvasMethods = {
         smoothed = { x: cp.x, y: cp.y };
       } else {
         shiftLine = false;
-        addPoint(e2.clientX, e2.clientY, e2.pressure);
+        // A fast, small gesture (a quick cursive "s" or "e") can have most
+        // of its real samples bundled into the browser's coalesced-event
+        // list rather than dispatched as their own pointermove — reading
+        // only e2's own final position under-samples exactly those strokes,
+        // sometimes down to a single point that the length<2 guard below
+        // then discards as a stray click. getCoalescedEvents() exposes
+        // every raw sample since the last dispatch; falling back to the
+        // event itself when the browser reports none keeps this a no-op
+        // everywhere coalescing isn't happening.
+        const samples = e2.getCoalescedEvents?.() ?? [];
+        if (samples.length) {
+          for (const s of samples) addPoint(s.clientX, s.clientY, s.pressure);
+        } else {
+          addPoint(e2.clientX, e2.clientY, e2.pressure);
+        }
       }
       if (!rafId) rafId = window.requestAnimationFrame(redrawLive);
     };
@@ -2310,8 +2324,22 @@ export const canvasMethods = {
       // can't null out a newer stroke's still-active entry.
       if (this.activeStrokeAbort === abortThisStroke) this.activeStrokeAbort = null;
     };
+    const isPenStroke = startEvent.pointerType === 'pen';
     const commitStroke = () => {
-      if (stroke.points.length < 2) return;
+      if (stroke.points.length < 1) return;
+      if (stroke.points.length < 2) {
+        // A mouse/touch "stroke" with only one sample is almost always an
+        // accidental click, not a drawn mark — still discarded. A Pencil
+        // stroke this short is more likely a deliberate quick tap/dot that
+        // undersampling (or the coalescing above still missing something)
+        // left with too little data to outline; render it as a small dot
+        // rather than silently losing it. buildPenOutlineD already renders
+        // a near-zero-length stroke as a full-width round cap, so a tiny
+        // synthetic second point is enough to make that path fire.
+        if (!isPenStroke) return;
+        const p0 = stroke.points[0];
+        stroke.points.push({ ...p0, x: p0.x + 0.01 });
+      }
       this.pushUndo();
       this.board.drawings.push(stroke);
       this.renderSingleDrawing(stroke);
