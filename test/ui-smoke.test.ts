@@ -1793,6 +1793,77 @@ describe('UI smoke: pen/marker strokes are undoable', () => {
   });
 });
 
+describe('UI smoke: undo/redo buttons (bottom-left, above the trash zone)', () => {
+  // Cmd/Ctrl+Z alone is undiscoverable on iPad — drawing with Apple Pencil
+  // means there's usually no keyboard in reach — so these buttons are the
+  // only on-screen affordance for undo/redo.
+  function click(el: HTMLElement) { el.dispatchEvent(new MouseEvent('click', { bubbles: true })); }
+
+  it('both buttons start disabled on a fresh board (nothing to undo or redo yet)', () => {
+    const { renderer } = setup([]);
+    expect(renderer.undoBtnEl!.hasClass('is-disabled')).toBe(true);
+    expect(renderer.redoBtnEl!.hasClass('is-disabled')).toBe(true);
+  });
+
+  it('undo enables after an edit, redo stays disabled', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#fff' };
+    const { renderer } = setup([sticky]);
+    renderer.pushUndo();
+
+    expect(renderer.undoBtnEl!.hasClass('is-disabled')).toBe(false);
+    expect(renderer.redoBtnEl!.hasClass('is-disabled')).toBe(true);
+  });
+
+  it('clicking undo reverts the change and flips the enabled button to redo', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#fff' };
+    const { renderer, board } = setup([sticky]);
+    renderer.pushUndo();
+    (board.cards[0] as StickyCard).text = 'changed';
+
+    click(renderer.undoBtnEl!);
+
+    expect((board.cards[0] as StickyCard).text).toBe('hi');
+    expect(renderer.undoBtnEl!.hasClass('is-disabled')).toBe(true);
+    expect(renderer.redoBtnEl!.hasClass('is-disabled')).toBe(false);
+  });
+
+  it('clicking redo re-applies the change and flips back to undo', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#fff' };
+    const { renderer, board } = setup([sticky]);
+    renderer.pushUndo();
+    (board.cards[0] as StickyCard).text = 'changed';
+    click(renderer.undoBtnEl!);
+
+    click(renderer.redoBtnEl!);
+
+    expect((board.cards[0] as StickyCard).text).toBe('changed');
+    expect(renderer.undoBtnEl!.hasClass('is-disabled')).toBe(false);
+    expect(renderer.redoBtnEl!.hasClass('is-disabled')).toBe(true);
+  });
+
+  it('clicking a disabled undo button is a no-op', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: '#fff' };
+    const { renderer, board } = setup([sticky]);
+
+    click(renderer.undoBtnEl!); // nothing pushed yet — stack is empty
+
+    expect((board.cards[0] as StickyCard).text).toBe('hi');
+    expect(renderer.undoBtnEl!.hasClass('is-disabled')).toBe(true);
+  });
+
+  it('undoing a pen stroke via the button works the same as Ctrl+Z', () => {
+    const { renderer, board } = setup([]);
+    renderer.enterPenMode();
+    renderer.outer.dispatchEvent(pointer('pointerdown', 0, 0));
+    document.dispatchEvent(pointer('pointerup', 20, 20));
+    expect(board.drawings).toHaveLength(1);
+
+    click(renderer.undoBtnEl!);
+
+    expect(board.drawings).toHaveLength(0);
+  });
+});
+
 describe('UI smoke: Safari content-visibility workaround (iPad flicker/disappear fix)', () => {
   afterEach(() => { Platform.isSafari = false; Platform.isIosApp = false; });
 

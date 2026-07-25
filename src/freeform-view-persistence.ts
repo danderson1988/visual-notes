@@ -52,18 +52,21 @@ export const persistenceMethods = {
     this.undoStack.push(this.undoSnapshot());
     if (this.undoStack.length > MAX_UNDO) this.undoStack.shift();
     this.redoStack = [];
+    this.refreshUndoRedoButtons();
   },
 
   undo(this: FreeformRenderer): void {
     if (!this.undoStack.length) return;
     this.redoStack.push(this.undoSnapshot());
     this.applyUndoSnapshot(this.undoStack.pop()!);
+    this.refreshUndoRedoButtons();
   },
 
   redo(this: FreeformRenderer): void {
     if (!this.redoStack.length) return;
     this.undoStack.push(this.undoSnapshot());
     this.applyUndoSnapshot(this.redoStack.pop()!);
+    this.refreshUndoRedoButtons();
   },
 
   rebuildCards(this: FreeformRenderer): void {

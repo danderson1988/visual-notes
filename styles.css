@@ -6265,6 +6265,51 @@ path.ib-highlight-stroke {
   transform: scale(1.25);
 }
 
+/* ── Undo / redo ──────────────────────────────────────────────── */
+/* Stacked directly above the trash zone, sharing its left edge — the calc()
+   clears whatever height the (user-resizable) trash zone currently is,
+   rather than a value baked in for its 56px default. The only on-screen
+   affordance for undo/redo (Cmd/Ctrl+Z still works too); without it, a
+   keyboard-less iPad Pencil session has no way to walk back a stroke. */
+.visual-notes-undo-redo-group {
+  position: absolute;
+  bottom: calc(16px + var(--ib-trash-zone-size, 56px) + 8px);
+  left: 16px;
+  display: flex;
+  gap: 4px;
+  z-index: 10002;
+}
+
+.visual-notes-undo-redo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--ib-shadow-low);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 80ms ease, color 80ms ease, opacity 80ms ease;
+}
+
+.visual-notes-undo-redo-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.visual-notes-undo-redo-btn:hover:not(.is-disabled) {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.visual-notes-undo-redo-btn.is-disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 /* ── Drawing selection box + resize handles ────────────────────── */
 
 .visual-notes-drawing-select-box {

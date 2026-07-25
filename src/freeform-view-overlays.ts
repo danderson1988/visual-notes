@@ -1,5 +1,5 @@
 import {
-  TFile, Menu, Notice, setIcon, Platform,
+  TFile, Menu, Notice, setIcon, setTooltip, Platform,
 } from 'obsidian';
 import { TouchActionSheet } from './touch-action-sheet';
 import {
@@ -41,6 +41,8 @@ declare module './freeform-view' {
     populateCardMenu(menu: Menu, el: HTMLElement, card: SupportedCard): void;
     renderToolbar(): void;
     renderTrashZone(): void;
+    renderUndoRedoButtons(): void;
+    refreshUndoRedoButtons(): void;
     toggleOverflow(anchor: HTMLElement): void;
     closeOverflow(): void;
     closeFab(): void;
@@ -652,6 +654,34 @@ export const overlaysMethods = {
     zone.setAttribute('aria-label', 'Drag here to delete');
     setIcon(zone, 'trash-2');
     this.trashZoneEl = zone;
+  },
+
+  // Stacked above the trash zone rather than tucked in the toolbar, so it
+  // stays put regardless of toolbarPosition and is reachable one-handed —
+  // the same reasoning as the trash zone's own placement.
+  renderUndoRedoButtons(this: FreeformRenderer): void {
+    const group = this.container.createDiv('visual-notes-undo-redo-group');
+
+    const undoBtn = group.createDiv('visual-notes-undo-redo-btn');
+    undoBtn.setAttribute('aria-label', 'Undo');
+    setTooltip(undoBtn, 'Undo');
+    setIcon(undoBtn, 'undo-2');
+    undoBtn.addEventListener('click', () => { if (this.undoStack.length) this.undo(); });
+    this.undoBtnEl = undoBtn;
+
+    const redoBtn = group.createDiv('visual-notes-undo-redo-btn');
+    redoBtn.setAttribute('aria-label', 'Redo');
+    setTooltip(redoBtn, 'Redo');
+    setIcon(redoBtn, 'redo-2');
+    redoBtn.addEventListener('click', () => { if (this.redoStack.length) this.redo(); });
+    this.redoBtnEl = redoBtn;
+
+    this.refreshUndoRedoButtons();
+  },
+
+  refreshUndoRedoButtons(this: FreeformRenderer): void {
+    this.undoBtnEl?.toggleClass('is-disabled', this.undoStack.length === 0);
+    this.redoBtnEl?.toggleClass('is-disabled', this.redoStack.length === 0);
   },
 
   toggleOverflow(this: FreeformRenderer, anchor: HTMLElement): void {

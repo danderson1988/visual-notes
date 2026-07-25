@@ -58,6 +58,11 @@ export class FreeformRenderer extends Component {
   // Bottom-left drop target — anything draggable (cards, kanban items,
   // column children, sketches) dropped onto it gets deleted.
   trashZoneEl: HTMLElement | null = null;
+  // Stacked just above the trash zone — the only on-screen affordance for
+  // undo/redo; Cmd/Ctrl+Z alone is undiscoverable on iPad, where drawing
+  // with Apple Pencil means there's usually no keyboard in reach at all.
+  undoBtnEl: HTMLElement | null = null;
+  redoBtnEl: HTMLElement | null = null;
   // Minimap widget — collapsed to a small toggle circle by default; UI-only
   // open/closed state, not persisted (always starts collapsed on reload).
   minimapOpen = false;
@@ -336,6 +341,7 @@ export class FreeformRenderer extends Component {
     this.renderAlignBar();
     this.renderZoomPill();
     this.renderTrashZone();
+    this.renderUndoRedoButtons();
     this.renderMinimap();
     this.renderSearchWidget();
     this.renderFilterWidget();

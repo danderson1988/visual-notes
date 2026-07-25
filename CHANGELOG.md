@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.68
+
+### Added
+- **Undo/redo buttons**: two small icon buttons now sit directly above the trash zone (bottom-left, always visible), so undo/redo has an on-screen affordance instead of being Cmd/Ctrl+Z only. Covers everything the keyboard shortcut already did, including pen/highlighter strokes — useful on iPad, where drawing with Apple Pencil usually means there's no keyboard in reach to undo a stroke. Each button greys out automatically when there's nothing left to undo/redo.
+
 ## 1.0.67
 
 ### Changed
