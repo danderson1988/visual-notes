@@ -70,11 +70,21 @@ export async function createBoardFile(
 
 export const TEMPLATES_FOLDER = '_Templates';
 
+// Group templates (reusable clusters of cards saved off a board, rather
+// than whole boards) live in a subfolder of the same place. Declared here
+// next to TEMPLATES_FOLDER because listTemplates has to know to skip it —
+// see group-templates.ts for everything else about them.
+export const GROUP_TEMPLATES_FOLDER = `${TEMPLATES_FOLDER}/Groups`;
+
 // Template files are just ordinary Visual Notes boards that happen to live
 // in this one folder — nothing distinguishes them at the file-format level.
 export function listTemplates(app: App): TFile[] {
   return app.vault.getFiles().filter(
-    f => f.extension === 'canvas' && f.path.startsWith(`${TEMPLATES_FOLDER}/`)
+    f => f.extension === 'canvas'
+      && f.path.startsWith(`${TEMPLATES_FOLDER}/`)
+      // Group templates are board fragments, not whole boards — they'd
+      // spawn a near-empty board if offered in the new-board picker.
+      && !f.path.startsWith(`${GROUP_TEMPLATES_FOLDER}/`)
   );
 }
 
@@ -144,7 +154,7 @@ export async function ensureDir(app: App, dir: string): Promise<void> {
 
 // Resolves name/folder to a collision-safe path (appending " 1", " 2", …
 // before the extension as needed) and writes board there.
-async function writeNewBoardFile(app: App, name: string, folder: TFolder | null, board: VisualNotesFile): Promise<TFile> {
+export async function writeNewBoardFile(app: App, name: string, folder: TFolder | null, board: VisualNotesFile): Promise<TFile> {
   const safeName = name.trim() || 'New Visual Notes board';
   const baseName = safeName.endsWith('.canvas') ? safeName : `${safeName}.canvas`;
   const folderPath = folder ? folder.path : '';

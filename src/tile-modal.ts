@@ -49,7 +49,9 @@ export class ConfirmModal extends Modal {
   private message: string;
   private onConfirm: () => void;
 
-  constructor(app: App, message: string, onConfirm: () => void) {
+  // confirmLabel defaults to 'Delete' — every original caller confirms a
+  // deletion; pass it for any other destructive action (e.g. 'Replace').
+  constructor(app: App, message: string, onConfirm: () => void, private confirmLabel = 'Delete') {
     super(app);
     this.message = message;
     this.onConfirm = onConfirm;
@@ -61,7 +63,7 @@ export class ConfirmModal extends Modal {
     const btnRow = contentEl.createDiv('visual-notes-modal-buttons');
     btnRow.createEl('button', { text: 'Cancel' })
       .addEventListener('click', () => this.close());
-    const delBtn = btnRow.createEl('button', { text: 'Delete', cls: 'mod-warning' });
+    const delBtn = btnRow.createEl('button', { text: this.confirmLabel, cls: 'mod-warning' });
     delBtn.addEventListener('click', () => { this.onConfirm(); this.close(); });
   }
 

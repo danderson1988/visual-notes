@@ -15,7 +15,8 @@ A visual workspace for [Obsidian](https://obsidian.md) — Milanote/Notion/Trell
 ### Templates
 - **15 bundled starter templates** (Brainstorm, Project Roadmap, Weekly Planner, Study Hub, Travel Planner, Fitness & Habits, and more) — pick one from **New board from template** to start with a populated board instead of a blank one
 - **Save any board as your own template** via the toolbar's "···" menu or the **Save current board as template** command, then reuse it the same way as a bundled one
-- Your own templates live in `_Templates/` in the vault, as plain `.canvas` files you can inspect or edit directly
+- **Group templates** — select any cluster of cards, right-click → **Create template…**, give it a name, and it becomes a reusable build you can drop onto any board from the canvas right-click menu's **Templates** entry. Anything can be templated: a styled header row, a meeting-notes layout, a connected diagram, a set of kanban columns
+- Your own templates live in `_Templates/` in the vault (group templates in `_Templates/Groups/`), as plain `.canvas` files you can inspect, rename, edit, or delete directly
 
 ### Freeform Canvas
 - Edge-to-edge canvas, same as Obsidian's native Canvas — no wasted border, with the board-name/back-navigation bar floating as a small pill over the canvas instead of a full-width header
@@ -23,6 +24,7 @@ A visual workspace for [Obsidian](https://obsidian.md) — Milanote/Notion/Trell
 - A **slash-command quick-add** (`/`) drops a new card of any type at the cursor without leaving the keyboard
 - **Connections** between any two cards — straight or elbow-routed, with colour, thickness, line style, arrowhead, and inline label
 - **Multi-select** via marquee or Shift-click; group drag, alignment bar, and even distribution
+- **Copy/cut/paste groups** with **⌘/Ctrl C**, **X**, and **V** — the connections between the copied cards come with them, a selected group frame brings its contents along, and paste lands on the pointer. Works across boards, and across Obsidian windows
 - **Group frames** — select 2+ cards and press **⌘/Ctrl G** to wrap them in a native-Canvas-style labelled frame. Purely spatial (no membership list, exactly like Obsidian's own Canvas groups): drag the frame to move everything inside it, resize or delete the frame without ever touching its contents
 - **Resize** any card by dragging any of its four corners
 - **Pan** with middle-click (or Space + drag), **zoom** with the scroll wheel
@@ -108,6 +110,9 @@ Select any text in a sticky note, checklist, kanban item, or image caption to re
 |---|---|
 | Delete selected | Delete / Backspace |
 | Select all | ⌘ A |
+| Copy selection | ⌘ C / Ctrl C |
+| Cut selection | ⌘ X / Ctrl X |
+| Paste | ⌘ V / Ctrl V |
 | Duplicate | ⌘ D |
 | Group selection | ⌘ G / Ctrl G |
 | Undo | ⌘ Z |

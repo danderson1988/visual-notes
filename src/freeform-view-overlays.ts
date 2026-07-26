@@ -517,11 +517,17 @@ export const overlaysMethods = {
     }));
     menu.addSeparator();
 
-    menu.addItem(i => i.setTitle('Duplicate').setIcon('copy').onClick(() => this.duplicateSelected()));
+    menu.addItem(i => i.setTitle('Copy').setIcon('copy').onClick(() => this.copySelection()));
+    menu.addItem(i => i.setTitle('Cut').setIcon('scissors').onClick(() => this.copySelection(true)));
+    menu.addItem(i => i.setTitle('Duplicate').setIcon('copy-plus').onClick(() => this.duplicateSelected()));
     menu.addItem(i => i.setTitle('Archive').setIcon('archive').onClick(() => this.archiveSelected()));
     if (this.selection.getIds().length > 1) {
       menu.addItem(i => i.setTitle('Group selection').setIcon('frame').onClick(() => this.groupSelected()));
     }
+    // Saves the selection to _Templates/Groups/ so it can be dropped onto
+    // any board later from the canvas menu's "Templates" entry.
+    menu.addItem(i => i.setTitle('Create template…').setIcon('layout-template').onClick(() =>
+      this.promptSaveSelectionAsTemplate()));
     menu.addSeparator();
     menu.addItem(i => i.setTitle('Bring to front').setIcon('chevrons-up').onClick(() => {
       const maxZ = Math.max(0, ...this.board.cards.map(c => c.z ?? 0));

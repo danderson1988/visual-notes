@@ -34,6 +34,7 @@ import { cardsCalendarMethods } from './freeform-view-cards-calendar';
 import { cardsCheckersMethods } from './freeform-view-cards-checkers';
 import { overlaysMethods } from './freeform-view-overlays';
 import { persistenceMethods } from './freeform-view-persistence';
+import { clipboardMethods } from './freeform-view-clipboard';
 
 // ── Renderer ───────────────────────────────────────────────────
 // FreeformRenderer's implementation is split across this file (fields,
@@ -47,6 +48,7 @@ import { persistenceMethods } from './freeform-view-persistence';
 //   freeform-view-cards-*.ts      — per-card-kind rendering and editing
 //   freeform-view-overlays.ts     — toolbar/context menus/minimap/search/filters
 //   freeform-view-persistence.ts  — save queue/undo/redo/archive
+//   freeform-view-clipboard.ts    — copy/cut/paste of card groups, group templates
 export class FreeformRenderer extends Component {
   outer!: HTMLElement;
   inner!: HTMLElement;
@@ -1269,4 +1271,4 @@ export class FreeformRenderer extends Component {
 
 }
 
-Object.assign(FreeformRenderer.prototype, canvasMethods, cardsBasicMethods, cardsTableMethods, cardsKanbanMethods, cardsColumnMethods, cardsMediaMethods, cardsCalendarMethods, cardsCheckersMethods, overlaysMethods, persistenceMethods);
+Object.assign(FreeformRenderer.prototype, canvasMethods, cardsBasicMethods, cardsTableMethods, cardsKanbanMethods, cardsColumnMethods, cardsMediaMethods, cardsCalendarMethods, cardsCheckersMethods, overlaysMethods, persistenceMethods, clipboardMethods);

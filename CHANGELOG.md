@@ -2,6 +2,13 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.69
+
+### Added
+- **Copy, cut, and paste card groups** with **⌘/Ctrl C**, **⌘/Ctrl X**, and **⌘/Ctrl V**. A copy takes the whole selection as one unit: the cards, the connections drawn between them, and any selected pen/highlighter sketches. Selecting a group frame brings the cards inside it along, matching what dragging that frame already does. Paste lands centred on the pointer, and works across boards and across Obsidian windows — everything gets fresh ids, so pasting onto the board you copied from is safe. Also available from the right-click menu on cards, sketches, and the canvas.
+- **Group templates**: save any cluster of cards as your own reusable build. Select the cards, right-click → **Create template…**, name it — then right-click anywhere on the canvas, choose **Templates**, and pick it to drop a fresh copy at that spot. Anything can be templated: a styled header row, a meeting-notes layout, a connected diagram, a set of kanban columns. Templates are normalized to their own origin, so where they were on the board you saved them from doesn't matter.
+- Group templates are stored as plain `.canvas` files in `_Templates/Groups/`, so they can be inspected, edited as a board, renamed, or deleted from the file explorer like anything else in the vault. Saving over an existing name asks first, and they're kept out of the whole-board **New board from template** picker.
+
 ## 1.0.68
 
 ### Added

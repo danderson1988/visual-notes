@@ -469,6 +469,16 @@ export const canvasMethods = {
         this.addCheckersAt(this.applySnap(cp.x - CHECKERS_DEFAULT_W / 2), this.applySnap(cp.y - CHECKERS_DEFAULT_H / 2))));
 
       menu.addSeparator();
+      // Opens a second menu listing the user's saved card-group templates
+      // — Menu has no submenu API, so this is a manual two-level flow.
+      menu.addItem(i => i.setTitle('Templates').setIcon('layout-template').onClick(() =>
+        this.showGroupTemplateMenu(e, cp.x, cp.y)));
+      if (this.hasClipboardBundle()) {
+        menu.addItem(i => i.setTitle('Paste').setIcon('clipboard-paste').onClick(() =>
+          this.pasteFromClipboard(cp.x, cp.y)));
+      }
+
+      menu.addSeparator();
       menu.addItem(i => i.setTitle('Archived cards…').setIcon('archive').onClick(() => this.openArchiveBrowser()));
       menu.addItem(i => i.setTitle('Reset view').setIcon('maximize').onClick(() => {
         this.vp = { x: 0, y: 0, zoom: 1 }; this.applyViewport(); this.scheduleSave();
@@ -485,6 +495,12 @@ export const canvasMethods = {
         || (active instanceof HTMLElement && active.getAttribute('contenteditable'))) return;
       e.preventDefault();
       const data = e.clipboardData; if (!data) return;
+      // Cards copied from a Visual Notes board (this one or another
+      // window's) — checked first so our own marker JSON is never mistaken
+      // for a plain text paste and turned into a sticky note.
+      const raw = data.getData('text/plain').trim();
+      const copied = raw ? this.readBundleFromText(raw) : null;
+      if (copied) { this.pasteBundleAt(copied); return; }
       // Image?
       for (const item of Array.from(data.items)) {
         if (item.type.startsWith('image/')) {
@@ -492,7 +508,11 @@ export const canvasMethods = {
         }
       }
       // Text?
-      const text = data.getData('text/plain').trim(); if (!text) return;
+      const text = raw;
+      // Nothing usable on the system clipboard: fall back to the in-session
+      // copy, which is all there is when writing to the system clipboard
+      // was unavailable or denied.
+      if (!text) { this.pasteFromClipboard(); return; }
       if (isValidURL(text) && isGoogleMapsUrl(text)) {
         const { x, y } = this.centerPos(MAP_DEFAULT_W, MAP_DEFAULT_H);
         this.createMapCard(x, y, text);
@@ -1349,6 +1369,15 @@ export const canvasMethods = {
     if (meta && e.key === 'g' && this.selection.getIds().length > 0) { e.preventDefault(); this.groupSelected(); return; }
     if (meta && !e.shiftKey && e.key === 'z') { e.preventDefault(); this.undo(); return; }
     if ((meta && e.shiftKey && e.key === 'z') || (meta && e.key === 'y')) { e.preventDefault(); this.redo(); return; }
+    // Copy/cut the selection. Left un-prevented when nothing is selected so
+    // a plain Cmd/Ctrl+C still reaches the OS (e.g. to copy a text
+    // selection made elsewhere in the pane). Cmd/Ctrl+V is deliberately NOT
+    // handled here — the canvas already has a `paste` listener, and pasting
+    // from both would insert everything twice; see bindCanvasEvents.
+    if (meta && !e.shiftKey && (e.key === 'c' || e.key === 'x')) {
+      if (this.selection.isEmpty() && this.selectedDrawingIds.size === 0) return;
+      e.preventDefault(); this.copySelection(e.key === 'x'); return;
+    }
     if (meta && e.shiftKey && e.key.toLowerCase() === 'c') {
       const imageCards = this.selection.getIds()
         .map(id => this.board.cards.find(c => c.id === id))
@@ -2124,6 +2153,9 @@ export const canvasMethods = {
     menu.addItem(i => i.setTitle('Thin').setIcon('minus').onClick(() => setWidth(2)));
     menu.addItem(i => i.setTitle('Medium').setIcon('minus').onClick(() => setWidth(4)));
     menu.addItem(i => i.setTitle('Thick').setIcon('minus').onClick(() => setWidth(8)));
+    menu.addSeparator();
+    menu.addItem(i => i.setTitle('Copy').setIcon('copy').onClick(() => this.copySelection()));
+    menu.addItem(i => i.setTitle('Cut').setIcon('scissors').onClick(() => this.copySelection(true)));
     menu.addSeparator();
     menu.addItem(i => i.setTitle(groupIds.length > 1 ? `Delete ${groupIds.length} sketches` : 'Delete').setIcon('trash').onClick(() => this.deleteSelectedDrawing()));
     menu.showAtMouseEvent(e);
