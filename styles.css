@@ -3058,40 +3058,121 @@ input.visual-notes-table-date-input {
 
 /* ── Connection handles & connect mode ──────────────────────── */
 
+/* The pin's HIT TARGET — deliberately larger than the dot drawn inside it,
+   and a constant size regardless of how the dot is styled. The dulled-down
+   secondary pins are only ~6px of visible dot; making that the clickable
+   area too would mean landing a connection on a specific port required
+   near-pixel accuracy. Everything visual lives on ::after below. */
 .visual-notes-connection-handle {
   position: absolute;
-  width: 10px;
-  height: 10px;
-  background: var(--interactive-accent);
-  border: 2px solid var(--background-primary);
-  border-radius: 50%;
+  width: 14px;
+  height: 14px;
   opacity: 0;
   transition: opacity 0.12s ease;
   cursor: crosshair;
   z-index: 10;
+  /* Interactivity is granted only by the reveal rules below, alongside
+     opacity — an invisible pin that still swallowed pointerdowns would
+     silently steal drags meant for the card underneath it. */
+  pointer-events: none;
+}
+
+/* The visible dot: 10px, centred in the 14px target. */
+.visual-notes-connection-handle::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: var(--interactive-accent);
+  border: 2px solid var(--background-primary);
+  border-radius: 50%;
+  transition: transform 0.12s ease, background-color 0.12s ease, border-color 0.12s ease;
+}
+
+/* Only the offset that straddles the border is set here (half the 14px
+   target, so the dot sits centred on the edge); the position ALONG the
+   edge is an inline percentage, since a side can carry several pins and
+   their count depends on how long that side is. */
+.visual-notes-connection-handle-n {
+  top: -7px;
+}
+.visual-notes-connection-handle-s {
+  bottom: -7px;
+}
+.visual-notes-connection-handle-e {
+  right: -7px;
+}
+.visual-notes-connection-handle-w {
+  left: -7px;
+}
+
+/* The extra pins are secondary to the four midpoints: smaller and dimmer,
+   so a revealed row reads as a quiet rail of options rather than a row of
+   buttons competing with the card's own content. Only the drawn dot
+   shrinks — the hit target above stays 14px, so they're no harder to land
+   a connection on than a midpoint pin. */
+.visual-notes-connection-handle:not(.is-mid)::after {
+  transform: scale(0.6);
+  background: var(--text-faint);
+  border-color: transparent;
+}
+
+/* Progressive disclosure, so a card with 28 pins doesn't read as 28 dots.
+   Every rule below uses the child combinator: a column card holds its child
+   cards inside its own element, and a descendant selector would light up
+   their pins alongside its own.
+
+   1. Plain hover — only the four edge midpoints, which is exactly the set
+      of handles a card had before pins existed. */
+.visual-notes-freeform-card:hover > .visual-notes-connection-handle.is-mid {
+  opacity: 1;
   pointer-events: auto;
 }
 
-.visual-notes-connection-handle-n {
-  top: -5px;
-  left: calc(50% - 5px);
-}
-.visual-notes-connection-handle-s {
-  bottom: -5px;
-  left: calc(50% - 5px);
-}
-.visual-notes-connection-handle-e {
-  right: -5px;
-  top: calc(50% - 5px);
-}
-.visual-notes-connection-handle-w {
-  left: -5px;
-  top: calc(50% - 5px);
+/* 2. Pointer approaching an edge — that edge's full row fades in, so the
+      extra pins appear only where you're actually reaching for them. */
+.visual-notes-freeform-card[data-pin-edge="n"] > .visual-notes-connection-handle-n,
+.visual-notes-freeform-card[data-pin-edge="s"] > .visual-notes-connection-handle-s,
+.visual-notes-freeform-card[data-pin-edge="e"] > .visual-notes-connection-handle-e,
+.visual-notes-freeform-card[data-pin-edge="w"] > .visual-notes-connection-handle-w {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-.visual-notes-freeform-card:hover .visual-notes-connection-handle,
-.visual-notes-canvas-outer.is-connect-mode .visual-notes-connection-handle {
+/* 3. Mid-connection — every pin on every card is a candidate target, so
+      hiding any of them would just hide somewhere you could drop. */
+.visual-notes-canvas-outer.is-connect-mode .visual-notes-connection-handle,
+.visual-notes-canvas-outer.is-linking .visual-notes-connection-handle {
   opacity: 1;
+  pointer-events: auto;
+}
+
+/* Points at a single pin without disturbing the row's spacing. */
+.visual-notes-connection-handle:hover {
+  opacity: 1;
+}
+.visual-notes-connection-handle:hover::after {
+  transform: scale(1.3);
+}
+
+/* Pointing at a secondary pin promotes it to full size and full colour, so
+   the one you're about to grab reads exactly like a midpoint pin. Higher
+   specificity than the generic :hover above, which it must override. */
+.visual-notes-connection-handle:not(.is-mid):hover::after {
+  transform: scale(1.1);
+  background: var(--interactive-accent);
+  border-color: var(--background-primary);
+}
+
+/* The pin a release would land on. Grows past its resting size so the
+   commitment is legible at a glance without having to compare dots. Scoped
+   to the linking states — which is the only time the class is applied — so
+   it outranks the :not(.is-mid):hover promotion above and a hovered
+   secondary pin still turns green when it's the live drop target. */
+.visual-notes-canvas-outer.is-linking .visual-notes-connection-handle.is-pin-target::after,
+.visual-notes-canvas-outer.is-connect-mode .visual-notes-connection-handle.is-pin-target::after {
+  transform: scale(1.5);
+  background: var(--color-green, #4caf50);
+  border-color: var(--background-primary);
 }
 
 .visual-notes-freeform-card.is-connect-source {

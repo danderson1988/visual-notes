@@ -29,22 +29,81 @@ export function rectExitPoint(cx: number, cy: number, tx: number, ty: number, re
   return { x: cx + best * dx, y: cy + best * dy };
 }
 
-/** Compute source and target anchor points for a straight-routed connection. */
-export function straightAnchors(from: Rect, to: Rect): { src: Point; tgt: Point } {
-  const fcx = from.x + from.w / 2, fcy = from.y + from.h / 2;
-  const tcx = to.x + to.w / 2,   tcy = to.y + to.h / 2;
+// ── Pinned anchors ───────────────────────────────────────────────
+//
+// A connection end is either FREE (slides around the card's edge to always
+// face the other end — the original behavior, and still the default) or
+// PINNED to one exact point on a named side, node-graph style. Every
+// function below takes the anchors as optional arguments, so passing none
+// reproduces the pre-anchor geometry exactly.
+
+export type Side = 'n' | 'e' | 's' | 'w';
+export interface Anchor { side: Side; t: number }
+
+/** The canvas-space point an anchor resolves to on `rect`. */
+export function anchorPoint(rect: Rect, a: Anchor): Point {
+  const t = Math.min(1, Math.max(0, a.t));
+  switch (a.side) {
+    case 'n': return { x: rect.x + rect.w * t, y: rect.y };
+    case 's': return { x: rect.x + rect.w * t, y: rect.y + rect.h };
+    case 'w': return { x: rect.x,              y: rect.y + rect.h * t };
+    case 'e': return { x: rect.x + rect.w,     y: rect.y + rect.h * t };
+  }
+}
+
+/** Center of a rect — what a free end aims at when the far end isn't pinned. */
+function center(r: Rect): Point { return { x: r.x + r.w / 2, y: r.y + r.h / 2 }; }
+
+/**
+ * The fractional positions of the pins offered along a side of the given
+ * length — more pins on a longer edge, so a tall card gets a usable column
+ * of them rather than three widely-spaced dots. Always an ODD count, which
+ * guarantees t = 0.5 is always on offer: the edge midpoint is where the
+ * single pre-anchor handle sat and where an unpinned end still tends to
+ * meet the edge, so it must stay reachable at every card size.
+ */
+export function pinPositions(sideLength: number): number[] {
+  const count = sideLength < 120 ? 1 : sideLength < 240 ? 3 : sideLength < 400 ? 5 : 7;
+  return Array.from({ length: count }, (_, i) => (i + 1) / (count + 1));
+}
+
+/**
+ * Compute source and target anchor points for a straight-routed connection.
+ *
+ * A pinned end resolves to its exact point. A free end aims at whatever the
+ * other end actually resolved to — the far end's PINNED POINT when it has
+ * one, rather than the far card's center. Without that, pinning one end of
+ * a connection would visibly drag the other end's exit point off toward the
+ * card's middle, making a deliberately-placed pin look misaligned.
+ */
+export function straightAnchors(
+  from: Rect, to: Rect,
+  fromAnchor?: Anchor | null, toAnchor?: Anchor | null,
+): { src: Point; tgt: Point } {
+  const srcPin = fromAnchor ? anchorPoint(from, fromAnchor) : null;
+  const tgtPin = toAnchor ? anchorPoint(to, toAnchor) : null;
+  const fc = center(from), tc = center(to);
   return {
-    src: rectExitPoint(fcx, fcy, tcx, tcy, from),
-    tgt: rectExitPoint(tcx, tcy, fcx, fcy, to),
+    src: srcPin ?? rectExitPoint(fc.x, fc.y, (tgtPin ?? tc).x, (tgtPin ?? tc).y, from),
+    tgt: tgtPin ?? rectExitPoint(tc.x, tc.y, (srcPin ?? fc).x, (srcPin ?? fc).y, to),
   };
 }
 
-/** Resolve 'auto' elbow orientation based on relative card positions. */
+/**
+ * Resolve 'auto' elbow orientation based on relative card positions — or,
+ * when either end is pinned, on the axis that pinned side faces, so an
+ * elbow leaves a pin perpendicular to the edge it sits on instead of
+ * immediately doubling back across the card. The `from` pin wins over the
+ * `to` pin when the two disagree.
+ */
 export function resolveOrientation(
   from: Rect, to: Rect,
-  hint: 'auto' | 'horizontal-first' | 'vertical-first'
+  hint: 'auto' | 'horizontal-first' | 'vertical-first',
+  fromAnchor?: Anchor | null, toAnchor?: Anchor | null,
 ): 'horizontal-first' | 'vertical-first' {
   if (hint !== 'auto') return hint;
+  const pinned = fromAnchor ?? toAnchor;
+  if (pinned) return pinned.side === 'e' || pinned.side === 'w' ? 'horizontal-first' : 'vertical-first';
   const dx = Math.abs((to.x + to.w / 2) - (from.x + from.w / 2));
   const dy = Math.abs((to.y + to.h / 2) - (from.y + from.h / 2));
   return dx >= dy ? 'horizontal-first' : 'vertical-first';
@@ -53,20 +112,26 @@ export function resolveOrientation(
 /** Compute source and target anchor points for an elbow-routed connection. */
 export function elbowAnchors(
   from: Rect, to: Rect,
-  orientation: 'horizontal-first' | 'vertical-first'
+  orientation: 'horizontal-first' | 'vertical-first',
+  fromAnchor?: Anchor | null, toAnchor?: Anchor | null,
 ): { src: Point; tgt: Point } {
   const fcx = from.x + from.w / 2, fcy = from.y + from.h / 2;
   const tcx = to.x + to.w / 2,   tcy = to.y + to.h / 2;
 
+  let src: Point, tgt: Point;
   if (orientation === 'horizontal-first') {
-    return tcx >= fcx
-      ? { src: { x: from.x + from.w, y: fcy }, tgt: { x: to.x, y: tcy } }
-      : { src: { x: from.x, y: fcy },           tgt: { x: to.x + to.w, y: tcy } };
+    [src, tgt] = tcx >= fcx
+      ? [{ x: from.x + from.w, y: fcy }, { x: to.x, y: tcy }]
+      : [{ x: from.x, y: fcy },           { x: to.x + to.w, y: tcy }];
   } else {
-    return tcy >= fcy
-      ? { src: { x: fcx, y: from.y + from.h }, tgt: { x: tcx, y: to.y } }
-      : { src: { x: fcx, y: from.y },           tgt: { x: tcx, y: to.y + to.h } };
+    [src, tgt] = tcy >= fcy
+      ? [{ x: fcx, y: from.y + from.h }, { x: tcx, y: to.y }]
+      : [{ x: fcx, y: from.y },           { x: tcx, y: to.y + to.h }];
   }
+  return {
+    src: fromAnchor ? anchorPoint(from, fromAnchor) : src,
+    tgt: toAnchor ? anchorPoint(to, toAnchor) : tgt,
+  };
 }
 
 /** Build SVG path string for a straight connection. */

@@ -44,6 +44,16 @@ export interface DrawingStroke {
 
 // ── Connection ────────────────────────────────────────────────
 
+// A specific point a connection is pinned to on a card's edge, node-graph
+// style. `t` is the fractional position ALONG that side (0..1, measured
+// left→right on n/s and top→bottom on e/w), not a pixel offset, so a pinned
+// connection keeps its proportional place when the card is resized.
+export type ConnectionSide = 'n' | 'e' | 's' | 'w';
+export interface ConnectionAnchor {
+  side: ConnectionSide;
+  t: number;
+}
+
 export interface Connection {
   id: string;
   // A connection normally anchors to a card at each end (fromCardId/
@@ -55,6 +65,13 @@ export interface Connection {
   toCardId?: string;
   fromPoint?: { x: number; y: number };
   toPoint?: { x: number; y: number };
+  // Pins a card-anchored end to one exact point on that card's edge. Unset
+  // (the default, and what every connection made before this existed has)
+  // keeps the original auto behavior: the endpoint slides freely around the
+  // card's edge to always face the other end. Only meaningful alongside the
+  // matching *CardId — ignored on a free-point end.
+  fromAnchor?: ConnectionAnchor;
+  toAnchor?: ConnectionAnchor;
   routing: 'straight' | 'elbow';
   elbowOrientation?: 'auto' | 'horizontal-first' | 'vertical-first';
   // Perpendicular offset (px) from the straight-line midpoint, dragged via

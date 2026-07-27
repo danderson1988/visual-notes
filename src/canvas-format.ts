@@ -38,7 +38,7 @@ import {
   StickyCard, ChecklistCard, CommentCard, TableCard, ImageCard, AudioCard,
   NoteLinkCard, BookmarkCard, KanbanColumnCard, KanbanBoardCard,
   MapCard, FileCard, GroupCard, KanbanItem,
-  CheckersCard,
+  CheckersCard, ConnectionAnchor, ConnectionSide,
 } from './file-types';
 import { isGoogleMapsUrl } from './thumbnail-utils';
 import { nearestColorName } from './named-colors';
@@ -457,10 +457,41 @@ function connectionToEdge(conn: Connection): CanvasEdge {
     id: conn.id,
     fromNode: conn.fromCardId!,
     toNode: conn.toCardId!,
+    // Spec-standard side hints, so a pinned connection still leaves/enters
+    // the right edge in any other JSON Canvas tool. The exact position
+    // along that side (our `t`) has no spec equivalent and rides in `ib`
+    // with everything else — other tools just use their own edge midpoint.
+    fromSide: anchorToEdgeSide(conn.fromAnchor),
+    toSide: anchorToEdgeSide(conn.toAnchor),
     color: conn.color,
     label: conn.label,
-    ib: rest, // routing, elbowOrientation, style, arrowhead, thickness
+    ib: rest, // routing, elbowOrientation, style, arrowhead, thickness, from/toAnchor
   };
+}
+
+const ANCHOR_SIDE_TO_EDGE_SIDE: Record<ConnectionSide, CanvasEdgeSide> = {
+  n: 'top', e: 'right', s: 'bottom', w: 'left',
+};
+const EDGE_SIDE_TO_ANCHOR_SIDE: Record<CanvasEdgeSide, ConnectionSide> = {
+  top: 'n', right: 'e', bottom: 's', left: 'w',
+};
+
+function anchorToEdgeSide(anchor: ConnectionAnchor | undefined): CanvasEdgeSide | undefined {
+  return anchor ? ANCHOR_SIDE_TO_EDGE_SIDE[anchor.side] : undefined;
+}
+
+/**
+ * An edge end's anchor, preferring our own `ib` record (which carries the
+ * position along the side) and falling back to the spec's `fromSide`/
+ * `toSide`. The fallback is what makes a connection drawn in Obsidian's
+ * native Canvas — or any other JSON Canvas editor — arrive here already
+ * pinned to the side its author chose, landing at that side's midpoint.
+ */
+function edgeSideToAnchor(
+  ibAnchor: ConnectionAnchor | undefined, side: CanvasEdgeSide | undefined,
+): ConnectionAnchor | undefined {
+  if (ibAnchor) return ibAnchor;
+  return side ? { side: EDGE_SIDE_TO_ANCHOR_SIDE[side], t: 0.5 } : undefined;
 }
 
 // ── Native JSON Canvas → Visual Notes ──────────────────────────────────────
@@ -650,6 +681,8 @@ function edgeToConnection(edge: CanvasEdge): Connection | null {
     id: edge.id,
     fromCardId: edge.fromNode,
     toCardId: edge.toNode,
+    fromAnchor: edgeSideToAnchor(ib?.fromAnchor, edge.fromSide),
+    toAnchor: edgeSideToAnchor(ib?.toAnchor, edge.toSide),
     color: edge.color ?? ib?.color ?? '#6b7280',
     label: edge.label ?? ib?.label,
     labelSize: ib?.labelSize,

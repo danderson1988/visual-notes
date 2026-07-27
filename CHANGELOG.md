@@ -2,6 +2,21 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.72
+
+### Added
+- **Connection ports along card edges** — a connection no longer has to meet a card at whatever point happens to face the other end. Each edge now offers a row of pins (1, 3, 5, or 7 of them, more on a longer edge), and a connection dropped onto one stays locked to that exact point as the cards move around, the way pins work in a node graph. Drag out from any pin: the line snaps onto a target pin as you pass over it and that pin swells green, so there's no guessing where a release will land. Dropping anywhere else on a card still leaves that end free to slide around the edge, exactly as before.
+- **Re-aim a connection that's already drawn** — select it and drag either endpoint onto a different pin, or onto a different card entirely. Endpoint handles are filled when pinned and hollow when free-sliding, and **double-clicking** a pinned one releases it back to the automatic behaviour (the same gesture that resets a curve's bend handle).
+- **Two cards can be joined more than once**, as long as the new line lands on a different pair of pins — previously a second connection between the same pair was silently discarded.
+- Ports reveal themselves progressively, so a card doesn't turn into a field of dots: hovering shows only the four edge midpoints (exactly the handles a card had before this existed), moving toward an edge fades in that edge's full row, and every pin on every card only appears while you're actually dragging a connection. The extra pins are drawn smaller and dimmer than the midpoints, and brighten as you point at one.
+- Pinning is entirely optional — every connection made before this update keeps its original behaviour, untouched.
+
+### Changed
+- Pinned ends are stored using the JSON Canvas spec's own `fromSide`/`toSide` fields, so a pinned connection still leaves and enters the right edge in Obsidian's native Canvas or any other canvas-compatible tool. It works in the other direction too: a connection drawn in one of those tools arrives here already pinned to the side its author chose.
+
+### Fixed
+- Card connection handles used to swallow clicks even while they were invisible, so a drag that started near a card's edge could be quietly captured by a handle you couldn't see instead of moving the card.
+
 ## 1.0.71
 
 ### Added

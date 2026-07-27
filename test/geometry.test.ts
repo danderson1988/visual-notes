@@ -3,6 +3,7 @@ import {
   pullBackPoint, curveControlPoint, buildCurvedPath, arrowheadPoints,
   buildTrimmedStraightPath, buildTrimmedCurvedPath, buildTrimmedElbowPath,
   buildElbowPath, quadBezierPoint,
+  anchorPoint, pinPositions, straightAnchors, elbowAnchors, resolveOrientation,
 } from '../src/canvas/geometry';
 
 describe('pullBackPoint', () => {
@@ -166,5 +167,133 @@ describe('buildTrimmedElbowPath', () => {
   it('clamps a trim at its corner when the outer segment is shorter than the trim', () => {
     const src = { x: 0, y: 0 }, tgt = { x: 10, y: 100 }; // first segment only 5px long
     expect(buildTrimmedElbowPath(src, tgt, 'horizontal-first', 20, 0)).toBe('M 5 0 H 5 V 100 H 10');
+  });
+});
+
+// ── Pinned connection anchors ────────────────────────────────────
+
+describe('anchorPoint', () => {
+  const rect = { x: 100, y: 200, w: 300, h: 400 };
+
+  it('places each side\'s anchor at the given fraction along that side', () => {
+    expect(anchorPoint(rect, { side: 'n', t: 0.5 })).toEqual({ x: 250, y: 200 });
+    expect(anchorPoint(rect, { side: 's', t: 0.25 })).toEqual({ x: 175, y: 600 });
+    expect(anchorPoint(rect, { side: 'w', t: 0.5 })).toEqual({ x: 100, y: 400 });
+    expect(anchorPoint(rect, { side: 'e', t: 0.75 })).toEqual({ x: 400, y: 500 });
+  });
+
+  it('clamps t outside 0..1 to the side\'s ends', () => {
+    expect(anchorPoint(rect, { side: 'n', t: -3 })).toEqual({ x: 100, y: 200 });
+    expect(anchorPoint(rect, { side: 'n', t: 9 })).toEqual({ x: 400, y: 200 });
+  });
+
+  it('is proportional, so a pin keeps its relative place when the card resizes', () => {
+    const grown = { ...rect, h: 800 };
+    expect(anchorPoint(rect, { side: 'e', t: 0.25 }).y).toBe(300);
+    expect(anchorPoint(grown, { side: 'e', t: 0.25 }).y).toBe(400);
+  });
+});
+
+describe('pinPositions', () => {
+  it('offers more pins on a longer edge', () => {
+    expect(pinPositions(80)).toHaveLength(1);
+    expect(pinPositions(200)).toHaveLength(3);
+    expect(pinPositions(300)).toHaveLength(5);
+    expect(pinPositions(900)).toHaveLength(7);
+  });
+
+  it('always includes the edge midpoint, at every size', () => {
+    for (const len of [50, 80, 120, 239, 240, 399, 400, 1200]) {
+      expect(pinPositions(len)).toContain(0.5);
+    }
+  });
+
+  it('spaces pins evenly and keeps them strictly inside the edge', () => {
+    expect(pinPositions(300)).toEqual([1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6]);
+    for (const t of pinPositions(900)) {
+      expect(t).toBeGreaterThan(0);
+      expect(t).toBeLessThan(1);
+    }
+  });
+});
+
+describe('straightAnchors with pinned ends', () => {
+  const from = { x: 0, y: 0, w: 100, h: 100 };
+  const to = { x: 300, y: 0, w: 100, h: 100 };
+
+  it('reproduces the original edge-exit geometry when nothing is pinned', () => {
+    expect(straightAnchors(from, to)).toEqual({
+      src: { x: 100, y: 50 },
+      tgt: { x: 300, y: 50 },
+    });
+    // Explicit nulls must behave identically to omitting the arguments.
+    expect(straightAnchors(from, to, null, null)).toEqual(straightAnchors(from, to));
+  });
+
+  it('uses the exact pinned point for a pinned end', () => {
+    const { src } = straightAnchors(from, to, { side: 'n', t: 0.25 });
+    expect(src).toEqual({ x: 25, y: 0 });
+  });
+
+  it('aims a free end at the far end\'s pin rather than the far card\'s center', () => {
+    // `to` is pinned to its own top-left corner, well above the center line
+    // the unpinned case would have aimed at, so the free `src` must ride up
+    // the source card's edge to face it.
+    const pinnedTgt = straightAnchors(from, to, null, { side: 'n', t: 0 });
+    expect(pinnedTgt.tgt).toEqual({ x: 300, y: 0 });
+    expect(pinnedTgt.src.y).toBeLessThan(50);
+
+    const unpinned = straightAnchors(from, to);
+    expect(unpinned.src.y).toBe(50);
+  });
+
+  it('honours both pins at once and ignores the cards\' relative positions', () => {
+    expect(straightAnchors(from, to, { side: 'w', t: 0 }, { side: 'e', t: 1 })).toEqual({
+      src: { x: 0, y: 0 },
+      tgt: { x: 400, y: 100 },
+    });
+  });
+});
+
+describe('resolveOrientation with pinned ends', () => {
+  const from = { x: 0, y: 0, w: 100, h: 100 };
+  const to = { x: 0, y: 300, w: 100, h: 100 };
+
+  it('falls back to relative position when neither end is pinned', () => {
+    // Cards are stacked vertically, so 'auto' picks vertical-first.
+    expect(resolveOrientation(from, to, 'auto')).toBe('vertical-first');
+  });
+
+  it('follows the axis the pinned side faces, overriding relative position', () => {
+    expect(resolveOrientation(from, to, 'auto', { side: 'e', t: 0.5 })).toBe('horizontal-first');
+    expect(resolveOrientation(from, to, 'auto', { side: 'n', t: 0.5 })).toBe('vertical-first');
+  });
+
+  it('lets the `from` pin win when the two ends disagree', () => {
+    expect(resolveOrientation(from, to, 'auto', { side: 'w', t: 0.5 }, { side: 's', t: 0.5 }))
+      .toBe('horizontal-first');
+  });
+
+  it('never overrides an explicit (non-auto) orientation', () => {
+    expect(resolveOrientation(from, to, 'vertical-first', { side: 'e', t: 0.5 })).toBe('vertical-first');
+  });
+});
+
+describe('elbowAnchors with pinned ends', () => {
+  const from = { x: 0, y: 0, w: 100, h: 100 };
+  const to = { x: 300, y: 0, w: 100, h: 100 };
+
+  it('reproduces the original side-midpoint geometry when nothing is pinned', () => {
+    expect(elbowAnchors(from, to, 'horizontal-first')).toEqual({
+      src: { x: 100, y: 50 },
+      tgt: { x: 300, y: 50 },
+    });
+  });
+
+  it('replaces only the pinned end, leaving the free end on its side midpoint', () => {
+    expect(elbowAnchors(from, to, 'horizontal-first', { side: 's', t: 0.5 })).toEqual({
+      src: { x: 50, y: 100 },
+      tgt: { x: 300, y: 50 },
+    });
   });
 });

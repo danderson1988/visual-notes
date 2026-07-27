@@ -17,7 +17,8 @@ import {
   straightAnchors, elbowAnchors, buildStraightPath, buildElbowPath, resolveOrientation, rectExitPoint,
   buildCurvedPath, curveThroughPoint, perpendicularOffset, curveControlPoint, arrowheadPoints,
   buildTrimmedStraightPath, buildTrimmedCurvedPath, buildTrimmedElbowPath,
-  type Point,
+  anchorPoint, pinPositions,
+  type Point, type Anchor,
 } from './canvas/geometry';
 import {
   parseYouTubeId,
@@ -142,9 +143,12 @@ declare module './freeform-view' {
     exitConnectMode(): void;
     toggleConnectMode(): void;
     addConnectionHandles(el: HTMLElement, card: SupportedCard): void;
+    refreshConnectionHandles(el: HTMLElement, card: SupportedCard): void;
+    anchorAtPoint(clientX: number, clientY: number): { cardId: string; anchor: Anchor } | null;
+    pinElementAt(clientX: number, clientY: number): HTMLElement | null;
     startHandleDrag(
         e: PointerEvent, handleEl: HTMLElement,
-        card: SupportedCard, side: 'n' | 's' | 'e' | 'w'
+        card: SupportedCard, anchor: Anchor
       ): void;
     getEdgeMidpoint(card: Card, side: 'n' | 's' | 'e' | 'w'): { x: number; y: number };
     updateGhostPath(sx: number, sy: number, tx: number, ty: number): void;
@@ -152,13 +156,14 @@ declare module './freeform-view' {
     startConnectSourceGhost(sourceId: string): void;
     stopConnectSourceGhost(): void;
     cardIdAtPoint(clientX: number, clientY: number): string | null;
-    finishConnection(fromId: string, toId: string): void;
+    finishConnection(fromId: string, toId: string, fromAnchor?: Anchor, toAnchor?: Anchor): void;
     startFreeLineDrag(startEvent: PointerEvent): void;
     addDefaultArrowAt(cx: number, cy: number): void;
     resolveDefaultConnectionColor(): string;
     selectConnection(id: string): void;
     deselectConnection(): void;
     showConnectionEndpointHandles(conn: Connection): void;
+    addEndpointAnchorHandle(conn: Connection, end: 'from' | 'to'): void;
     hideConnectionEndpointHandles(): void;
     showConnectionBendHandle(conn: Connection): void;
     rerenderConnection(conn: Connection): void;
@@ -174,6 +179,35 @@ declare module './freeform-view' {
 // kept in sync in one place rather than duplicating the formula.
 function arrowMarkerLength(thickness: number): number {
   return 10 + thickness * 2;
+}
+
+// A connection's two pinned anchors, or null for an end that should keep the
+// original free-sliding behavior. An anchor is only meaningful on a
+// card-anchored end — on a free-point end there's no edge to sit on, and the
+// endpoint drag handle would fight a stale pin — so one left behind by a
+// re-anchor is ignored rather than trusted.
+// Which edge (if any) the pointer is close enough to for that edge's full
+// row of connection pins to be worth revealing. Returns null while the
+// pointer is out in the card's middle, which is what keeps a plain hover
+// down to the four midpoint pins instead of all 28. The band scales with
+// the card so it stays a band rather than swallowing a small card whole —
+// and is measured in screen px, so it feels the same at any zoom.
+function nearestPinEdge(rect: DOMRect, clientX: number, clientY: number): 'n' | 'e' | 's' | 'w' | null {
+  const dN = clientY - rect.top, dS = rect.bottom - clientY;
+  const dW = clientX - rect.left, dE = rect.right - clientX;
+  const closest = Math.min(dN, dS, dW, dE);
+  if (closest > Math.min(24, rect.width / 5, rect.height / 5)) return null;
+  if (closest === dN) return 'n';
+  if (closest === dS) return 's';
+  if (closest === dW) return 'w';
+  return 'e';
+}
+
+function connAnchors(conn: Connection): [Anchor | null, Anchor | null] {
+  return [
+    conn.fromCardId ? conn.fromAnchor ?? null : null,
+    conn.toCardId ? conn.toAnchor ?? null : null,
+  ];
 }
 
 export const canvasMethods = {
@@ -2864,12 +2898,13 @@ export const canvasMethods = {
     const from = this.getConnEndpointRect(conn.fromCardId, conn.fromPoint);
     const to   = this.getConnEndpointRect(conn.toCardId, conn.toPoint);
     if (!from || !to) return null;
+    const [fa, ta] = connAnchors(conn);
     if (conn.routing === 'elbow') {
-      const ori = resolveOrientation(from, to, conn.elbowOrientation ?? 'auto');
-      const { src, tgt } = elbowAnchors(from, to, ori);
+      const ori = resolveOrientation(from, to, conn.elbowOrientation ?? 'auto', fa, ta);
+      const { src, tgt } = elbowAnchors(from, to, ori, fa, ta);
       return buildElbowPath(src, tgt, ori);
     }
-    const { src, tgt } = straightAnchors(from, to);
+    const { src, tgt } = straightAnchors(from, to, fa, ta);
     if (conn.bend) return buildCurvedPath(src, tgt, conn.bend);
     return buildStraightPath(src, tgt);
   },
@@ -2891,10 +2926,11 @@ export const canvasMethods = {
     const from = this.getConnEndpointRect(conn.fromCardId, conn.fromPoint);
     const to   = this.getConnEndpointRect(conn.toCardId, conn.toPoint);
     if (!from || !to) return null;
+    const [fa, ta] = connAnchors(conn);
 
     if (conn.routing === 'elbow') {
-      const ori = resolveOrientation(from, to, conn.elbowOrientation ?? 'auto');
-      const { src, tgt } = elbowAnchors(from, to, ori);
+      const ori = resolveOrientation(from, to, conn.elbowOrientation ?? 'auto', fa, ta);
+      const { src, tgt } = elbowAnchors(from, to, ori, fa, ta);
       // The segment arriving at/leaving each endpoint is purely
       // horizontal or vertical (matching `ori`), so the adjacent corner
       // one axis-aligned step back is exact, not an approximation.
@@ -2904,7 +2940,7 @@ export const canvasMethods = {
       return { src, tgt, srcApproach, tgtApproach, ori };
     }
 
-    const { src, tgt } = straightAnchors(from, to);
+    const { src, tgt } = straightAnchors(from, to, fa, ta);
     if (conn.bend) {
       // Both ends' tangents reference the same quadratic-bezier control
       // point — only the direction (ctrl→tgt vs ctrl→src) differs.
@@ -2985,9 +3021,10 @@ export const canvasMethods = {
     const from = this.getConnEndpointRect(conn.fromCardId, conn.fromPoint);
     const to   = this.getConnEndpointRect(conn.toCardId, conn.toPoint);
     if (!from || !to) return null;
+    const [fa, ta] = connAnchors(conn);
     const { src, tgt } = conn.routing === 'elbow'
-      ? elbowAnchors(from, to, resolveOrientation(from, to, conn.elbowOrientation ?? 'auto'))
-      : straightAnchors(from, to);
+      ? elbowAnchors(from, to, resolveOrientation(from, to, conn.elbowOrientation ?? 'auto', fa, ta), fa, ta)
+      : straightAnchors(from, to, fa, ta);
     if (conn.routing !== 'elbow' && conn.bend) return curveThroughPoint(src, tgt, conn.bend);
     return { x: (src.x + tgt.x) / 2, y: (src.y + tgt.y) / 2 };
   },
@@ -3058,6 +3095,12 @@ export const canvasMethods = {
     this.connectMode = true;
     this.outer.addClass('is-connect-mode');
     this.connectToolBtn?.addClass('is-active');
+    // Pins show without hovering in this mode, so any card resized since it
+    // was last hovered needs its pin count brought up to date now.
+    for (const [id, el] of this.cardEls) {
+      const card = this.board.cards.find(c => c.id === id);
+      if (card) this.refreshConnectionHandles(el, card as SupportedCard);
+    }
   },
 
   exitConnectMode(this: FreeformRenderer): void {
@@ -3076,23 +3119,129 @@ export const canvasMethods = {
   },
 
   addConnectionHandles(this: FreeformRenderer, el: HTMLElement, card: SupportedCard): void {
-    for (const side of ['n', 's', 'e', 'w'] as const) {
-      const handle = el.createDiv(`visual-notes-connection-handle visual-notes-connection-handle-${side}`);
-      handle.addEventListener('pointerdown', (e) => {
-        e.stopPropagation(); e.preventDefault();
-        handle.setPointerCapture(e.pointerId);
-        this.startHandleDrag(e, handle, card, side);
+    // Called from renderCardContent, which empties `el` first — so the pins
+    // are already gone even though the signature left on the element says
+    // otherwise. Clearing it forces the rebuild that guard would skip.
+    delete el.dataset.pinSig;
+    this.refreshConnectionHandles(el, card);
+
+    // How MANY pins a side gets depends on its length, so a resize can
+    // change it. Refreshing on hover (exactly when they become visible)
+    // keeps them current without hooking the resize path — and costs
+    // nothing in the common case where the count is unchanged. Bound once
+    // per element: re-rendering a card's content reuses the same element,
+    // so an unguarded listener here would stack up one copy per render.
+    if (el.dataset.pinHoverBound) return;
+    el.dataset.pinHoverBound = '1';
+    let hoverRect: DOMRect | null = null;
+    el.addEventListener('pointerenter', () => {
+      // Looked up fresh rather than closing over `card`, whose object may
+      // have been replaced by a later render of the same card.
+      const current = this.board.cards.find(c => c.id === card.id);
+      if (current) this.refreshConnectionHandles(el, current as SupportedCard);
+      // Measured once per hover rather than per move: a card doesn't
+      // change geometry while the pointer sits over it, and reading a rect
+      // on every pointermove would force layout on each one.
+      hoverRect = el.getBoundingClientRect();
+    });
+
+    // Reveals one edge's full row of pins as the pointer approaches it —
+    // see nearestPinEdge. rAF-coalesced like the other pointermove work in
+    // this file so a fast mouse can't outrun the screen refresh.
+    let pending = false;
+    let latest: PointerEvent | null = null;
+    el.addEventListener('pointermove', (e) => {
+      latest = e;
+      if (pending) return;
+      pending = true;
+      window.requestAnimationFrame(() => {
+        pending = false;
+        if (!latest || !hoverRect) return;
+        const edge = nearestPinEdge(hoverRect, latest.clientX, latest.clientY);
+        if (edge) el.dataset.pinEdge = edge; else delete el.dataset.pinEdge;
       });
+    });
+    el.addEventListener('pointerleave', () => { delete el.dataset.pinEdge; hoverRect = null; });
+  },
+
+  // Lays out the row/column of connection pins along each edge. Positions
+  // are percentages, so they track a resize on their own; only the count
+  // needs recomputing, which the signature guard below detects. Rebuilding
+  // unconditionally would delete the very pin the pointer is hovering (or
+  // mid-drag on) and cancel the gesture.
+  refreshConnectionHandles(this: FreeformRenderer, el: HTMLElement, card: SupportedCard): void {
+    const w = card.w ?? TILE_DEFAULT_W, h = card.h ?? TILE_DEFAULT_H;
+    const across = pinPositions(w), down = pinPositions(h);
+    const sig = `${across.length}x${down.length}`;
+    if (el.dataset.pinSig === sig) return;
+    el.dataset.pinSig = sig;
+    // `:scope >` matters: a column card holds its child cards inside its own
+    // element, and an unscoped selector here would delete THEIR pins too.
+    el.querySelectorAll(':scope > .visual-notes-connection-handle').forEach(n => n.remove());
+
+    for (const side of ['n', 's', 'e', 'w'] as const) {
+      const horizontal = side === 'n' || side === 's';
+      for (const t of horizontal ? across : down) {
+        // The midpoint pin is the only one shown on a plain hover (see the
+        // stylesheet) — it stands in for the single handle each side had
+        // before pins existed, so hovering a card is no busier than it was.
+        const mid = Math.abs(t - 0.5) < 1e-9 ? ' is-mid' : '';
+        const handle = el.createDiv(`visual-notes-connection-handle visual-notes-connection-handle-${side}${mid}`);
+        handle.dataset.side = side;
+        handle.dataset.t = String(t);
+        // Only the along-edge axis is set here; the perpendicular offset
+        // that straddles the border comes from the per-side CSS class.
+        // The 7px back-off is half the pin's hit target, centring it on
+        // its fraction of the edge — keep in step with the stylesheet.
+        if (horizontal) handle.style.left = `calc(${t * 100}% - 7px)`;
+        else handle.style.top = `calc(${t * 100}% - 7px)`;
+        handle.addEventListener('pointerdown', (e) => {
+          e.stopPropagation(); e.preventDefault();
+          handle.setPointerCapture(e.pointerId);
+          this.startHandleDrag(e, handle, card, { side, t });
+        });
+      }
     }
   },
 
-  startHandleDrag(this: FreeformRenderer, 
+  // The pin under a screen point, if any — used to decide whether a
+  // dropped connection lands on a specific pin (pinned) or just somewhere
+  // on the card (left free-sliding, as before).
+  anchorAtPoint(this: FreeformRenderer, clientX: number, clientY: number): { cardId: string; anchor: Anchor } | null {
+    for (const el of activeDocument.elementsFromPoint(clientX, clientY)) {
+      const handle = el.closest<HTMLElement>('.visual-notes-connection-handle');
+      if (!handle) continue;
+      const cardId = handle.closest<HTMLElement>('[data-id]')?.dataset.id;
+      const side = handle.dataset.side as Anchor['side'] | undefined;
+      const t = Number(handle.dataset.t);
+      if (!cardId || !side || !Number.isFinite(t)) continue;
+      if (!this.cardEls.has(cardId)) continue;
+      return { cardId, anchor: { side, t } };
+    }
+    return null;
+  },
+
+  /** The pin element itself at a screen point — for highlighting it as a drop target. */
+  pinElementAt(this: FreeformRenderer, clientX: number, clientY: number): HTMLElement | null {
+    for (const el of activeDocument.elementsFromPoint(clientX, clientY)) {
+      const handle = el.closest<HTMLElement>('.visual-notes-connection-handle');
+      if (handle) return handle;
+    }
+    return null;
+  },
+
+  startHandleDrag(this: FreeformRenderer,
     e: PointerEvent, handleEl: HTMLElement,
-    card: SupportedCard, side: 'n' | 's' | 'e' | 'w'
+    card: SupportedCard, anchor: Anchor
   ): void {
     const outerRect = this.outer.getBoundingClientRect();
-    const srcEdge = this.getEdgeMidpoint(card, side);
+    const cardRect = this.getCardRect(card.id);
+    const srcEdge = cardRect ? anchorPoint(cardRect, anchor) : this.getEdgeMidpoint(card, anchor.side);
     let hoveredId: string | null = null;
+    // Reveals every card's pins for the duration of the drag — the target
+    // card isn't hovered in the CSS sense while the source handle holds
+    // pointer capture, so without this you'd be aiming at invisible pins.
+    this.outer.addClass('is-linking');
 
     // cardIdAtPoint (elementsFromPoint) and the ghost-path rebuild are
     // layout-dependent — same rAF coalescing as card drag/resize above, so
@@ -3100,9 +3249,23 @@ export const canvasMethods = {
     let latestEv: PointerEvent | null = null;
     let moveFrameId = 0;
     let moveFramePending = false;
+    let hoveredPin: HTMLElement | null = null;
     const applyHandleMove = (ev: PointerEvent) => {
       const cp = screenToCanvas(ev.clientX - outerRect.left, ev.clientY - outerRect.top, this.vp);
-      this.updateGhostPath(srcEdge.x, srcEdge.y, cp.x, cp.y);
+      // Snap the ghost line's far end onto a pin the moment the pointer is
+      // over one, so it's unambiguous which pin a release would land on.
+      const overPin = this.anchorAtPoint(ev.clientX, ev.clientY);
+      const pinRect = overPin && overPin.cardId !== card.id ? this.getCardRect(overPin.cardId) : null;
+      const end = pinRect && overPin ? anchorPoint(pinRect, overPin.anchor) : cp;
+      this.updateGhostPath(srcEdge.x, srcEdge.y, end.x, end.y);
+
+      const nextPin = pinRect ? this.pinElementAt(ev.clientX, ev.clientY) : null;
+      if (nextPin !== hoveredPin) {
+        hoveredPin?.removeClass('is-pin-target');
+        hoveredPin = nextPin;
+        hoveredPin?.addClass('is-pin-target');
+      }
+
       const id = this.cardIdAtPoint(ev.clientX, ev.clientY);
       const newHover = (id && id !== card.id) ? id : null;
       if (newHover !== hoveredId) {
@@ -3122,10 +3285,25 @@ export const canvasMethods = {
       handleEl.removeEventListener('pointermove', onMove);
       handleEl.removeEventListener('pointerup', onUp);
       if (moveFramePending) { window.cancelAnimationFrame(moveFrameId); moveFramePending = false; }
-      this.removeGhostPath();
-      if (hoveredId) this.cardEls.get(hoveredId)?.removeClass('is-connect-target');
+      // Read what's under the cursor BEFORE tearing down the linking
+      // state. Clearing `is-linking` returns every pin to pointer-events:
+      // none, and elementsFromPoint skips those — so querying afterwards
+      // finds the card but never the pin on it, leaving the target end
+      // silently unpinned however precisely it was aimed.
       const targetId = this.cardIdAtPoint(ev.clientX, ev.clientY);
-      if (targetId && targetId !== card.id) this.finishConnection(card.id, targetId);
+      const dropped = this.anchorAtPoint(ev.clientX, ev.clientY);
+
+      this.removeGhostPath();
+      this.outer.removeClass('is-linking');
+      hoveredPin?.removeClass('is-pin-target');
+      if (hoveredId) this.cardEls.get(hoveredId)?.removeClass('is-connect-target');
+
+      if (!targetId || targetId === card.id) return;
+      // Released squarely on one of the target's pins → pin that end too.
+      // Released anywhere else on the card → leave it free-sliding, which
+      // is what a plain card-to-card drag has always produced.
+      const toAnchor = dropped && dropped.cardId === targetId ? dropped.anchor : undefined;
+      this.finishConnection(card.id, targetId, anchor, toAnchor);
     };
 
     handleEl.addEventListener('pointermove', onMove);
@@ -3193,17 +3371,27 @@ export const canvasMethods = {
     return null;
   },
 
-  finishConnection(this: FreeformRenderer, fromId: string, toId: string): void {
+  finishConnection(this: FreeformRenderer, fromId: string, toId: string, fromAnchor?: Anchor, toAnchor?: Anchor): void {
     if (fromId === toId) return;
-    const exists = this.board.connections.some(
-      c => (c.fromCardId === fromId && c.toCardId === toId) ||
-           (c.fromCardId === toId   && c.toCardId === fromId)
+    // Two cards may now be joined more than once, as long as the new line
+    // lands on a different pair of pins — that's the whole point of pinning
+    // in a node graph. Only an exact duplicate (same pair, same pins, in
+    // either direction) is still rejected.
+    const sameAnchor = (a?: Anchor | null, b?: Anchor | null) =>
+      (!a && !b) || (!!a && !!b && a.side === b.side && a.t === b.t);
+    const exists = this.board.connections.some(c =>
+      (c.fromCardId === fromId && c.toCardId === toId &&
+        sameAnchor(c.fromAnchor, fromAnchor) && sameAnchor(c.toAnchor, toAnchor)) ||
+      (c.fromCardId === toId && c.toCardId === fromId &&
+        sameAnchor(c.fromAnchor, toAnchor) && sameAnchor(c.toAnchor, fromAnchor))
     );
     if (exists) return;
     const conn: Connection = {
       id: crypto.randomUUID(),
       fromCardId: fromId,
       toCardId: toId,
+      fromAnchor,
+      toAnchor,
       routing: 'straight',
       color: this.resolveDefaultConnectionColor(),
       style: 'solid',
@@ -3365,6 +3553,96 @@ export const canvasMethods = {
 
     if (!conn.fromCardId) addHandle(() => conn.fromPoint, (p) => { conn.fromPoint = p; });
     if (!conn.toCardId) addHandle(() => conn.toPoint, (p) => { conn.toPoint = p; });
+    if (conn.fromCardId) this.addEndpointAnchorHandle(conn, 'from');
+    if (conn.toCardId) this.addEndpointAnchorHandle(conn, 'to');
+  },
+
+  // Drag handle on a card-anchored end, letting an existing connection be
+  // moved to a different pin — the counterpart to choosing a pin when the
+  // connection was first drawn, without which a mis-aimed line could only
+  // be deleted and redrawn. Double-click releases the pin back to the
+  // free-sliding default, mirroring the bend handle's double-click reset.
+  addEndpointAnchorHandle(this: FreeformRenderer, conn: Connection, end: 'from' | 'to'): void {
+    const anchors = this.resolveConnectionAnchors(conn);
+    if (!anchors) return;
+    const p = end === 'from' ? anchors.src : anchors.tgt;
+    const pinned = end === 'from' ? conn.fromAnchor : conn.toAnchor;
+
+    const handle = createSvg('circle');
+    handle.setAttribute('cx', String(p.x));
+    handle.setAttribute('cy', String(p.y));
+    handle.setAttribute('r', '6');
+    handle.setAttribute('fill', pinned ? 'var(--interactive-accent)' : 'var(--background-primary)');
+    handle.setAttribute('stroke', 'var(--interactive-accent)');
+    handle.setAttribute('stroke-width', '2');
+    handle.classList.add('visual-notes-connection-bend-handle');
+    this.hitSvgEl.appendChild(handle);
+    this.connectionEndpointHandles.push(handle);
+
+    handle.addEventListener('pointerdown', (e) => {
+      e.stopPropagation(); e.preventDefault();
+      const rect = this.outer.getBoundingClientRect();
+      // The far end stays put and acts as the ghost line's origin, so the
+      // preview reads as "this end is being re-aimed".
+      const origin = end === 'from' ? anchors.tgt : anchors.src;
+      this.outer.addClass('is-linking');
+      let hoveredPin: HTMLElement | null = null;
+      let moved = false;
+
+      const onMove = (e2: PointerEvent) => {
+        moved = true;
+        const cp = screenToCanvas(e2.clientX - rect.left, e2.clientY - rect.top, this.vp);
+        const over = this.anchorAtPoint(e2.clientX, e2.clientY);
+        const overRect = over ? this.getCardRect(over.cardId) : null;
+        const tip = over && overRect ? anchorPoint(overRect, over.anchor) : cp;
+        this.updateGhostPath(origin.x, origin.y, tip.x, tip.y);
+        const nextPin = overRect ? this.pinElementAt(e2.clientX, e2.clientY) : null;
+        if (nextPin !== hoveredPin) {
+          hoveredPin?.removeClass('is-pin-target');
+          hoveredPin = nextPin;
+          hoveredPin?.addClass('is-pin-target');
+        }
+      };
+
+      const onUp = (e2: PointerEvent) => {
+        activeDocument.removeEventListener('pointermove', onMove);
+        activeDocument.removeEventListener('pointerup', onUp);
+        // Same ordering rule as startHandleDrag's release: query the drop
+        // target while the pins are still hit-testable, then clean up.
+        const dropCardId = this.cardIdAtPoint(e2.clientX, e2.clientY);
+        const dropped = this.anchorAtPoint(e2.clientX, e2.clientY);
+
+        this.removeGhostPath();
+        this.outer.removeClass('is-linking');
+        hoveredPin?.removeClass('is-pin-target');
+        if (!moved) return;
+
+        // Dropped off any card — leave the connection exactly as it was
+        // rather than silently detaching it from the card it belongs to.
+        if (!dropCardId) return;
+        const otherId = end === 'from' ? conn.toCardId : conn.fromCardId;
+        if (dropCardId === otherId) return; // would collapse both ends onto one card
+        const newAnchor = dropped && dropped.cardId === dropCardId ? dropped.anchor : undefined;
+
+        this.pushUndo();
+        if (end === 'from') { conn.fromCardId = dropCardId; conn.fromAnchor = newAnchor; }
+        else { conn.toCardId = dropCardId; conn.toAnchor = newAnchor; }
+        this.rerenderConnection(conn);
+        this.scheduleSave();
+      };
+
+      activeDocument.addEventListener('pointermove', onMove);
+      activeDocument.addEventListener('pointerup', onUp);
+    });
+
+    handle.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      if (!pinned) return;
+      this.pushUndo();
+      if (end === 'from') conn.fromAnchor = undefined; else conn.toAnchor = undefined;
+      this.rerenderConnection(conn);
+      this.scheduleSave();
+    });
   },
 
   hideConnectionEndpointHandles(this: FreeformRenderer): void {
@@ -3380,7 +3658,8 @@ export const canvasMethods = {
     const from = this.getConnEndpointRect(conn.fromCardId, conn.fromPoint);
     const to = this.getConnEndpointRect(conn.toCardId, conn.toPoint);
     if (!from || !to) return;
-    const { src, tgt } = straightAnchors(from, to);
+    const [fa0, ta0] = connAnchors(conn);
+    const { src, tgt } = straightAnchors(from, to, fa0, ta0);
     const pt = curveThroughPoint(src, tgt, conn.bend ?? 0);
 
     const handle = createSvg('circle');
@@ -3405,7 +3684,8 @@ export const canvasMethods = {
         const from2 = this.getConnEndpointRect(conn.fromCardId, conn.fromPoint);
         const to2 = this.getConnEndpointRect(conn.toCardId, conn.toPoint);
         if (!from2 || !to2) return;
-        const anchors = straightAnchors(from2, to2);
+        const [fa2, ta2] = connAnchors(conn);
+        const anchors = straightAnchors(from2, to2, fa2, ta2);
         conn.bend = Math.round(perpendicularOffset(anchors.src, anchors.tgt, cp));
         this.rerenderConnection(conn);
       };
