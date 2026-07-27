@@ -467,6 +467,8 @@ export const canvasMethods = {
         this.addSwatchAt(this.applySnap(cp.x - SWATCH_DEFAULT_W / 2), this.applySnap(cp.y - SWATCH_DEFAULT_H / 2))));
       menu.addItem(i => i.setTitle('Checkers').setIcon('crown').onClick(() =>
         this.addCheckersAt(this.applySnap(cp.x - CHECKERS_DEFAULT_W / 2), this.applySnap(cp.y - CHECKERS_DEFAULT_H / 2))));
+      menu.addItem(i => i.setTitle('Calendar').setIcon('calendar-days').onClick(() =>
+        this.addCalendarAt(this.applySnap(cp.x - CALENDAR_DEFAULT_W / 2), this.applySnap(cp.y - CALENDAR_DEFAULT_H / 2))));
 
       menu.addSeparator();
       // Opens a second menu listing the user's saved card-group templates

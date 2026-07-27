@@ -36,8 +36,12 @@ declare module './freeform-view' {
     pruneDayStyleIfEmpty(card: CalendarCard, date: string): void;
     showCalendarDayMenu(e: MouseEvent, el: HTMLElement, card: CalendarCard, date: string): void;
     showCalendarItemMenu(e: MouseEvent, el: HTMLElement, card: CalendarCard, item: DatedItem): void;
+    editCalendarAnchor(label: HTMLElement, cardEl: HTMLElement, card: CalendarCard): void;
   }
 }
+
+// YYYY-MM, what <input type="month"> reads and writes.
+const MONTH_INPUT_RE = /^\d{4}-\d{2}$/;
 
 export const cardsCalendarMethods = {
   refreshAfterDateChange(this: FreeformRenderer, sourceCardId: string): void {
@@ -124,20 +128,54 @@ export const cardsCalendarMethods = {
       });
     }
     const weekStart = startOfWeekISO(anchor);
-    header.createDiv({
+    const locked = !!card.anchorLocked;
+    const monthLabel = header.createDiv({
       cls: 'visual-notes-calendar-month-label',
       text: mode === 'month' ? monthTitle(anchor) : `${shortDate(weekStart)} – ${shortDate(addDaysISO(weekStart, 6))}`,
     });
+    if (locked) {
+      monthLabel.addClass('is-locked');
+    } else {
+      // Click-to-jump: swaps the label for a native <input type="month">,
+      // which covers both requested input styles at once — Chromium lets
+      // you type MM/YYYY directly into it, and its own calendar-icon affordance
+      // opens a year/month grid, so no custom dropdown needs building here.
+      monthLabel.addClass('is-clickable');
+      monthLabel.setAttribute('aria-label', 'Click to jump to a month and year');
+      monthLabel.addEventListener('pointerdown', e => e.stopPropagation());
+      monthLabel.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.editCalendarAnchor(monthLabel, el, card);
+      });
+    }
     const nav = header.createDiv('visual-notes-dataview-nav');
-    this.dataViewNavBtn(nav, 'chevron-left', 'Previous', () => {
+    const prevBtn = this.dataViewNavBtn(nav, 'chevron-left', 'Previous', () => {
+      if (card.anchorLocked) return;
       card.anchor = mode === 'month' ? firstOfMonth(addDaysISO(firstOfMonth(anchor), -1)) : addDaysISO(anchor, -7);
       this.scheduleSave(); rerender();
     });
-    this.dataViewTextBtn(nav, 'Today', () => { card.anchor = undefined; this.scheduleSave(); rerender(); });
-    this.dataViewNavBtn(nav, 'chevron-right', 'Next', () => {
+    prevBtn.toggleClass('is-disabled', locked);
+    const todayBtn = this.dataViewTextBtn(nav, 'Today', () => {
+      if (card.anchorLocked) return;
+      card.anchor = undefined; this.scheduleSave(); rerender();
+    });
+    todayBtn.toggleClass('is-disabled', locked);
+    const nextBtn = this.dataViewNavBtn(nav, 'chevron-right', 'Next', () => {
+      if (card.anchorLocked) return;
       card.anchor = mode === 'month' ? firstOfMonth(addDaysISO(firstOfMonth(anchor), 32)) : addDaysISO(anchor, 7);
       this.scheduleSave(); rerender();
     });
+    nextBtn.toggleClass('is-disabled', locked);
+    // Freezes Previous/Today/Next and the month/year jump above — suggested
+    // for anyone who finds a stray click expensive to undo, e.g. after
+    // scrolling deep into a historical timeline. Stays clickable itself
+    // either way, so locking is never a dead end.
+    const lockBtn = this.dataViewNavBtn(
+      nav, locked ? 'lock' : 'lock-open',
+      locked ? 'Unlock month/year' : 'Lock month/year (prevents accidental changes)',
+      () => { card.anchorLocked = !card.anchorLocked; this.scheduleSave(); rerender(); },
+    );
+    lockBtn.toggleClass('is-active', locked);
     const modeWrap = header.createDiv('visual-notes-calendar-mode');
     for (const m of ['month', 'week'] as const) {
       const b = this.dataViewTextBtn(modeWrap, m === 'month' ? 'Month' : 'Week', () => {
@@ -167,6 +205,39 @@ export const cardsCalendarMethods = {
     });
 
     this.appendResizeHandles(el);
+  },
+
+  // In-place month/year jump — swaps the clicked label for a real <input
+  // type="month">, the same pattern editSimpleTitle uses for card titles.
+  // Not undo-tracked: like Previous/Today/Next, this only moves which
+  // month is *displayed*, so it belongs with those rather than with edits
+  // to the card's actual data.
+  editCalendarAnchor(this: FreeformRenderer, label: HTMLElement, cardEl: HTMLElement, card: CalendarCard): void {
+    const original = (card.anchor ?? todayISO()).slice(0, 7);
+    const input = createEl('input');
+    input.type = 'month';
+    input.value = original;
+    input.className = 'visual-notes-calendar-month-input';
+    input.addEventListener('pointerdown', e => e.stopPropagation());
+    label.replaceWith(input);
+
+    let done = false;
+    const commit = () => {
+      if (done) return; done = true;
+      const v = input.value;
+      if (v && MONTH_INPUT_RE.test(v) && v !== original) {
+        card.anchor = `${v}-01`;
+        this.scheduleSave();
+      }
+      this.rerenderCard(cardEl, card);
+    };
+    input.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      else if (e.key === 'Escape') { e.preventDefault(); done = true; this.rerenderCard(cardEl, card); }
+    });
+    input.addEventListener('blur', commit);
+    window.requestAnimationFrame(() => input.focus());
   },
 
   quickAddCalendarNote(this: FreeformRenderer, el: HTMLElement, card: CalendarCard, date: string): void {

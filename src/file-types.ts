@@ -433,6 +433,10 @@ export interface CalendarCard extends BaseCard {
   titleHidden?: boolean;
   mode?: 'month' | 'week';
   anchor?: string; // ISO date inside the shown month/week; undefined = today
+  // When set, Previous/Today/Next and the month/year jump control are all
+  // inert — guards against nudging the displayed month off a long-scrolled
+  // position (e.g. deep into a historical timeline) with a stray click.
+  anchorLocked?: boolean;
   dayStyles?: Record<string, CalendarDayStyle>; // keyed by ISO date
   notes?: CalendarNote[];
 }

@@ -2,6 +2,13 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.70
+
+### Added
+- **Calendar card: jump to a month/year directly** — click the month/year label to swap it for a native month picker: type the month and year straight in, or use its built-in calendar-icon dropdown to pick one. No more clicking Previous hundreds of times to reach a date years away.
+- **Calendar card: lock the displayed month/year** — the new lock icon in the calendar's header freezes Previous/Today/Next and the month/year jump so an accidental click can't shift you off a date you navigated to deliberately. Unlock any time from the same icon.
+- **Calendar** was missing from the canvas right-click "Add" menu (Organize section) — it was only reachable from the toolbar. Added there too.
+
 ## 1.0.69
 
 ### Added

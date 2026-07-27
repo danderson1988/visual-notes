@@ -6391,6 +6391,12 @@ path.ib-highlight-stroke {
   color: var(--interactive-accent);
 }
 
+.visual-notes-dataview-btn.is-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .visual-notes-dataview-btn svg { width: 14px; height: 14px; }
 
 .visual-notes-dataview-btn-text {
@@ -6474,6 +6480,35 @@ input.visual-notes-dataview-title-input {
   font-weight: 600;
   color: var(--text-normal);
   white-space: nowrap;
+}
+
+.visual-notes-calendar-month-label.is-clickable {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+
+.visual-notes-calendar-month-label.is-clickable:hover {
+  background: var(--background-modifier-hover);
+  color: var(--interactive-accent);
+}
+
+.visual-notes-calendar-month-label.is-locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+input.visual-notes-calendar-month-input {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border: 1px solid var(--interactive-accent);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  outline: none;
+  min-width: 0;
 }
 
 .visual-notes-calendar-header .visual-notes-dataview-nav { margin-left: auto; }

@@ -2349,3 +2349,110 @@ describe('UI smoke: "Save as template" moved out of the header into the "…" me
     expect(items.some(t => t?.includes('Save as template'))).toBe(true);
   });
 });
+
+describe('UI smoke: calendar month/year jump and lock', () => {
+  function calEl(container: HTMLElement, id: string): HTMLElement {
+    return container.querySelector<HTMLElement>(`.visual-notes-freeform-card[data-id="${id}"]`)!;
+  }
+  function navBtn(el: HTMLElement, label: string): HTMLElement {
+    return Array.from(el.querySelectorAll<HTMLElement>('.visual-notes-dataview-nav [aria-label]'))
+      .find(b => b.getAttribute('aria-label') === label)!;
+  }
+
+  it('clicking the month label opens a month input seeded with the current anchor', () => {
+    const cal: CalendarCard = { id: 'c1', kind: 'calendar', x: 0, y: 0, w: 460, h: 420, anchor: '2007-06-15' };
+    const { container } = setup([cal]);
+    const el = calEl(container, 'c1');
+    const label = el.querySelector<HTMLElement>('.visual-notes-calendar-month-label')!;
+    expect(label.hasClass('is-clickable')).toBe(true);
+
+    label.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const input = el.querySelector<HTMLInputElement>('input.visual-notes-calendar-month-input')!;
+    expect(input).not.toBeNull();
+    expect(input.type).toBe('month');
+    expect(input.value).toBe('2007-06');
+  });
+
+  it('committing a typed month/year jumps the anchor to the 1st of that month', () => {
+    const cal: CalendarCard = { id: 'c1', kind: 'calendar', x: 0, y: 0, w: 460, h: 420, anchor: '2007-06-15' };
+    const { board, container } = setup([cal]);
+    const el = calEl(container, 'c1');
+    el.querySelector<HTMLElement>('.visual-notes-calendar-month-label')!
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const input = el.querySelector<HTMLInputElement>('input.visual-notes-calendar-month-input')!;
+    input.value = '1998-12';
+    input.dispatchEvent(new Event('blur'));
+
+    const saved = board.cards.find(c => c.id === 'c1') as CalendarCard;
+    expect(saved.anchor).toBe('1998-12-01');
+    expect(calEl(container, 'c1').querySelector('.visual-notes-calendar-month-label')!.textContent)
+      .toContain('1998');
+  });
+
+  it('Escape cancels the month jump without changing the anchor', () => {
+    const cal: CalendarCard = { id: 'c1', kind: 'calendar', x: 0, y: 0, w: 460, h: 420, anchor: '2007-06-15' };
+    const { board, container } = setup([cal]);
+    const el = calEl(container, 'c1');
+    el.querySelector<HTMLElement>('.visual-notes-calendar-month-label')!
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const input = el.querySelector<HTMLInputElement>('input.visual-notes-calendar-month-input')!;
+    input.value = '1998-12';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    const saved = board.cards.find(c => c.id === 'c1') as CalendarCard;
+    expect(saved.anchor).toBe('2007-06-15');
+    expect(calEl(container, 'c1').querySelector('input.visual-notes-calendar-month-input')).toBeNull();
+  });
+
+  it('the canvas right-click "Add" menu includes Calendar, wired to addCalendarAt', () => {
+    const { renderer } = setup([]);
+    let captured: InstanceType<typeof Menu> | null = null;
+    vi.spyOn(Menu.prototype, 'showAtMouseEvent').mockImplementation(function (this: InstanceType<typeof Menu>) {
+      captured = this;
+    });
+    const addSpy = vi.spyOn(renderer, 'addCalendarAt');
+
+    renderer.outer.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 10, clientY: 10 }));
+    const menu = captured!;
+    // Item order: Write(label)+5, Media & links(label)+6, Organize(label)+
+    // Tile/Kanban board/Column/Group frame/Swatch/Checkers/Calendar — Calendar
+    // is the 7th Organize entry, index 20 overall. The MenuItemStub doesn't
+    // retain title text, so this asserts the click actually reaches
+    // addCalendarAt rather than checking a label.
+    expect(menu.items.length).toBeGreaterThan(20);
+    (menu.items[20] as any).__trigger();
+    expect(addSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('Previous/Today/Next and the month label are inert while locked, and unlocking restores them', () => {
+    const cal: CalendarCard = { id: 'c1', kind: 'calendar', x: 0, y: 0, w: 460, h: 420, anchor: '2007-06-15', anchorLocked: true };
+    const { board, container } = setup([cal]);
+    let el = calEl(container, 'c1');
+
+    const label = el.querySelector<HTMLElement>('.visual-notes-calendar-month-label')!;
+    expect(label.hasClass('is-locked')).toBe(true);
+    expect(label.hasClass('is-clickable')).toBe(false);
+    label.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(el.querySelector('input.visual-notes-calendar-month-input')).toBeNull();
+
+    navBtn(el, 'Previous').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    navBtn(el, 'Next').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const todayBtn = Array.from(el.querySelectorAll<HTMLElement>('.visual-notes-dataview-btn-text'))
+      .find(b => b.textContent === 'Today')!;
+    todayBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    let saved = board.cards.find(c => c.id === 'c1') as CalendarCard;
+    expect(saved.anchor).toBe('2007-06-15');
+
+    navBtn(el, 'Unlock month/year').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    saved = board.cards.find(c => c.id === 'c1') as CalendarCard;
+    expect(saved.anchorLocked).toBe(false);
+
+    el = calEl(container, 'c1');
+    navBtn(el, 'Next').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    saved = board.cards.find(c => c.id === 'c1') as CalendarCard;
+    expect(saved.anchor).not.toBe('2007-06-15');
+  });
+});
