@@ -12,6 +12,15 @@ const context = await esbuild.context({
   banner: {
     js: `/* Visual Notes v${manifest.version} — bundled file, do not edit. Source: https://github.com/danderson1988/visual-notes */`,
   },
+  // Bakes the version being built into the bundle itself, so the running
+  // code can report which main.js it actually is. That's a different fact
+  // from plugin.manifest.version (which Obsidian reads out of
+  // manifest.json), and the settings tab compares the two to catch a
+  // half-applied update — the failure where manifest.json is replaced but
+  // main.js isn't, making new features look silently missing.
+  define: {
+    __BUILD_VERSION__: JSON.stringify(manifest.version),
+  },
   external: [
     "obsidian",
     "electron",

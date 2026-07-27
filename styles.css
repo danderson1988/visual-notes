@@ -7147,3 +7147,27 @@ input.visual-notes-calendar-month-input {
   padding: 6px 10px 0;
   flex-shrink: 0;
 }
+
+/* ── Settings: running-build version line ───────────────────── */
+
+.visual-notes-version-line {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  margin-bottom: 14px;
+}
+
+/* Shown only when main.js and manifest.json disagree — a half-applied
+   update. Styled as a warning because the practical symptom is "features
+   are silently missing", which otherwise gives the user nothing to go on. */
+.visual-notes-version-line.is-stale {
+  color: var(--text-error, #ef4444);
+  border: 1px solid var(--text-error, #ef4444);
+  border-radius: var(--radius-s, 4px);
+  padding: 10px 12px;
+  line-height: 1.45;
+}
+
+.visual-notes-version-line-title {
+  font-weight: var(--font-semibold, 600);
+  margin-bottom: 4px;
+}

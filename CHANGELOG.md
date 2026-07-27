@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.73
+
+### Added
+- **The settings tab now shows which build is actually running**, as a small "Visual Notes v…" line at the top. If that version ever disagrees with what Obsidian thinks is installed, it turns into a warning explaining what happened and how to fix it. This catches a genuinely confusing failure: an update that replaces the small `manifest.json` but not the ~1 MB `main.js`, leaving Obsidian reporting the new version while still running the old code — so newly-added features are silently absent even though the version number says they should be there. Previously the only way to spot this was to open `main.js` in a text editor and read its first line.
+
 ## 1.0.72
 
 ### Added

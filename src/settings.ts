@@ -5,6 +5,13 @@ import { Tile } from './types';
 import { relinkAllBoards } from './asset-manager';
 import { STICKY_COLORS, resolveDefaultStickyColor } from './freeform-view-shared';
 
+// Replaced with a string literal by esbuild at build time (see the `define`
+// in esbuild.config.mjs). The `typeof` guard keeps this working under
+// vitest, which imports the TypeScript sources directly and so never runs
+// the substitution.
+declare const __BUILD_VERSION__: string;
+const BUILD_VERSION = typeof __BUILD_VERSION__ === 'string' ? __BUILD_VERSION__ : 'unknown';
+
 // ── Board picker modal ────────────────────────────────────────
 
 class BoardPickerModal extends FuzzySuggestModal<TFile> {
@@ -129,6 +136,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
+    this.buildVersionNotice(containerEl);
     this.buildOpenOnStartup(new Setting(containerEl));
     this.buildDefaultBoard(new Setting(containerEl));
 
@@ -209,6 +217,36 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
         })(); })
       );
     }
+  }
+
+  // Reports which build is actually running, and flags the case where that
+  // disagrees with what Obsidian thinks is installed.
+  //
+  // The two numbers come from two different files an update has to replace
+  // TOGETHER: manifest.json (what plugin.manifest.version reports, and what
+  // a user sees in the Community plugins list) and main.js (the code
+  // actually executing, stamped at build time). When only the small
+  // manifest.json lands and the ~1MB main.js doesn't, Obsidian cheerfully
+  // reports the new version while running the old code — so a just-shipped
+  // feature is missing with no visible reason, and the version number
+  // "proves" it should be there. Surfacing the mismatch here turns that
+  // into something a user can see and screenshot in one step.
+  private buildVersionNotice(containerEl: HTMLElement): void {
+    const declared = this.plugin.manifest.version;
+    if (BUILD_VERSION === declared || BUILD_VERSION === 'unknown') {
+      containerEl.createDiv('visual-notes-version-line').setText(`Visual Notes v${declared}`);
+      return;
+    }
+
+    const warn = containerEl.createDiv('visual-notes-version-line is-stale');
+    warn.createDiv('visual-notes-version-line-title').setText(
+      `Update didn't finish — manifest.json says v${declared}, but the code running is v${BUILD_VERSION}.`
+    );
+    warn.createDiv().setText(
+      'Obsidian is reporting the newer version while still running the older build, so anything added since ' +
+      `v${BUILD_VERSION} will appear to be missing. To fix it, download main.js, manifest.json and styles.css ` +
+      'from the latest release, replace all three together, then turn the plugin off and on again in Community plugins.'
+    );
   }
 
   private buildPanButton(setting: Setting): void {
