@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.74
+
+### Changed
+- Internal code cleanup with no change to how the plugin behaves: removed two redundant type assertions that the plugin review tooling flagged in 1.0.73. They were compile-time only, so apart from the version stamp the compiled output is identical to 1.0.73 — there's nothing to notice, and no need to update if 1.0.73 is working for you.
+
 ## 1.0.73
 
 ### Added
