@@ -3099,7 +3099,7 @@ export const canvasMethods = {
     // was last hovered needs its pin count brought up to date now.
     for (const [id, el] of this.cardEls) {
       const card = this.board.cards.find(c => c.id === id);
-      if (card) this.refreshConnectionHandles(el, card as SupportedCard);
+      if (card) this.refreshConnectionHandles(el, card);
     }
   },
 
@@ -3138,7 +3138,7 @@ export const canvasMethods = {
       // Looked up fresh rather than closing over `card`, whose object may
       // have been replaced by a later render of the same card.
       const current = this.board.cards.find(c => c.id === card.id);
-      if (current) this.refreshConnectionHandles(el, current as SupportedCard);
+      if (current) this.refreshConnectionHandles(el, current);
       // Measured once per hover rather than per move: a card doesn't
       // change geometry while the pointer sits over it, and reading a rect
       // on every pointermove would force layout on each one.
