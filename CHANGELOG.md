@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.71
+
+### Added
+- **Choice of mouse button for panning the canvas** — a new "Pan the canvas with" setting lets you pick middle-click (the previous default, unchanged), right-click, or either, for anyone who finds a middle-click physically awkward or whose mouse doesn't have one. Space + left-click still pans no matter which you choose. When right-click is selected, a drag that actually pans the canvas no longer pops the right-click context menu on release — a plain right-click with no drag still opens it as before.
+- New starter template: **D&D Campaign Atlas**.
+
 ## 1.0.70
 
 ### Added
