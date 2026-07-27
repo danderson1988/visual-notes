@@ -194,6 +194,10 @@ export class FreeformRenderer extends Component {
 
   spaceDown = false;
   isPanning = false;
+  // Set when a right-click-to-pan drag (see startPan) actually moves the
+  // viewport, so the contextmenu event Chrome/Firefox fire on right-button
+  // release doesn't pop a menu on top of what was really just a pan gesture.
+  suppressNextContextMenu = false;
 
   // Debounces + serializes writeBoardFile calls — see save-queue.ts. Built
   // in the constructor (needs onSave/file, which aren't available at field-
@@ -258,6 +262,7 @@ export class FreeformRenderer extends Component {
     public mobileFabPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' = 'bottom-right',
     public penDrawOptions: PenDrawOptions = { ...DEFAULT_PEN_DRAW_OPTIONS },
     public onPenDrawOptionsChange?: (value: PenDrawOptions) => void,
+    public panButton: 'middle' | 'right' | 'either' = 'middle',
   ) {
     super();
     this.vp = { ...(board.viewport ?? { x: 0, y: 0, zoom: 1 }) };

@@ -40,6 +40,7 @@ export interface VisualNotesSettings {
   trashZoneSize?: number;           // diameter in px of the bottom-left trash drop zone; default 42
   mobileFabPosition?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'; // corner of the phone-width "+" FAB; default bottom-right
   penDrawOptions?: PenDrawOptions;  // perfect-freehand tuning from the pen options panel; default DEFAULT_PEN_DRAW_OPTIONS
+  panButton?: 'middle' | 'right' | 'either'; // which mouse button drags the freeform canvas; default 'middle'
 }
 
 export const DEFAULT_SETTINGS: VisualNotesSettings = {

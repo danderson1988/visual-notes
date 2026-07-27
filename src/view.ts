@@ -161,6 +161,7 @@ export class VisualNotesView extends FileView {
         // module-level default for every board opened afterward.
         { ...DEFAULT_PEN_DRAW_OPTIONS, ...this.plugin.settings.penDrawOptions },
         (value) => { this.plugin.settings.penDrawOptions = value; void this.plugin.saveSettings(); },
+        this.plugin.settings.panButton ?? 'middle',
       );
     } else {
       this.renderer = new GridRenderer(

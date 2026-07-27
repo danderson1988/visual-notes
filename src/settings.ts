@@ -133,6 +133,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
     this.buildDefaultBoard(new Setting(containerEl));
 
     new Setting(containerEl).setName('Freeform canvas').setHeading();
+    this.buildPanButton(new Setting(containerEl));
     this.buildToolbarPosition(new Setting(containerEl));
     this.buildMobileFabPosition(new Setting(containerEl));
     this.buildDotColor(new Setting(containerEl));
@@ -208,6 +209,23 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
         })(); })
       );
     }
+  }
+
+  private buildPanButton(setting: Setting): void {
+    setting
+      .setName('Pan the canvas with')
+      .setDesc('Which mouse button drags the freeform canvas around. Space+left-click always works no matter what you pick here. Takes effect when you next open a board.')
+      .addDropdown(dd =>
+        dd
+          .addOption('middle', 'Middle-click (default)')
+          .addOption('right', 'Right-click')
+          .addOption('either', 'Middle or right-click')
+          .setValue(this.plugin.settings.panButton ?? 'middle')
+          .onChange(async (value) => {
+            this.plugin.settings.panButton = value as 'middle' | 'right' | 'either';
+            await this.plugin.saveSettings();
+          })
+      );
   }
 
   private buildToolbarPosition(setting: Setting): void {

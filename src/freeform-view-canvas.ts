@@ -57,6 +57,7 @@ declare module './freeform-view' {
   interface FreeformRenderer {
     disposeCardResources(id: string): void;
     bindCanvasEvents(): void;
+    isPanButton(button: number): boolean;
     startPan(e: PointerEvent): void;
     cancelLongPress(): void;
     maybeStartTouchPan(e: PointerEvent): void;
@@ -195,7 +196,16 @@ export const canvasMethods = {
     // phase per-card/per-item contextmenu handler builds its menu —
     // committing the edit here, while the card is still fully valid, is
     // the same thing a normal left-click-away would have done.
-    this.container.addEventListener('contextmenu', () => {
+    this.container.addEventListener('contextmenu', (e) => {
+      // A right-click drag configured as the pan gesture (see startPan)
+      // still ends in a native contextmenu event on release — swallow that
+      // one so panning right doesn't also drop a menu on the card/canvas
+      // underneath the cursor. A right-click with no drag is unaffected.
+      if (this.suppressNextContextMenu) {
+        this.suppressNextContextMenu = false;
+        e.preventDefault(); e.stopImmediatePropagation();
+        return;
+      }
       (activeDocument.activeElement as HTMLElement | null)?.blur();
     }, { capture: true });
 
@@ -354,14 +364,14 @@ export const canvasMethods = {
     activeDocument.addEventListener('keydown', this.docKeyDown);
     activeDocument.addEventListener('keyup', this.docKeyUp);
 
-    // Capture-phase listeners: intercept middle-click / space-drag over any child
-    // element before its stopPropagation can block panning.
+    // Capture-phase listeners: intercept middle-click / right-click / space-drag
+    // over any child element before its stopPropagation can block panning.
     // The mousedown guard prevents Chrome autoscroll on scrollable/image targets.
     this.outer.addEventListener('mousedown', (e: MouseEvent) => {
       if (e.button === 1) e.preventDefault();
     }, { capture: true });
     this.outer.addEventListener('pointerdown', (e) => {
-      if (e.button === 1 || (e.button === 0 && this.spaceDown)) {
+      if (this.isPanButton(e.button) || (e.button === 0 && this.spaceDown)) {
         e.preventDefault(); e.stopPropagation(); this.startPan(e);
       }
     }, { capture: true });
@@ -396,7 +406,7 @@ export const canvasMethods = {
       // drawing selection so the marquee can add more strokes to it —
       // matches the shift-aware card selection just below.
       if (!e.shiftKey && this.selectedDrawingIds.size > 0) this.deselectDrawing();
-      if (e.button === 1 || (e.button === 0 && this.spaceDown)) {
+      if (this.isPanButton(e.button) || (e.button === 0 && this.spaceDown)) {
         e.preventDefault(); this.startPan(e);
       } else if (e.button === 0 && this.pendingTool) {
         e.preventDefault();
@@ -670,14 +680,25 @@ export const canvasMethods = {
     })(); });
   },
 
+  // Whether a mousedown/pointerdown with this button should start a canvas
+  // pan, per the "Pan with" setting — middle-click always qualifies unless
+  // the user has dedicated it solely to right-click.
+  isPanButton(this: FreeformRenderer, button: number): boolean {
+    if (button === 1) return this.panButton !== 'right';
+    if (button === 2) return this.panButton === 'right' || this.panButton === 'either';
+    return false;
+  },
+
   startPan(this: FreeformRenderer, e: PointerEvent): void {
     this.isPanning = true; this.setCursor('grabbing');
     const sx = e.clientX, sy = e.clientY, svx = this.vp.x, svy = this.vp.y;
     const pid = e.pointerId;
+    let moved = false;
     // Use window capture-phase listeners so autoscroll or child stopPropagation
     // can't block move/up events (e.g. middle-click over <img> or scrollable kanban).
     const onMove = (me: PointerEvent) => {
       if (me.pointerId !== pid) return;
+      if (!moved && Math.hypot(me.clientX - sx, me.clientY - sy) > DRAG_THRESHOLD) moved = true;
       this.vp = { ...this.vp, x: svx + (me.clientX - sx), y: svy + (me.clientY - sy) };
       this.applyViewport();
     };
@@ -686,6 +707,10 @@ export const canvasMethods = {
       window.removeEventListener('pointermove', onMove, true);
       window.removeEventListener('pointerup', onUp, true);
       this.isPanning = false; this.setCursor(this.spaceDown ? 'grab' : ''); this.scheduleSave();
+      // A right-button pan that actually moved the viewport shouldn't also
+      // pop the browser's context menu on release — see the contextmenu
+      // listener above, which consumes this flag.
+      if (e.button === 2 && moved) this.suppressNextContextMenu = true;
     };
     window.addEventListener('pointermove', onMove, true);
     window.addEventListener('pointerup', onUp, true);
