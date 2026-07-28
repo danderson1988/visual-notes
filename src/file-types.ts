@@ -477,7 +477,16 @@ export type ColumnChildCard =
 export interface GroupCard extends BaseCard {
   kind: 'group';
   label?: string;
-  color?: string; // accent for border + label chip + tinted fill; default grey
+  color?: string;   // accent for border + label chip; default grey
+  // Explicit fill, chosen from a theme-aware pastel palette (see BG_COLORS
+  // in context-bar.ts). Only rendered while `transparent` is false —
+  // stored independently of it so switching transparency back off
+  // restores whatever fill was last picked instead of forgetting it.
+  bgColor?: string;
+  // true or unset (the default new groups get): a faint tint derived from
+  // `color`, same as every group made before bgColor/transparent existed.
+  // false: the explicit `bgColor` fill.
+  transparent?: boolean;
 }
 
 // A generic vertical container, Milanote-style: drag any card from the

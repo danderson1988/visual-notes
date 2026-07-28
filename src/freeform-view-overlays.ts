@@ -1537,6 +1537,50 @@ export const overlaysMethods = {
         this.scheduleSave();
         break;
       }
+      case 'group-color': {
+        if (card?.kind !== 'group' || !el) return;
+        this.pushUndo();
+        card.color = e.hex;
+        // Mirrors renderGroupContent's own derivation of border/label
+        // colors from card.color, rather than a full re-render — cheaper,
+        // and (unlike table-title/comment-resolve, which rebuild content
+        // that's actually changing shape) nothing else about a group frame
+        // changes when only its border color does.
+        el.style.borderColor = e.hex;
+        // The border color only doubles as the fill when no bgColor has
+        // been chosen — once one has, the fill is independent and shouldn't
+        // shift just because the border did.
+        if (!card.bgColor) {
+          el.style.backgroundColor = (card.transparent ?? true) ? `${e.hex}14` : e.hex;
+        }
+        const groupLabel = el.querySelector<HTMLElement>('.visual-notes-group-label');
+        if (groupLabel) {
+          groupLabel.style.backgroundColor = e.hex;
+          groupLabel.style.color = contrastColor(e.hex);
+        }
+        this.scheduleSave();
+        break;
+      }
+      case 'group-bg': {
+        if (card?.kind !== 'group' || !el) return;
+        this.pushUndo();
+        card.bgColor = e.hex;
+        // Transparency is an alpha applied to whichever fill is active, not
+        // a separate look to exit — picking a color doesn't change it, it
+        // just changes what that alpha is now being applied to.
+        el.style.backgroundColor = (card.transparent ?? true) ? `${e.hex}14` : e.hex;
+        this.scheduleSave();
+        break;
+      }
+      case 'group-transparent': {
+        if (card?.kind !== 'group' || !el) return;
+        this.pushUndo();
+        card.transparent = e.transparent;
+        const fill = card.bgColor ?? (card.color ?? '#6b7280');
+        el.style.backgroundColor = e.transparent ? `${fill}14` : fill;
+        this.scheduleSave();
+        break;
+      }
       case 'comment-resolve': {
         if (card?.kind !== 'comment' || !el) return;
         this.pushUndo();

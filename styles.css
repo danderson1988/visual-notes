@@ -7171,3 +7171,49 @@ input.visual-notes-calendar-month-input {
   font-weight: var(--font-semibold, 600);
   margin-bottom: 4px;
 }
+
+/* ── Context bar: labelled toggle row (group frame's Background tab) ── */
+
+.ib-ctx-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 6px 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ib-ctx-toggle-label {
+  font-family: var(--ib-font-body);
+}
+
+.ib-ctx-toggle {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--background-modifier-border);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.12s ease;
+}
+
+.ib-ctx-toggle.is-on {
+  background: var(--interactive-accent);
+}
+
+.ib-ctx-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--background-primary);
+  transition: transform 0.12s ease;
+}
+
+.ib-ctx-toggle.is-on .ib-ctx-toggle-knob {
+  transform: translateX(12px);
+}

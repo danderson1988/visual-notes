@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.0.75
+
+### Added
+- **Group frames now support an explicit background color, independent of the border/label color.** Open a group's context menu and use the new "Color" button: the Background tab picks a solid fill from the same pastel palette as sticky notes, and a "Transparent" switch toggles between that fill (shown at full color, or faded like before) and the original see-through tint. The Border tab still sets the accent used for the frame's border and label chip, matching the previous single-color behavior.
+
 ## 1.0.74
 
 ### Changed

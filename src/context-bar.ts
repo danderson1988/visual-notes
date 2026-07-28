@@ -30,7 +30,10 @@ export type CtxEvent =
   | { type: 'kanban-top-color'; hex: string | null }
   | { type: 'kanban-title' }
   | { type: 'kanban-add-col' }
-  | { type: 'checkers-reset' };
+  | { type: 'checkers-reset' }
+  | { type: 'group-color'; hex: string }
+  | { type: 'group-bg'; hex: string }
+  | { type: 'group-transparent'; transparent: boolean };
 
 // ── Colour palettes ───────────────────────────────────────────────────────────
 
@@ -283,6 +286,22 @@ export class ContextBar {
 
       case 'group':
         this.mkBtn(p, 'Rename', 'edit-2', () => this.emit({ type: 'edit-card' }));
+        this.mkBtn(p, 'Color', 'palette', () => this.openBgTopColorSub(
+          p, card,
+          BG_COLORS(),
+          hex => this.emit({ type: 'group-bg', hex }),
+          ACCENT_COLORS,
+          // "None" resets the border/label to the default grey rather than
+          // removing it outright — unlike a sticky's optional top strip, a
+          // group frame's border is how you tell it apart from the plain
+          // canvas, so there's no sensible "no border" state to drop to.
+          hex => this.emit({ type: 'group-color', hex: hex ?? '#6b7280' }),
+          'Border',
+          {
+            value: card.transparent ?? true,
+            onChange: transparent => this.emit({ type: 'group-transparent', transparent }),
+          },
+        ));
         break;
 
       case 'calendar':
@@ -304,6 +323,16 @@ export class ContextBar {
     onBg: (hex: string) => void,
     stripColors: string[],
     onStrip: (hex: string | null) => void,
+    // Sticky/Checklist/Kanban column all call this for an actual pale fill
+    // + a top accent strip, so those two labels are the defaults. A group
+    // frame reuses the same two-tab mechanics for a pale fill + its
+    // border/label color — "Top strip" would describe nothing there, so it
+    // passes its own second label instead of the generic one.
+    stripLabel = 'Top strip',
+    // Group frames only: an explicit fill can be switched off in favor of
+    // the original see-through tint without losing whatever fill color was
+    // picked, so flipping it back on later doesn't need reselecting.
+    bgTransparent?: { value: boolean; onChange: (transparent: boolean) => void },
   ): void {
     p.empty();
     this.cancelTrashConfirm();
@@ -314,7 +343,7 @@ export class ContextBar {
     const bgTab    = tabRow.createDiv('ib-ctx-tab ib-ctx-tab--active');
     bgTab.setText('Background');
     const stripTab = tabRow.createDiv('ib-ctx-tab');
-    stripTab.setText('Top strip');
+    stripTab.setText(stripLabel);
 
     // Swatch area (re-rendered on tab switch)
     const swatchArea = p.createDiv('ib-ctx-swatch-area');
@@ -322,12 +351,25 @@ export class ContextBar {
     const renderSwatches = (tab: 'bg' | 'strip') => {
       swatchArea.empty();
       if (tab === 'bg') {
+        // bgTransparent.value is only ever the snapshot read when the panel
+        // opened — mkToggleRow renders it once and has no memory of its own,
+        // so without mutating it here every re-render would draw the switch
+        // back at its original position regardless of how many times it'd
+        // actually been flipped.
+        if (bgTransparent) this.mkToggleRow(swatchArea, 'Transparent', bgTransparent.value, (v) => {
+          bgTransparent.value = v;
+          bgTransparent.onChange(v);
+          renderSwatches('bg');
+        });
         const grid = swatchArea.createDiv('ib-ctx-color-grid');
         for (const hex of bgColors) {
           const sw = grid.createDiv('ib-ctx-color-swatch');
           sw.style.background = hex;
           if (['#FFFFFF','#F3F4F6','#E0F2FE','#F0F9FF'].includes(hex))
             sw.addClass('ib-swatch-border-light');
+          // Doesn't touch the Transparent toggle — picking a color and
+          // choosing how solid it is are independent questions, so this
+          // never silently overrides whatever the switch above is set to.
           sw.addEventListener('click', () => onBg(hex));
         }
         this.mkCustomColor(swatchArea, onBg, () => {});
@@ -388,6 +430,24 @@ export class ContextBar {
     this.mkCustomColor(p, onSelect, () => this.fill(card));
     this.mkTrash(p);
     this.syncPos();
+  }
+
+  // A labelled on/off switch — currently only the group frame's Background
+  // tab needs one, so this stays a small standalone control rather than
+  // wrapping Obsidian's own Setting/ToggleComponent, which expect a full
+  // Setting row and don't attach to a bare panel like this one.
+  private mkToggleRow(p: HTMLElement, label: string, value: boolean, onChange: (value: boolean) => void): void {
+    const row = p.createDiv('ib-ctx-toggle-row');
+    row.createSpan({ cls: 'ib-ctx-toggle-label', text: label });
+    const sw = row.createDiv('ib-ctx-toggle');
+    sw.toggleClass('is-on', value);
+    sw.setAttribute('role', 'switch');
+    sw.setAttribute('aria-checked', String(value));
+    sw.setAttribute('tabindex', '0');
+    sw.createDiv('ib-ctx-toggle-knob');
+    const toggle = () => { const next = !sw.hasClass('is-on'); onChange(next); };
+    sw.addEventListener('click', toggle);
+    sw.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
   }
 
   private mkCustomColor(p: HTMLElement, onSelect: (hex: string) => void, onBack: () => void): void {

@@ -1052,7 +1052,13 @@ export const cardsBasicMethods = {
     el.addClass('visual-notes-freeform-group-card');
     const color = card.color ?? '#6b7280';
     el.style.borderColor = color;
-    el.style.backgroundColor = `${color}14`;
+    // The fill color is bgColor if one's been chosen, otherwise the border
+    // color itself (the original derived-tint look). Transparent (true or
+    // unset — the default) is a pure alpha applied to THAT color, not a
+    // separate look — so toggling it never changes which color is showing,
+    // only how solid it is.
+    const fill = card.bgColor ?? color;
+    el.style.backgroundColor = (card.transparent ?? true) ? `${fill}14` : fill;
 
     const label = el.createDiv({ cls: 'visual-notes-group-label', text: card.label || 'Group' });
     label.toggleClass('is-empty', !card.label);
