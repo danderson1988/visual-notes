@@ -306,9 +306,9 @@ export class DueDateModal extends Modal {
     const input = this.contentEl.createEl('input');
     input.type = 'date';
     input.value = this.current ?? '';
-    input.addClass('ib-modal-text-input');
+    input.addClass('visual-notes-modal-text-input');
 
-    const row = this.contentEl.createDiv('ib-modal-btn-row');
+    const row = this.contentEl.createDiv('visual-notes-modal-btn-row');
     if (this.current) {
       row.createEl('button', { text: 'Remove' })
         .addEventListener('click', () => { this.close(); this.onSubmit(undefined); });
@@ -384,9 +384,9 @@ export class CalloutIconPickerModal extends Modal {
       btn.addEventListener('click', () => { this.close(); this.onPick(emoji); });
     }
 
-    const row = contentEl.createDiv('ib-modal-btn-row');
+    const row = contentEl.createDiv('visual-notes-modal-btn-row');
     const input = row.createEl('input', { type: 'text', placeholder: 'Or type any emoji…' });
-    input.addClass('ib-modal-text-input');
+    input.addClass('visual-notes-modal-text-input');
     const useBtn = row.createEl('button', { text: 'Use', cls: 'mod-cta' });
     const submit = () => {
       const v = input.value.trim();
@@ -421,10 +421,10 @@ export class KanbanItemUrlModal extends Modal {
     this.contentEl.createEl('h3', { text: this.title });
     const input = this.contentEl.createEl('input');
     input.type = 'text'; input.placeholder = 'https://…'; input.value = this.initialValue;
-    input.addClass('ib-modal-text-input');
+    input.addClass('visual-notes-modal-text-input');
 
     const btnRow = this.contentEl.createDiv();
-    btnRow.addClass('ib-modal-btn-row');
+    btnRow.addClass('visual-notes-modal-btn-row');
     btnRow.createEl('button', { text: 'Cancel' }).addEventListener('click', () => this.close());
     const saveBtn = btnRow.createEl('button', { text: 'Save', cls: 'mod-cta' });
     const submit = () => { const v = input.value.trim(); this.close(); this.onSubmit(v); };
@@ -446,10 +446,10 @@ export class CalendarNoteTextModal extends Modal {
     this.contentEl.createEl('h3', { text: 'Note' });
     const input = this.contentEl.createEl('input');
     input.type = 'text'; input.placeholder = 'Note text…'; input.value = this.initialValue;
-    input.addClass('ib-modal-text-input');
+    input.addClass('visual-notes-modal-text-input');
 
     const btnRow = this.contentEl.createDiv();
-    btnRow.addClass('ib-modal-btn-row');
+    btnRow.addClass('visual-notes-modal-btn-row');
     btnRow.createEl('button', { text: 'Cancel' }).addEventListener('click', () => this.close());
     const saveBtn = btnRow.createEl('button', { text: 'Save', cls: 'mod-cta' });
     const submit = () => {
@@ -520,7 +520,7 @@ export class KanbanItemColorModal extends Modal {
       swatch.addEventListener('click', () => { this.close(); this.onSubmit(hex); });
     }
 
-    const wheelRow = contentEl.createDiv('ib-modal-btn-row');
+    const wheelRow = contentEl.createDiv('visual-notes-modal-btn-row');
     const colorWheel = wheelRow.createEl('input');
     colorWheel.type = 'color';
     colorWheel.value = this.current ?? '#3B82F6';
@@ -548,11 +548,11 @@ export class WipLimitModal extends Modal {
     });
     const input = this.contentEl.createEl('input');
     input.type = 'number'; input.min = '1'; input.placeholder = 'No limit';
-    input.addClass('ib-modal-text-input');
+    input.addClass('visual-notes-modal-text-input');
     if (this.current !== undefined) input.value = String(this.current);
 
     const btnRow = this.contentEl.createDiv();
-    btnRow.addClass('ib-modal-btn-row');
+    btnRow.addClass('visual-notes-modal-btn-row');
     btnRow.createEl('button', { text: 'Cancel' }).addEventListener('click', () => this.close());
     const setBtn = btnRow.createEl('button', { text: 'Set', cls: 'mod-cta' });
     setBtn.addEventListener('click', () => this.submit(input.value));
@@ -612,9 +612,9 @@ export class TagInputModal extends Modal {
     this.contentEl.createEl('h3', { text: 'Add tag' });
     const input = this.contentEl.createEl('input');
     input.type = 'text'; input.placeholder = 'tag name (no #)';
-    input.addClass('ib-modal-text-input');
+    input.addClass('visual-notes-modal-text-input');
     const btnRow = this.contentEl.createDiv();
-    btnRow.addClass('ib-modal-btn-row');
+    btnRow.addClass('visual-notes-modal-btn-row');
     btnRow.createEl('button', { text: 'Cancel' }).addEventListener('click', () => this.close());
     const addBtn = btnRow.createEl('button', { text: 'Add', cls: 'mod-cta' });
     const submit = () => {
@@ -639,10 +639,10 @@ export class BookmarkInputModal extends Modal {
     this.contentEl.createEl('h3', { text: this.title });
     const input = this.contentEl.createEl('input', { cls: 'visual-notes-bookmark-url-input' });
     input.type = 'text'; input.placeholder = 'https://…';
-    input.addClass('ib-modal-text-input');
+    input.addClass('visual-notes-modal-text-input');
 
     const btnRow = this.contentEl.createDiv();
-    btnRow.addClass('ib-modal-btn-row');
+    btnRow.addClass('visual-notes-modal-btn-row');
     const cancel = btnRow.createEl('button', { text: 'Cancel' });
     cancel.addEventListener('click', () => this.close());
     const add = btnRow.createEl('button', { text: 'Add', cls: 'mod-cta' });

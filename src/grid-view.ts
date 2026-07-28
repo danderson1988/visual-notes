@@ -103,7 +103,7 @@ export class GridRenderer {
     // or the icon itself is a custom bundled asset (same reasoning — it's
     // full art, not a glyph meant to sit on an accent-colored chip).
     const hasThumbForBg = !!tile.thumbnail || isCustomIconRef(tile.icon);
-    tileEl.setCssProps({ '--ib-tile-color': hasThumbForBg ? 'transparent' : tile.color });
+    tileEl.setCssProps({ '--visual-notes-tile-color': hasThumbForBg ? 'transparent' : tile.color });
 
     const iconColor = contrastColor(tile.color);
     const thumbSrc = resolveThumbnailSrc(this.app, tile);
@@ -117,7 +117,7 @@ export class GridRenderer {
       // image icon.
       img.addEventListener('error', () => {
         img.remove();
-        tileEl.setCssProps({ '--ib-tile-color': tile.color });
+        tileEl.setCssProps({ '--visual-notes-tile-color': tile.color });
         this.renderIconInto(tileEl, tile, iconColor);
       });
     } else {

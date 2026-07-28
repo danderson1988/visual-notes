@@ -24,7 +24,7 @@ describe('readBoardFile', () => {
   });
 
   it('runs the legacy kanban-column migration on read', async () => {
-    // A hand-built native canvas node carrying a legacy kanban-column ib
+    // A hand-built native canvas node carrying a legacy kanban-column ib (also covers the legacy `ib` key)
     // payload — readBoardFile should hand it through migrateLegacyKanbanColumns.
     const vault = new FakeVault();
     const raw = JSON.stringify({
@@ -75,13 +75,13 @@ describe('readBoardFile', () => {
 });
 
 describe('isVisualNotesOwnedFile', () => {
-  it('is true for a canvas carrying the ib version marker', async () => {
+  it('is true for a canvas carrying the vn version marker', async () => {
     const vault = new FakeVault();
     const file = vault.putText('Board.canvas', JSON.stringify(visualNotesToCanvas(board())));
     expect(await isVisualNotesOwnedFile(vault.toApp(), file)).toBe(true);
   });
 
-  it('is false for a plain native canvas with no ib marker', async () => {
+  it('is false for a plain native canvas with no vn marker', async () => {
     const vault = new FakeVault();
     const file = vault.putText('Native.canvas', JSON.stringify({ nodes: [], edges: [] }));
     expect(await isVisualNotesOwnedFile(vault.toApp(), file)).toBe(false);
@@ -103,7 +103,7 @@ describe('writeBoardFile', () => {
     await writeBoardFile(vault.toApp(), file, board([sticky]));
 
     const written = JSON.parse(vault.textAt('Board.canvas'));
-    expect(written.nodes[0].ib).toMatchObject({ id: 's1', kind: 'sticky' });
+    expect(written.nodes[0].vn).toMatchObject({ id: 's1', kind: 'sticky' });
   });
 });
 
@@ -113,7 +113,7 @@ describe('createBoardFile / collision-safe naming', () => {
     const file = await createBoardFile(vault.toApp(), 'My Board', null, 'freeform');
     expect(file.path).toBe('My Board.canvas');
     const written = JSON.parse(vault.textAt('My Board.canvas'));
-    expect(written.ib.layout).toBe('freeform');
+    expect(written.vn.layout).toBe('freeform');
   });
 
   it('appends a counter suffix when the name is already taken', async () => {
@@ -157,10 +157,10 @@ describe('createBoardFileFromTemplate', () => {
 
     expect(spawned.path).toBe('Foo.canvas');
     const spawnedData = JSON.parse(vault.textAt('Foo.canvas'));
-    expect(spawnedData.nodes[0].ib.id).not.toBe('orig');
+    expect(spawnedData.nodes[0].vn.id).not.toBe('orig');
     // Template file itself is unchanged.
     const templateData = JSON.parse(vault.textAt('Templates/Foo.canvas'));
-    expect(templateData.nodes[0].ib.id).toBe('orig');
+    expect(templateData.nodes[0].vn.id).toBe('orig');
   });
 });
 
@@ -195,7 +195,7 @@ describe('saveBoardAsTemplate', () => {
     await saveBoardAsTemplate(vault.toApp(), src, 'My Template');
 
     const written = JSON.parse(vault.textAt(`${TEMPLATES_FOLDER}/My Template.canvas`));
-    expect(written.ib.archived).toBeUndefined();
+    expect(written.vn.archived).toBeUndefined();
     expect(written.nodes).toHaveLength(1);
     // Original board object itself isn't mutated by the strip.
     expect(src.archived).toHaveLength(1);

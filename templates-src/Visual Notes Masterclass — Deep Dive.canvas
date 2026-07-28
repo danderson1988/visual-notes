@@ -9,7 +9,7 @@
       "type": "text",
       "text": "> [!note] 🔎\n> This linked board is a focused working area. Use it to expand an idea from the Masterclass board without losing your place.",
       "color": "#2563EB",
-      "ib": {
+      "vn": {
         "kind": "callout",
         "id": "deep-title",
         "text": "This linked board is a focused working area. Use it to expand an idea from the Masterclass board without losing your place.",
@@ -26,7 +26,7 @@
       "type": "file",
       "file": "_Templates/Visual Notes Masterclass.canvas",
       "color": "#2563EB",
-      "ib": {
+      "vn": {
         "kind": "tile",
         "id": "deep-back",
         "label": "← Back to Masterclass",
@@ -48,7 +48,7 @@
       "type": "group",
       "label": "Develop one idea",
       "color": "#8B5CF6",
-      "ib": {
+      "vn": {
         "kind": "group",
         "id": "deep-frame",
         "label": "Develop one idea",
@@ -64,7 +64,7 @@
       "type": "text",
       "text": "💭 QUESTION\n\nWhat do I want to understand, decide, or make next?",
       "color": "#EDE9FE",
-      "ib": {
+      "vn": {
         "kind": "sticky",
         "id": "deep-question",
         "text": "💭 QUESTION\n\nWhat do I want to understand, decide, or make next?",
@@ -81,7 +81,7 @@
       "type": "text",
       "text": "### Evidence\n\n- [ ] Source or observation\n- [ ] Counterpoint\n- [ ] Open question",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "checklist",
         "id": "deep-evidence",
         "title": "Evidence",
@@ -115,7 +115,7 @@
       "type": "text",
       "text": "### Decision record\n\n| Option | Benefit | Risk | Choice |\n| --- | --- | --- | --- |\n| A |  |  |  |\n| B |  |  |  |",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "table",
         "id": "deep-decision",
         "title": "Decision record",
@@ -174,7 +174,7 @@
       "type": "text",
       "text": "**Collaborator** _(14/07/2026, 10:00:00)_\nWhat would change your mind?\n\n---\n**You** _(14/07/2026, 11:00:00)_\nAdd a response or resolve this thread.",
       "color": "#FEF3C7",
-      "ib": {
+      "vn": {
         "kind": "comment",
         "id": "deep-comment",
         "text": "What would change your mind?",
@@ -200,7 +200,7 @@
       "type": "text",
       "text": "✅ NEXT ACTION\n\nTurn the decision into one small, scheduled action.",
       "color": "#DCFCE7",
-      "ib": {
+      "vn": {
         "kind": "sticky",
         "id": "deep-next",
         "text": "✅ NEXT ACTION\n\nTurn the decision into one small, scheduled action.",
@@ -217,7 +217,7 @@
       "toNode": "deep-evidence",
       "color": "#8B5CF6",
       "label": "investigate",
-      "ib": {
+      "vn": {
         "routing": "straight",
         "bend": 57,
         "style": "solid",
@@ -231,7 +231,7 @@
       "toNode": "deep-decision",
       "color": "#2563EB",
       "label": "weigh",
-      "ib": {
+      "vn": {
         "routing": "elbow",
         "elbowOrientation": "vertical-first",
         "style": "dashed",
@@ -245,7 +245,7 @@
       "toNode": "deep-next",
       "color": "#16A34A",
       "label": "commit",
-      "ib": {
+      "vn": {
         "routing": "straight",
         "bend": -45,
         "style": "solid",
@@ -254,7 +254,7 @@
       }
     }
   ],
-  "ib": {
+  "vn": {
     "version": 1,
     "layout": "freeform",
     "viewport": {

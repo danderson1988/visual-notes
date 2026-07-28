@@ -487,7 +487,7 @@ describe('UI smoke: note top strip color (bug #8)', () => {
     const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
     const { renderer, board, container } = setup([sticky]);
     const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
-    expect(el.querySelector('.ib-card-top-strip')).toBeNull();
+    expect(el.querySelector('.visual-notes-card-top-strip')).toBeNull();
 
     renderer.selection.select('s1');
     (renderer as any).handleCtxEvent({ type: 'sticky-top-color', hex: '#ef4444' });
@@ -495,7 +495,7 @@ describe('UI smoke: note top strip color (bug #8)', () => {
     expect((board.cards[0] as StickyCard).topColor).toBe('#ef4444');
     const children = Array.from(el.children).map(c => c.className);
     const fillIdx = children.findIndex(c => c.includes('visual-notes-sticky-shape-fill'));
-    const stripIdx = children.findIndex(c => c.includes('ib-card-top-strip'));
+    const stripIdx = children.findIndex(c => c.includes('visual-notes-card-top-strip'));
     const innerIdx = children.findIndex(c => c.includes('visual-notes-sticky-inner'));
     expect(fillIdx).toBeGreaterThanOrEqual(0);
     expect(stripIdx).toBeGreaterThan(fillIdx);
@@ -504,7 +504,7 @@ describe('UI smoke: note top strip color (bug #8)', () => {
 
   it('the shape-fill layer no longer outranks the top strip in the stylesheet', () => {
     const css = readFileSync(join(__dirname, '..', 'styles.css'), 'utf8');
-    expect(css).toMatch(/\.visual-notes-freeform-sticky-card \.ib-card-top-strip\s*\{[^}]*z-index:\s*1/);
+    expect(css).toMatch(/\.visual-notes-freeform-sticky-card \.visual-notes-card-top-strip\s*\{[^}]*z-index:\s*1/);
   });
 });
 
@@ -589,7 +589,7 @@ describe('UI smoke: deleting a card resets the floating format bar (bug #5)', ()
     renderer.deleteSelected();
 
     expect(board.cards).toHaveLength(0);
-    expect(panel.hasClass('ib-invisible')).toBe(true); // hidden immediately, not left showing stale buttons
+    expect(panel.hasClass('visual-notes-invisible')).toBe(true); // hidden immediately, not left showing stale buttons
   });
 });
 
@@ -1038,10 +1038,10 @@ describe('UI smoke: sticky/note text auto-contrast against background', () => {
   });
 
   it('a theme-driven background (var(...)) is left to CSS, not JS-computed contrast', () => {
-    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: 'var(--ib-card-bg)' };
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 200, h: 120, text: 'hi', color: 'var(--visual-notes-card-bg)' };
     const { container } = setup([sticky]);
     const textEl = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"] .visual-notes-sticky-text')!;
-    expect(textEl.style.color).toBe(''); // no inline override — var(--ib-card-text) from the stylesheet applies
+    expect(textEl.style.color).toBe(''); // no inline override — var(--visual-notes-card-text) from the stylesheet applies
   });
 
   it('picking a new background color via the context bar recomputes text contrast', () => {
@@ -1058,7 +1058,7 @@ describe('UI smoke: sticky/note text auto-contrast against background', () => {
     const { renderer, board } = setup([]);
     (renderer as any).addBlankCardAt(0, 0);
     const note = board.cards[0] as StickyCard;
-    expect(note.color).toBe('var(--ib-card-bg)');
+    expect(note.color).toBe('var(--visual-notes-card-bg)');
   });
 });
 
@@ -1911,7 +1911,7 @@ describe('UI smoke: card background color palette follows the active theme', () 
     const colorBtn = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-tb-btn'))
       .find(b => b.getAttribute('aria-label') === 'Color')!;
     colorBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    return Array.from(container.querySelectorAll<HTMLElement>('.ib-ctx-color-swatch'))
+    return Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-ctx-color-swatch'))
       .map(sw => sw.style.background)
       .filter(bg => bg.length > 0);
   }
@@ -2077,7 +2077,7 @@ describe('UI smoke: floating context bar positions above the selected card', () 
     renderer.selection.select('s1');
     renderer.refreshSelectionVisuals();
     expect(container.querySelector('.visual-notes-ctx-bar-panel')).toBeNull();
-    expect(renderer.toolbarEl.hasClass('ib-ctx-active')).toBe(true);
+    expect(renderer.toolbarEl.hasClass('visual-notes-ctx-active')).toBe(true);
   });
 });
 

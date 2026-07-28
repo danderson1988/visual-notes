@@ -9,7 +9,7 @@
       "type": "text",
       "text": "> [!note] 👗\n> Collect inspiration, build a season palette, plan outfits, and track your wardrobe — all in one place.",
       "color": "#EC4899",
-      "ib": {
+      "vn": {
         "kind": "callout",
         "id": "fm-callout",
         "text": "Collect inspiration, build a season palette, plan outfits, and track your wardrobe — all in one place.",
@@ -26,7 +26,7 @@
       "type": "group",
       "label": "Inspiration",
       "color": "#EC4899",
-      "ib": {
+      "vn": {
         "kind": "group",
         "id": "fm-group-inspo",
         "label": "Inspiration",
@@ -42,7 +42,7 @@
       "type": "text",
       "text": "📸 Drop inspiration images here — paste from the clipboard or drag them in from your files.",
       "color": "#FBCFE8",
-      "ib": {
+      "vn": {
         "kind": "sticky",
         "id": "fm-sticky-1",
         "text": "📸 Drop inspiration images here — paste from the clipboard or drag them in from your files.",
@@ -58,7 +58,7 @@
       "type": "text",
       "text": "✂️ Textures & fabrics — linen, silk, denim, knit. Note what feels right for the season.",
       "color": "#E9D5FF",
-      "ib": {
+      "vn": {
         "kind": "sticky",
         "id": "fm-sticky-2",
         "text": "✂️ Textures & fabrics — linen, silk, denim, knit. Note what feels right for the season.",
@@ -74,7 +74,7 @@
       "type": "group",
       "label": "Season Palette",
       "color": "#8E2A3C",
-      "ib": {
+      "vn": {
         "kind": "group",
         "id": "fm-group-palette",
         "label": "Season Palette",
@@ -90,7 +90,7 @@
       "type": "text",
       "text": "#D4B896 — Desert Sand",
       "color": "#D4B896",
-      "ib": {
+      "vn": {
         "kind": "swatch",
         "id": "fm-swatch-1",
         "color": "#D4B896"
@@ -105,7 +105,7 @@
       "type": "text",
       "text": "#2F3A45 — Merlin",
       "color": "#2F3A45",
-      "ib": {
+      "vn": {
         "kind": "swatch",
         "id": "fm-swatch-2",
         "color": "#2F3A45"
@@ -120,7 +120,7 @@
       "type": "text",
       "text": "#8E2A3C — Chili Red",
       "color": "#8E2A3C",
-      "ib": {
+      "vn": {
         "kind": "swatch",
         "id": "fm-swatch-3",
         "color": "#8E2A3C"
@@ -135,7 +135,7 @@
       "type": "text",
       "text": "#F3E5D8 — Cream Sand",
       "color": "#F3E5D8",
-      "ib": {
+      "vn": {
         "kind": "swatch",
         "id": "fm-swatch-4",
         "color": "#F3E5D8"
@@ -149,7 +149,7 @@
       "height": 400,
       "type": "group",
       "label": "Outfit Planning",
-      "ib": {
+      "vn": {
         "kind": "kanban-board",
         "id": "fm-kanban",
         "title": "Outfit Planning",
@@ -216,7 +216,7 @@
       "width": 190.66666666666666,
       "height": 44,
       "text": "- [ ] Linen co-ord for warm days",
-      "ib": {
+      "vn": {
         "id": "ki-1",
         "text": "Linen co-ord for warm days",
         "done": false
@@ -230,7 +230,7 @@
       "width": 190.66666666666666,
       "height": 44,
       "text": "- [ ] Monochrome layering",
-      "ib": {
+      "vn": {
         "id": "ki-2",
         "text": "Monochrome layering",
         "done": false
@@ -254,7 +254,7 @@
       "width": 190.66666666666666,
       "height": 44,
       "text": "- [ ] Denim jacket + white midi",
-      "ib": {
+      "vn": {
         "id": "ki-3",
         "text": "Denim jacket + white midi",
         "done": false
@@ -278,7 +278,7 @@
       "width": 190.66666666666666,
       "height": 44,
       "text": "- [x] Black blazer evening look",
-      "ib": {
+      "vn": {
         "id": "ki-4",
         "text": "Black blazer evening look",
         "done": true
@@ -293,7 +293,7 @@
       "type": "text",
       "text": "### Shopping List\n\n- [ ] **Essentials**\n  - [ ] White button-down\n  - [ ] Straight-leg jeans\n  - [ ] Leather belt\n- [ ] **Accessories**\n  - [ ] Gold hoops\n  - [ ] Silk scarf",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "checklist",
         "id": "fm-checklist",
         "title": "Shopping List",
@@ -354,7 +354,7 @@
       "type": "text",
       "text": "### Wardrobe Tracker\n\n| Item | Brand | Size | Price | Status |\n| --- | --- | --- | --- | --- |\n| Trench coat |  | M | 120 | Wishlist |\n| White sneakers |  | 38 | 85 | Owned |\n|  |  |  |  |  |",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "table",
         "id": "fm-table",
         "title": "Wardrobe Tracker",
@@ -438,7 +438,7 @@
     }
   ],
   "edges": [],
-  "ib": {
+  "vn": {
     "version": 1,
     "layout": "freeform",
     "viewport": {

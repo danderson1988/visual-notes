@@ -68,7 +68,7 @@ describe('canvas-format round trips', () => {
     expect(out.connections[0]).toEqual(conn);
   });
 
-  it('round-trips a free-floating (non-card-anchored) line via ib.freeLines', () => {
+  it('round-trips a free-floating (non-card-anchored) line via vn.freeLines', () => {
     const a: GroupCard = { id: 'a', kind: 'group', x: 0, y: 0, w: 100, h: 100 };
     const freeLine: Connection = {
       id: 'fl1', fromCardId: 'a', toPoint: { x: 500, y: 500 },
@@ -97,7 +97,7 @@ describe('canvas-format round trips', () => {
 
   it('preserves z-index on live (non-archived) cards', () => {
     // z has no top-level equivalent in the JSON Canvas node spec (unlike
-    // x/y/w/h), so it can only survive via `ib` — stashable() must not
+    // x/y/w/h), so it can only survive via `vn` — stashable() must not
     // strip it the way it strips the positional fields.
     const s: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 1, h: 1, z: 42, text: 'x', color: '#fff' };
     const out = canvasToVisualNotes(visualNotesToCanvas(board([s])));
@@ -116,7 +116,7 @@ describe('canvas-format round trips', () => {
 });
 
 describe('canvas-format: foreign / native-Canvas content', () => {
-  it('synthesizes a sensible card from a plain native image node with no ib tag', () => {
+  it('synthesizes a sensible card from a plain native image node with no vn tag', () => {
     const data: CanvasData = {
       nodes: [{ id: 'n1', type: 'file', x: 0, y: 0, width: 200, height: 150, file: 'Attachments/photo.png' }],
       edges: [],
@@ -127,7 +127,7 @@ describe('canvas-format: foreign / native-Canvas content', () => {
   });
 
   it('never drops a node type it does not recognize — preserved verbatim in foreignNodes', () => {
-    const weirdNode = { id: 'n1', type: 'file', x: 0, y: 0, width: 100, height: 100, file: 'weird.xyz', ib: { kind: 'nonexistent-kind-from-a-future-version' } };
+    const weirdNode = { id: 'n1', type: 'file', x: 0, y: 0, width: 100, height: 100, file: 'weird.xyz', vn: { kind: 'nonexistent-kind-from-a-future-version' } };
     const data: CanvasData = { nodes: [weirdNode as never], edges: [] };
     expect(() => canvasToVisualNotes(data)).not.toThrow();
   });
@@ -150,10 +150,10 @@ describe('canvas-format: foreign / native-Canvas content', () => {
     expect(canvas.nodes).toContainEqual(foreignNode);
   });
 
-  it('isVisualNotesCanvas is true only for boards carrying our ib version marker', () => {
-    expect(isVisualNotesCanvas({ nodes: [], edges: [], ib: { version: 1, layout: 'freeform' } })).toBe(true);
+  it('isVisualNotesCanvas is true only for boards carrying our version marker', () => {
+    expect(isVisualNotesCanvas({ nodes: [], edges: [], vn: { version: 1, layout: 'freeform' } })).toBe(true);
     expect(isVisualNotesCanvas({ nodes: [], edges: [] })).toBe(false);
-    expect(isVisualNotesCanvas({ nodes: [], edges: [], ib: {} as never })).toBe(false);
+    expect(isVisualNotesCanvas({ nodes: [], edges: [], vn: {} as never })).toBe(false);
   });
 });
 
@@ -165,9 +165,9 @@ describe('canvas-format: malformed/corrupt input resilience', () => {
     expect(out.connections).toEqual([]);
   });
 
-  it('handles a node with a non-object ib value by treating it as a foreign node', () => {
+  it('handles a node with a non-object vn value by treating it as a foreign node', () => {
     const data: CanvasData = {
-      nodes: [{ id: 'n1', type: 'text', x: 0, y: 0, width: 10, height: 10, text: 'hi', ib: 'not-an-object' as never }],
+      nodes: [{ id: 'n1', type: 'text', x: 0, y: 0, width: 10, height: 10, text: 'hi', vn: 'not-an-object' as never }],
       edges: [],
     };
     expect(() => canvasToVisualNotes(data)).not.toThrow();
@@ -184,7 +184,133 @@ describe('canvas-format: malformed/corrupt input resilience', () => {
     expect(() => canvasToVisualNotes(data)).not.toThrow();
   });
 
-  it('handles ib.freeLines being absent, null-ish, or malformed without throwing', () => {
-    expect(() => canvasToVisualNotes({ nodes: [], edges: [], ib: { version: 1, layout: 'freeform' } })).not.toThrow();
+  it('handles vn.freeLines being absent, null-ish, or malformed without throwing', () => {
+    expect(() => canvasToVisualNotes({ nodes: [], edges: [], vn: { version: 1, layout: 'freeform' } })).not.toThrow();
+  });
+});
+
+// ── Surviving Obsidian's native Canvas view ──────────────────────────────
+//
+// Native Canvas rebuilds a file from its own {nodes, edges} model whenever it
+// saves. Per-node extra keys ride along in Obsidian's `unknownData`
+// passthrough; root-level extra keys have nowhere to go and are dropped.
+// Reported in the wild as boards losing their kanban/checklist/sticky content
+// "forever" after being opened from the file explorer with canvas-patching
+// plugins installed (those save on load, before Visual Notes takes the leaf).
+function stripRootMeta(data: CanvasData): CanvasData {
+  return { nodes: data.nodes.map(n => ({ ...n })), edges: data.edges.map(e => ({ ...e })) };
+}
+
+function stripAllStashes(data: CanvasData): CanvasData {
+  return {
+    nodes: data.nodes.map(n => { const c = { ...n } as Record<string, unknown>; delete c.vn; delete c.ib; return c as CanvasData['nodes'][number]; }),
+    edges: data.edges.map(e => ({ ...e })),
+  };
+}
+
+describe('native Canvas round-trip damage', () => {
+  const kanban: KanbanBoardCard = {
+    id: 'kb1', kind: 'kanban-board', x: 0, y: 0, w: 580, h: 420,
+    columns: [
+      { id: 'c1', title: 'To do', items: [{ id: 'i1', text: 'Buy milk' }, { id: 'i2', text: 'Walk dog' }] },
+      { id: 'c2', title: 'Done', items: [{ id: 'i3', text: 'Ship it' }] },
+    ],
+  };
+
+  it('still recognises a board whose root vn was stripped', () => {
+    const damaged = stripRootMeta(visualNotesToCanvas(board([kanban])));
+    // Without this the board is disowned permanently: the file-open takeover
+    // skips it and the manual switch refuses it, with the cards still intact.
+    expect(isVisualNotesCanvas(damaged)).toBe(true);
+  });
+
+  it('recovers the cards from a root-stripped board', () => {
+    const damaged = stripRootMeta(visualNotesToCanvas(board([kanban])));
+    const out = canvasToVisualNotes(damaged);
+    const kb = out.cards.find(c => c.id === 'kb1');
+    expect(kb?.kind).toBe('kanban-board');
+    expect(kb?.kind === 'kanban-board' && kb.columns.flatMap(c => c.items)).toHaveLength(3);
+  });
+
+  it('never deletes kanban sub-nodes whose parent lost its vn stash', () => {
+    const saved = visualNotesToCanvas(board([kanban]));
+    const damaged = stripAllStashes(saved);
+    const idsOnDisk = damaged.nodes.map(n => n.id).sort();
+
+    // Read it back and save it again — the destructive path, since the parent
+    // can no longer rebuild its items and the sub-nodes used to be skipped.
+    const resaved = visualNotesToCanvas(canvasToVisualNotes(damaged));
+    expect(resaved.nodes.map(n => n.id).sort()).toEqual(idsOnDisk);
+  });
+
+  it('leaves an undamaged board alone', () => {
+    const healthy = visualNotesToCanvas(board([kanban]));
+    const out = canvasToVisualNotes(healthy);
+    // Sub-nodes are still absorbed by the parent, not duplicated as foreign.
+    expect(out.foreignNodes ?? []).toHaveLength(0);
+    expect(out.cards).toHaveLength(1);
+  });
+
+  it('does not claim ownership of a genuinely native canvas', () => {
+    expect(isVisualNotesCanvas({
+      nodes: [{ id: 'n1', type: 'text', text: 'plain', x: 0, y: 0, width: 10, height: 10 }],
+      edges: [],
+    })).toBe(false);
+  });
+});
+
+// ── Legacy `ib` key compatibility ────────────────────────────────────────
+//
+// Boards written before the plugin was renamed off "Icon Board" stash their
+// data under `ib` instead of `vn`. That spelling is read forever and never
+// written: dropping it would disown every board authored before the rename,
+// which is the same permanent-loss failure as the native-Canvas strip above
+// but self-inflicted and universal. These tests are the guard on that.
+describe('legacy ib key', () => {
+  const legacyBoard = (): CanvasData => ({
+    nodes: [
+      {
+        id: 's1', type: 'text', x: 10, y: 20, width: 240, height: 200, text: 'hi', color: '#FDE68A',
+        ib: { kind: 'sticky', id: 's1', text: 'hi', color: '#FDE68A', z: 7 },
+      } as never,
+    ],
+    edges: [
+      { id: 'e1', fromNode: 's1', toNode: 's1', ib: { routing: 'elbow', thickness: 4, arrowhead: 'both' } } as never,
+    ],
+    ib: { version: 1, layout: 'grid', dotsHidden: true, viewport: { x: 1, y: 2, zoom: 3 } },
+  });
+
+  it('is still recognised as a Visual Notes board', () => {
+    expect(isVisualNotesCanvas(legacyBoard())).toBe(true);
+  });
+
+  it('reads root metadata from the legacy key', () => {
+    const out = canvasToVisualNotes(legacyBoard());
+    expect(out.layout).toBe('grid');
+    expect(out.dotsHidden).toBe(true);
+    expect(out.viewport).toEqual({ x: 1, y: 2, zoom: 3 });
+  });
+
+  it('reads card and connection stashes from the legacy key', () => {
+    const out = canvasToVisualNotes(legacyBoard());
+    expect(out.cards[0]).toMatchObject({ kind: 'sticky', id: 's1', text: 'hi', z: 7 });
+    expect(out.connections[0]).toMatchObject({ routing: 'elbow', thickness: 4, arrowhead: 'both' });
+  });
+
+  it('migrates to the new key on save, leaving no ib behind', () => {
+    const resaved = visualNotesToCanvas(canvasToVisualNotes(legacyBoard()));
+    const json = JSON.stringify(resaved);
+    expect(json).not.toContain('"ib"');
+    expect(resaved.vn?.layout).toBe('grid');
+    expect(resaved.nodes[0].vn).toMatchObject({ kind: 'sticky', z: 7 });
+  });
+
+  it('prefers vn when a file somehow carries both', () => {
+    const both: CanvasData = {
+      nodes: [], edges: [],
+      vn: { version: 1, layout: 'freeform' },
+      ib: { version: 1, layout: 'grid' },
+    };
+    expect(canvasToVisualNotes(both).layout).toBe('freeform');
   });
 });

@@ -9,7 +9,7 @@
       "type": "text",
       "text": "> [!note] 🍳\n> Kitchen HQ — plan the week's meals, keep recipes and macros side by side, and save techniques worth rewatching.",
       "color": "#F97316",
-      "ib": {
+      "vn": {
         "kind": "callout",
         "id": "ck-callout",
         "text": "Kitchen HQ — plan the week's meals, keep recipes and macros side by side, and save techniques worth rewatching.",
@@ -26,7 +26,7 @@
       "type": "group",
       "label": "Inspiration",
       "color": "#F97316",
-      "ib": {
+      "vn": {
         "kind": "group",
         "id": "ck-group-inspo",
         "label": "Inspiration",
@@ -41,7 +41,7 @@
       "height": 280,
       "type": "link",
       "url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=900&q=80",
-      "ib": {
+      "vn": {
         "kind": "image",
         "id": "ck-img-salad",
         "source": {
@@ -59,7 +59,7 @@
       "height": 340,
       "type": "link",
       "url": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=900&q=80",
-      "ib": {
+      "vn": {
         "kind": "image",
         "id": "ck-img-pizza",
         "source": {
@@ -77,7 +77,7 @@
       "height": 340,
       "type": "link",
       "url": "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=900&q=80",
-      "ib": {
+      "vn": {
         "kind": "image",
         "id": "ck-img-pancakes",
         "source": {
@@ -96,7 +96,7 @@
       "type": "text",
       "text": "📷 Paste your own food photos here — screenshots, restaurant dishes to recreate, plating ideas.",
       "color": "#FED7AA",
-      "ib": {
+      "vn": {
         "kind": "sticky",
         "id": "ck-sticky-inspo",
         "text": "📷 Paste your own food photos here — screenshots, restaurant dishes to recreate, plating ideas.",
@@ -112,7 +112,7 @@
       "type": "group",
       "label": "Recipe Corner",
       "color": "#10B981",
-      "ib": {
+      "vn": {
         "kind": "group",
         "id": "ck-group-recipe",
         "label": "Recipe Corner",
@@ -128,7 +128,7 @@
       "type": "text",
       "text": "🍝 Weeknight Carbonara — serves 2\n\n1. Boil spaghetti in well-salted water.\n2. Crisp guanciale in a dry pan.\n3. Whisk eggs + pecorino + lots of black pepper.\n4. Off the heat, toss pasta with guanciale, add egg mix + a splash of pasta water.\n5. Stir fast until glossy. Serve immediately.",
       "color": "#FEF3C7",
-      "ib": {
+      "vn": {
         "kind": "sticky",
         "id": "ck-recipe",
         "text": "🍝 Weeknight Carbonara — serves 2\n\n1. Boil spaghetti in well-salted water.\n2. Crisp guanciale in a dry pan.\n3. Whisk eggs + pecorino + lots of black pepper.\n4. Off the heat, toss pasta with guanciale, add egg mix + a splash of pasta water.\n5. Stir fast until glossy. Serve immediately.",
@@ -144,7 +144,7 @@
       "type": "text",
       "text": "### Ingredients\n\n- [ ] Spaghetti — 200 g\n- [ ] Guanciale — 100 g\n- [ ] Eggs — 3 (2 yolks + 1 whole)\n- [ ] Pecorino Romano — 50 g\n- [ ] Black pepper — plenty",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "checklist",
         "id": "ck-ingredients",
         "title": "Ingredients",
@@ -187,7 +187,7 @@
       "height": 270,
       "type": "link",
       "url": "https://www.youtube.com/watch?v=PUP7U5vTMM0",
-      "ib": {
+      "vn": {
         "kind": "bookmark",
         "id": "ck-video",
         "url": "https://www.youtube.com/watch?v=PUP7U5vTMM0",
@@ -204,7 +204,7 @@
       "type": "text",
       "text": "### Macros\n\n| Meal | Protein g | Carbs g | Fat g | kcal |\n| --- | --- | --- | --- | --- |\n| Carbonara | 32 | 78 | 30 | 720 |\n| Overnight oats | 22 | 58 | 14 | 450 |\n| Chicken salad | 38 | 18 | 22 | 420 |\n|  |  |  |  |  |",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "table",
         "id": "ck-macros",
         "title": "Macros",
@@ -292,7 +292,7 @@
       "height": 380,
       "type": "group",
       "label": "Meal Plan — This Week",
-      "ib": {
+      "vn": {
         "kind": "kanban-board",
         "id": "ck-week",
         "title": "Meal Plan — This Week",
@@ -359,7 +359,7 @@
       "width": 197.33333333333334,
       "height": 44,
       "text": "- [ ] Carbonara — Tue",
-      "ib": {
+      "vn": {
         "id": "wi-1",
         "text": "Carbonara — Tue",
         "done": false
@@ -373,7 +373,7 @@
       "width": 197.33333333333334,
       "height": 44,
       "text": "- [ ] Sheet-pan salmon — Wed",
-      "ib": {
+      "vn": {
         "id": "wi-2",
         "text": "Sheet-pan salmon — Wed",
         "done": false
@@ -397,7 +397,7 @@
       "width": 197.33333333333334,
       "height": 44,
       "text": "- [ ] Overnight oats ×3",
-      "ib": {
+      "vn": {
         "id": "wi-3",
         "text": "Overnight oats ×3",
         "done": false
@@ -421,7 +421,7 @@
       "width": 197.33333333333334,
       "height": 44,
       "text": "- [x] Chili con carne — froze 4 portions",
-      "ib": {
+      "vn": {
         "id": "wi-4",
         "text": "Chili con carne — froze 4 portions",
         "done": true
@@ -436,7 +436,7 @@
       "type": "text",
       "text": "### Pantry Restock\n\n- [ ] **Produce**\n  - [ ] Basil\n  - [ ] Cherry tomatoes\n  - [ ] Lemons\n- [ ] **Staples**\n  - [ ] Olive oil\n  - [ ] Spaghetti\n- [ ] **Fridge**\n  - [ ] Eggs\n  - [ ] Pecorino",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "checklist",
         "id": "ck-pantry",
         "title": "Pantry Restock",
@@ -515,7 +515,7 @@
       "type": "text",
       "text": "**Chef** _(11/07/2026, 02:13:20)_\nCarbonara verdict: 9/10 — silkier than last time. Guanciale > pancetta, confirmed.\n\n---\n**The critics** _(11/07/2026, 03:13:20)_\nMore pepper next time! 🌶️",
       "color": "#FEF9C3",
-      "ib": {
+      "vn": {
         "kind": "comment",
         "id": "ck-comment",
         "text": "Carbonara verdict: 9/10 — silkier than last time. Guanciale > pancetta, confirmed.",
@@ -540,7 +540,7 @@
       "height": 300,
       "type": "link",
       "url": "https://www.google.com/maps/search/Borough+Market+London",
-      "ib": {
+      "vn": {
         "kind": "map",
         "id": "ck-map",
         "url": "https://www.google.com/maps/search/Borough+Market+London"
@@ -554,7 +554,7 @@
       "toNode": "ck-recipe",
       "color": "#10B981",
       "label": "mise en place",
-      "ib": {
+      "vn": {
         "routing": "straight",
         "style": "solid",
         "arrowhead": "end",
@@ -567,7 +567,7 @@
       "toNode": "ck-recipe",
       "color": "#8B5CF6",
       "label": "watch first",
-      "ib": {
+      "vn": {
         "routing": "straight",
         "bend": 222,
         "style": "dashed",
@@ -581,7 +581,7 @@
       "toNode": "ck-macros",
       "color": "#3B82F6",
       "label": "log it",
-      "ib": {
+      "vn": {
         "routing": "elbow",
         "elbowOrientation": "auto",
         "style": "solid",
@@ -595,7 +595,7 @@
       "toNode": "ck-week",
       "color": "#F97316",
       "label": "shop → cook",
-      "ib": {
+      "vn": {
         "labelSize": 20,
         "routing": "straight",
         "style": "solid",
@@ -604,7 +604,7 @@
       }
     }
   ],
-  "ib": {
+  "vn": {
     "version": 1,
     "layout": "freeform",
     "viewport": {

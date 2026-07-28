@@ -79,10 +79,10 @@ export class ContextBar {
       // pen options panel, not an in-flow toolbar child — created once and
       // toggled invisible rather than removed/recreated per show(), same
       // as the docked panel below never gets torn down either.
-      this.ctxPanelEl = this.container.createDiv('visual-notes-ctx-bar-panel ib-ctx-panel');
-      this.ctxPanelEl.addClass('ib-invisible');
+      this.ctxPanelEl = this.container.createDiv('visual-notes-ctx-bar-panel visual-notes-ctx-panel');
+      this.ctxPanelEl.addClass('visual-notes-invisible');
     } else {
-      this.ctxPanelEl = this.toolbarEl.createDiv('ib-ctx-panel');
+      this.ctxPanelEl = this.toolbarEl.createDiv('visual-notes-ctx-panel');
     }
   }
 
@@ -98,7 +98,7 @@ export class ContextBar {
   hide(): void {
     this.currentCard = null;
     this.currentCardEl = null;
-    if (this.floating) { this.ctxPanelEl.addClass('ib-invisible'); this.cancelTrashConfirm(); }
+    if (this.floating) { this.ctxPanelEl.addClass('visual-notes-invisible'); this.cancelTrashConfirm(); }
     else this.deactivate();
   }
 
@@ -120,11 +120,11 @@ export class ContextBar {
   // ── Panel activation (docked/phone mode only) ───────────────────────────────
 
   private activate(): void {
-    this.toolbarEl.addClass('ib-ctx-active');
+    this.toolbarEl.addClass('visual-notes-ctx-active');
   }
 
   private deactivate(): void {
-    this.toolbarEl.removeClass('ib-ctx-active');
+    this.toolbarEl.removeClass('visual-notes-ctx-active');
     this.cancelTrashConfirm();
   }
 
@@ -135,10 +135,10 @@ export class ContextBar {
   // dimensions), position, reveal — avoids a visible flash at a stale spot
   // when show() targets a different card than whatever was last positioned.
   private position(): void {
-    this.ctxPanelEl.addClass('ib-invisible');
+    this.ctxPanelEl.addClass('visual-notes-invisible');
     window.requestAnimationFrame(() => {
       this.applyPosition();
-      this.ctxPanelEl.removeClass('ib-invisible');
+      this.ctxPanelEl.removeClass('visual-notes-invisible');
     });
   }
 
@@ -339,14 +339,14 @@ export class ContextBar {
     this.mkBack(p, () => this.fill(card));
 
     // Tab row
-    const tabRow = p.createDiv('ib-ctx-tab-row');
-    const bgTab    = tabRow.createDiv('ib-ctx-tab ib-ctx-tab--active');
+    const tabRow = p.createDiv('visual-notes-ctx-tab-row');
+    const bgTab    = tabRow.createDiv('visual-notes-ctx-tab visual-notes-ctx-tab--active');
     bgTab.setText('Background');
-    const stripTab = tabRow.createDiv('ib-ctx-tab');
+    const stripTab = tabRow.createDiv('visual-notes-ctx-tab');
     stripTab.setText(stripLabel);
 
     // Swatch area (re-rendered on tab switch)
-    const swatchArea = p.createDiv('ib-ctx-swatch-area');
+    const swatchArea = p.createDiv('visual-notes-ctx-swatch-area');
 
     const renderSwatches = (tab: 'bg' | 'strip') => {
       swatchArea.empty();
@@ -361,12 +361,12 @@ export class ContextBar {
           bgTransparent.onChange(v);
           renderSwatches('bg');
         });
-        const grid = swatchArea.createDiv('ib-ctx-color-grid');
+        const grid = swatchArea.createDiv('visual-notes-ctx-color-grid');
         for (const hex of bgColors) {
-          const sw = grid.createDiv('ib-ctx-color-swatch');
+          const sw = grid.createDiv('visual-notes-ctx-color-swatch');
           sw.style.background = hex;
           if (['#FFFFFF','#F3F4F6','#E0F2FE','#F0F9FF'].includes(hex))
-            sw.addClass('ib-swatch-border-light');
+            sw.addClass('visual-notes-swatch-border-light');
           // Doesn't touch the Transparent toggle — picking a color and
           // choosing how solid it is are independent questions, so this
           // never silently overrides whatever the switch above is set to.
@@ -374,13 +374,13 @@ export class ContextBar {
         }
         this.mkCustomColor(swatchArea, onBg, () => {});
       } else {
-        const grid = swatchArea.createDiv('ib-ctx-color-grid');
+        const grid = swatchArea.createDiv('visual-notes-ctx-color-grid');
         // "None" swatch removes the strip
-        const noneSw = grid.createDiv('ib-ctx-color-swatch ib-ctx-color-swatch--none');
+        const noneSw = grid.createDiv('visual-notes-ctx-color-swatch visual-notes-ctx-color-swatch--none');
         noneSw.setAttribute('aria-label', 'None');
         noneSw.addEventListener('click', () => onStrip(null));
         for (const hex of stripColors) {
-          const sw = grid.createDiv('ib-ctx-color-swatch');
+          const sw = grid.createDiv('visual-notes-ctx-color-swatch');
           sw.style.background = hex;
           sw.addEventListener('click', () => onStrip(hex));
         }
@@ -389,14 +389,14 @@ export class ContextBar {
     };
 
     bgTab.addEventListener('click', () => {
-      bgTab.addClass('ib-ctx-tab--active');
-      stripTab.removeClass('ib-ctx-tab--active');
+      bgTab.addClass('visual-notes-ctx-tab--active');
+      stripTab.removeClass('visual-notes-ctx-tab--active');
       renderSwatches('bg');
       this.syncPos();
     });
     stripTab.addEventListener('click', () => {
-      stripTab.addClass('ib-ctx-tab--active');
-      bgTab.removeClass('ib-ctx-tab--active');
+      stripTab.addClass('visual-notes-ctx-tab--active');
+      bgTab.removeClass('visual-notes-ctx-tab--active');
       renderSwatches('strip');
       this.syncPos();
     });
@@ -418,12 +418,12 @@ export class ContextBar {
     this.cancelTrashConfirm();
     this.mkBack(p, () => this.fill(card));
 
-    const grid = p.createDiv('ib-ctx-color-grid');
+    const grid = p.createDiv('visual-notes-ctx-color-grid');
     for (const hex of colors) {
-      const sw = grid.createDiv('ib-ctx-color-swatch');
+      const sw = grid.createDiv('visual-notes-ctx-color-swatch');
       sw.style.background = hex;
       if (['#F3F4F6','#D1D5DB'].includes(hex))
-        sw.addClass('ib-swatch-border-light');
+        sw.addClass('visual-notes-swatch-border-light');
       sw.addEventListener('click', () => { onSelect(hex); this.fill(card); });
     }
 
@@ -437,14 +437,14 @@ export class ContextBar {
   // wrapping Obsidian's own Setting/ToggleComponent, which expect a full
   // Setting row and don't attach to a bare panel like this one.
   private mkToggleRow(p: HTMLElement, label: string, value: boolean, onChange: (value: boolean) => void): void {
-    const row = p.createDiv('ib-ctx-toggle-row');
-    row.createSpan({ cls: 'ib-ctx-toggle-label', text: label });
-    const sw = row.createDiv('ib-ctx-toggle');
+    const row = p.createDiv('visual-notes-ctx-toggle-row');
+    row.createSpan({ cls: 'visual-notes-ctx-toggle-label', text: label });
+    const sw = row.createDiv('visual-notes-ctx-toggle');
     sw.toggleClass('is-on', value);
     sw.setAttribute('role', 'switch');
     sw.setAttribute('aria-checked', String(value));
     sw.setAttribute('tabindex', '0');
-    sw.createDiv('ib-ctx-toggle-knob');
+    sw.createDiv('visual-notes-ctx-toggle-knob');
     const toggle = () => { const next = !sw.hasClass('is-on'); onChange(next); };
     sw.addEventListener('click', toggle);
     sw.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
@@ -453,7 +453,7 @@ export class ContextBar {
   private mkCustomColor(p: HTMLElement, onSelect: (hex: string) => void, onBack: () => void): void {
     const inp = p.createEl('input');
     inp.type = 'color';
-    inp.addClass('ib-ctx-color-wheel-input');
+    inp.addClass('visual-notes-ctx-color-wheel-input');
     inp.addEventListener('pointerdown', e => e.stopPropagation());
     inp.addEventListener('change', () => { onSelect(inp.value); onBack(); });
 
@@ -482,7 +482,7 @@ export class ContextBar {
   }
 
   private mkBack(parent: HTMLElement, handler: () => void): void {
-    const back = parent.createDiv('ib-ctx-back-btn');
+    const back = parent.createDiv('visual-notes-ctx-back-btn');
     back.setAttribute('tabindex', '0');
     back.setAttribute('aria-label', 'Back');
     setTooltip(back, 'Back');
@@ -492,10 +492,10 @@ export class ContextBar {
   }
 
   private mkTrash(parent: HTMLElement): void {
-    parent.createDiv('ib-ctx-spacer');
-    parent.createDiv('ib-ctx-trash-sep');
+    parent.createDiv('visual-notes-ctx-spacer');
+    parent.createDiv('visual-notes-ctx-trash-sep');
 
-    const btn = parent.createDiv('visual-notes-tb-btn ib-ctx-trash-btn');
+    const btn = parent.createDiv('visual-notes-tb-btn visual-notes-ctx-trash-btn');
     btn.setAttribute('tabindex', '0');
     btn.setAttribute('aria-label', 'Delete');
     setTooltip(btn, 'Delete');
@@ -505,7 +505,7 @@ export class ContextBar {
     labelEl.setText('Delete');
 
     // Icon-only mode has no visible label to show "Sure?" on, so the red
-    // ib-ctx-trash--confirm background is the primary confirm signal there;
+    // visual-notes-ctx-trash--confirm background is the primary confirm signal there;
     // the label/tooltip text still updates too, for the docked panel and
     // for anyone hovering the floating one.
     const confirm = () => {
@@ -513,14 +513,14 @@ export class ContextBar {
       this.trashConfirmActive = true;
       labelEl.setText('Sure?');
       setTooltip(btn, 'Sure?');
-      btn.addClass('ib-ctx-trash--confirm');
+      btn.addClass('visual-notes-ctx-trash--confirm');
       if (this.trashTimeout !== null) window.clearTimeout(this.trashTimeout);
       this.trashTimeout = window.setTimeout(() => {
         this.trashTimeout = null;
         this.trashConfirmActive = false;
         labelEl.setText('Delete');
         setTooltip(btn, 'Delete');
-        btn.removeClass('ib-ctx-trash--confirm');
+        btn.removeClass('visual-notes-ctx-trash--confirm');
       }, 3000);
     };
 

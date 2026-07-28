@@ -9,7 +9,7 @@
       "type": "text",
       "text": "> [!note] ✨\n> A connected working system: capture, plan, research, discuss, schedule, and go deeper. Every major card type is ready to explore.",
       "color": "#7C3AED",
-      "ib": {
+      "vn": {
         "kind": "callout",
         "id": "master-title",
         "text": "A connected working system: capture, plan, research, discuss, schedule, and go deeper. Every major card type is ready to explore.",
@@ -26,7 +26,7 @@
       "type": "file",
       "file": "_Templates/Visual Notes Masterclass — Deep Dive.canvas",
       "color": "#7C3AED",
-      "ib": {
+      "vn": {
         "kind": "tile",
         "id": "master-focus",
         "label": "Focus: Deep-dive workspace",
@@ -58,7 +58,7 @@
       "type": "text",
       "text": "🎯 FOCUS FLOW\n\n1. Capture a question\n2. Click the purple tile\n3. Develop it on the linked canvas\n4. Return here to plan the next action",
       "color": "#F3E8FF",
-      "ib": {
+      "vn": {
         "kind": "sticky",
         "id": "master-focus-note",
         "text": "🎯 FOCUS FLOW\n\n1. Capture a question\n2. Click the purple tile\n3. Develop it on the linked canvas\n4. Return here to plan the next action",
@@ -76,7 +76,7 @@
       "type": "group",
       "label": "Capture, write & discuss",
       "color": "#8B5CF6",
-      "ib": {
+      "vn": {
         "kind": "group",
         "id": "master-write-group",
         "label": "Capture, write & discuss",
@@ -92,7 +92,7 @@
       "type": "text",
       "text": "💡 Sticky note\n\nWrite an insight, format selected text, change its colours, or make it a round card from the context menu.",
       "color": "#FEF3C7",
-      "ib": {
+      "vn": {
         "kind": "sticky",
         "id": "master-note",
         "text": "💡 Sticky note\n\nWrite an insight, format selected text, change its colours, or make it a round card from the context menu.",
@@ -116,7 +116,7 @@
       "type": "text",
       "text": "Blank Card\n\nA neutral, freely resizable card. Use it as a label, stage, or visual building block.",
       "color": "#E0F2FE",
-      "ib": {
+      "vn": {
         "kind": "sticky",
         "id": "master-blank-card",
         "text": "Blank Card\n\nA neutral, freely resizable card. Use it as a label, stage, or visual building block.",
@@ -135,7 +135,7 @@
       "type": "text",
       "text": "### To-do checklist\n\n- [ ] **Try the basics**\n  - [ ] Edit a card\n  - [ ] Change a colour\n- [ ] **Make progress**\n  - [ ] Check this task\n  - [ ] Add a child task",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "checklist",
         "id": "master-checklist",
         "title": "To-do checklist",
@@ -190,7 +190,7 @@
       "type": "text",
       "text": "**Alex** _(14/07/2026, 10:00:00)_\nCould this be clearer?\n\n---\n**You** _(14/07/2026, 11:00:00)_\nReply here, then resolve the thread when it is settled.",
       "color": "#FCE7F3",
-      "ib": {
+      "vn": {
         "kind": "comment",
         "id": "master-comment",
         "text": "Could this be clearer?",
@@ -217,7 +217,7 @@
       "type": "text",
       "text": "### Typed table\n\n| Work item | Status | Due | Done | Effort |\n| --- | --- | --- | --- | --- |\n| Explore cards | In progress | 2026-07-15 |  | 2 |\n| Link ideas | Planned | 2026-07-18 |  | 3 |\n| Review board | Done | 2026-07-12 | true | 1 |",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "table",
         "id": "master-table",
         "title": "Typed table",
@@ -311,7 +311,7 @@
       "height": 520,
       "type": "group",
       "label": "Project delivery kanban",
-      "ib": {
+      "vn": {
         "kind": "kanban-board",
         "id": "master-kanban-group",
         "title": "Project delivery kanban",
@@ -473,7 +473,7 @@
       "width": 260.6666666666667,
       "height": 44,
       "text": "- [ ] Collect reference material",
-      "ib": {
+      "vn": {
         "id": "mki-1",
         "text": "Collect reference material",
         "done": false,
@@ -514,7 +514,7 @@
       "width": 260.6666666666667,
       "height": 44,
       "text": "- [ ] Sketch a first approach",
-      "ib": {
+      "vn": {
         "id": "mki-2",
         "text": "Sketch a first approach",
         "done": false,
@@ -544,7 +544,7 @@
       "width": 260.6666666666667,
       "height": 44,
       "text": "- [ ] Build the first draft",
-      "ib": {
+      "vn": {
         "id": "mki-3",
         "text": "Build the first draft",
         "done": false,
@@ -585,7 +585,7 @@
       "width": 260.6666666666667,
       "height": 44,
       "text": "- [ ] Review visual hierarchy",
-      "ib": {
+      "vn": {
         "id": "mki-4",
         "text": "Review visual hierarchy",
         "done": false,
@@ -619,7 +619,7 @@
       "width": 260.6666666666667,
       "height": 44,
       "text": "- [x] Define the outcome",
-      "ib": {
+      "vn": {
         "id": "mki-5",
         "text": "Define the outcome",
         "done": true,
@@ -638,7 +638,7 @@
       "width": 260.6666666666667,
       "height": 44,
       "text": "- [x] Create a deep-dive board",
-      "ib": {
+      "vn": {
         "id": "mki-6",
         "text": "Create a deep-dive board",
         "done": true,
@@ -657,7 +657,7 @@
       "height": 350,
       "type": "text",
       "text": "📅 **Project calendar**\n*(Visual Notes calendar view)*",
-      "ib": {
+      "vn": {
         "kind": "calendar",
         "id": "master-calendar",
         "title": "Project calendar",
@@ -708,7 +708,7 @@
       "type": "group",
       "label": "Research, media & palettes",
       "color": "#0EA5E9",
-      "ib": {
+      "vn": {
         "kind": "group",
         "id": "master-media-group",
         "label": "Research, media & palettes",
@@ -723,7 +723,7 @@
       "height": 212,
       "type": "link",
       "url": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=800&q=80",
-      "ib": {
+      "vn": {
         "kind": "image",
         "id": "master-image",
         "source": {
@@ -743,7 +743,7 @@
       "height": 190,
       "type": "link",
       "url": "https://www.youtube.com/watch?v=IlU-zDU6aQ0",
-      "ib": {
+      "vn": {
         "kind": "bookmark",
         "id": "master-youtube",
         "url": "https://www.youtube.com/watch?v=IlU-zDU6aQ0",
@@ -761,7 +761,7 @@
       "height": 190,
       "type": "link",
       "url": "https://www.google.com/maps?q=Sydney+Opera+House",
-      "ib": {
+      "vn": {
         "kind": "map",
         "id": "master-map",
         "url": "https://www.google.com/maps?q=Sydney+Opera+House"
@@ -775,7 +775,7 @@
       "height": 105,
       "type": "file",
       "file": "_Assets/Audio/Hannah radio 18 04 26#.mp3",
-      "ib": {
+      "vn": {
         "kind": "audio",
         "id": "master-audio",
         "source": {
@@ -793,7 +793,7 @@
       "height": 95,
       "type": "file",
       "file": "Ideas/cnc machine.md",
-      "ib": {
+      "vn": {
         "kind": "note-link",
         "id": "master-note-link",
         "path": "Ideas/cnc machine.md",
@@ -809,7 +809,7 @@
       "type": "text",
       "text": "#7C3AED — Purple Zing",
       "color": "#7C3AED",
-      "ib": {
+      "vn": {
         "kind": "swatch",
         "id": "master-swatch-1",
         "color": "#7C3AED"
@@ -824,7 +824,7 @@
       "type": "text",
       "text": "#0EA5E9 — Azure Punch",
       "color": "#0EA5E9",
-      "ib": {
+      "vn": {
         "kind": "swatch",
         "id": "master-swatch-2",
         "color": "#0EA5E9"
@@ -839,7 +839,7 @@
       "type": "text",
       "text": "#16A34A — Kelly Green",
       "color": "#16A34A",
-      "ib": {
+      "vn": {
         "kind": "swatch",
         "id": "master-swatch-3",
         "color": "#16A34A"
@@ -854,7 +854,7 @@
       "type": "text",
       "text": "#F59E0B — Amber Zap",
       "color": "#F59E0B",
-      "ib": {
+      "vn": {
         "kind": "swatch",
         "id": "master-swatch-4",
         "color": "#F59E0B"
@@ -869,7 +869,7 @@
       "type": "text",
       "text": "#EC4899 — French Rose",
       "color": "#EC4899",
-      "ib": {
+      "vn": {
         "kind": "swatch",
         "id": "master-swatch-5",
         "color": "#EC4899"
@@ -884,7 +884,7 @@
       "type": "group",
       "label": "Organize: container column",
       "color": "#14B8A6",
-      "ib": {
+      "vn": {
         "kind": "column",
         "id": "master-column",
         "title": "Organize: container column",
@@ -949,7 +949,7 @@
       "height": 130,
       "type": "file",
       "file": "_Templates/Visual Notes Masterclass — Deep Dive.canvas",
-      "ib": {
+      "vn": {
         "kind": "file",
         "id": "master-file",
         "path": "_Templates/Visual Notes Masterclass — Deep Dive.canvas"
@@ -964,7 +964,7 @@
       "type": "text",
       "text": "🖊️ Pen & highlighter\n\nThe ink around this card is saved drawing data. Select it to move, recolour, resize, or delete it.",
       "color": "#DCFCE7",
-      "ib": {
+      "vn": {
         "kind": "sticky",
         "id": "master-pen-note",
         "text": "🖊️ Pen & highlighter\n\nThe ink around this card is saved drawing data. Select it to move, recolour, resize, or delete it.",
@@ -980,7 +980,7 @@
       "toNode": "master-focus",
       "color": "#7C3AED",
       "label": "develop this idea",
-      "ib": {
+      "vn": {
         "labelSize": 16,
         "routing": "straight",
         "bend": -151,
@@ -995,7 +995,7 @@
       "toNode": "master-kanban-group",
       "color": "#8B5CF6",
       "label": "turn insight into work",
-      "ib": {
+      "vn": {
         "labelSize": 14,
         "routing": "elbow",
         "elbowOrientation": "vertical-first",
@@ -1010,7 +1010,7 @@
       "toNode": "master-calendar",
       "color": "#16A34A",
       "label": "schedule it",
-      "ib": {
+      "vn": {
         "labelSize": 15,
         "routing": "straight",
         "bend": 55,
@@ -1025,7 +1025,7 @@
       "toNode": "master-kanban-group",
       "color": "#0EA5E9",
       "label": "research informs work",
-      "ib": {
+      "vn": {
         "routing": "elbow",
         "elbowOrientation": "horizontal-first",
         "style": "dashed",
@@ -1039,7 +1039,7 @@
       "toNode": "master-table",
       "color": "#EC4899",
       "label": "review",
-      "ib": {
+      "vn": {
         "routing": "straight",
         "bend": -7,
         "style": "dotted",
@@ -1053,7 +1053,7 @@
       "toNode": "master-calendar",
       "color": "#F59E0B",
       "label": "place & date",
-      "ib": {
+      "vn": {
         "routing": "straight",
         "bend": 35,
         "style": "solid",
@@ -1062,7 +1062,7 @@
       }
     }
   ],
-  "ib": {
+  "vn": {
     "version": 1,
     "layout": "freeform",
     "viewport": {

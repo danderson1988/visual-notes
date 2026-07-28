@@ -9,7 +9,7 @@ describe('color-utils: isHexColor', () => {
   });
 
   it('rejects a CSS var()/keyword reference', () => {
-    expect(isHexColor('var(--ib-card-bg)')).toBe(false);
+    expect(isHexColor('var(--visual-notes-card-bg)')).toBe(false);
     expect(isHexColor('var(--background-primary)')).toBe(false);
     expect(isHexColor('transparent')).toBe(false);
   });

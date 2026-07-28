@@ -5,7 +5,7 @@ import { VisualNotesSettings, DEFAULT_SETTINGS } from './types';
 import { CreateBoardModal, TemplatePickerModal, TemplateChoice } from './create-board-modal';
 import { needsMigration, migrateV1toV2 } from './migration';
 import { relinkAllBoards } from './asset-manager';
-import { isVisualNotesOwnedFile, listTemplates, createBoardFileFromTemplate, installStarterTemplate, TEMPLATES_FOLDER, promptSaveBoardAsTemplate } from './file-io';
+import { isVisualNotesOwnedFile, listTemplates, createBoardFileFromTemplate, installStarterTemplate, TEMPLATES_FOLDER, promptSaveBoardAsTemplate, backupBeforeNativeEdit, NATIVE_BAK_SUFFIX } from './file-io';
 import { STARTER_TEMPLATES } from './starter-templates';
 
 export default class VisualNotesPlugin extends Plugin {
@@ -190,21 +190,21 @@ export default class VisualNotesPlugin extends Plugin {
 
   // Applies the dot-grid color/size and canvas background color as CSS
   // custom properties on the whole app body — every open (and future)
-  // board's canvas reads these via var(--ib-dot-color, ...), etc. with
+  // board's canvas reads these via var(--visual-notes-dot-color, ...), etc. with
   // inheritance, so setting them here updates every open board live in one
   // shot — no need to reach into each board's individual FreeformRenderer
   // instance.
   applyCanvasAppearanceSettings(): void {
-    if (this.settings.dotColor) document.body.style.setProperty('--ib-dot-color', this.settings.dotColor);
-    else document.body.style.removeProperty('--ib-dot-color');
+    if (this.settings.dotColor) document.body.style.setProperty('--visual-notes-dot-color', this.settings.dotColor);
+    else document.body.style.removeProperty('--visual-notes-dot-color');
 
-    if (this.settings.dotSize !== undefined) document.body.style.setProperty('--ib-dot-radius', `${this.settings.dotSize}px`);
-    else document.body.style.removeProperty('--ib-dot-radius');
+    if (this.settings.dotSize !== undefined) document.body.style.setProperty('--visual-notes-dot-radius', `${this.settings.dotSize}px`);
+    else document.body.style.removeProperty('--visual-notes-dot-radius');
 
-    if (this.settings.canvasBgColor) document.body.style.setProperty('--ib-canvas-bg', this.settings.canvasBgColor);
-    else document.body.style.removeProperty('--ib-canvas-bg');
+    if (this.settings.canvasBgColor) document.body.style.setProperty('--visual-notes-canvas-bg', this.settings.canvasBgColor);
+    else document.body.style.removeProperty('--visual-notes-canvas-bg');
 
-    document.body.style.setProperty('--ib-trash-zone-size', `${this.settings.trashZoneSize ?? 56}px`);
+    document.body.style.setProperty('--visual-notes-trash-zone-size', `${this.settings.trashZoneSize ?? 56}px`);
   }
 
   // ── Canvas leaf takeover ─────────────────────────────────────
@@ -217,14 +217,26 @@ export default class VisualNotesPlugin extends Plugin {
     if (view.getViewType() === VISUAL_NOTES_VIEW_TYPE) {
       // Visual Notes → native: remember this choice for the session so the
       // file-open takeover hook doesn't immediately swap it back.
+      //
+      // Native Canvas rebuilds a file from its own model whenever it saves,
+      // and that model has no room for root-level extra keys — so as soon as
+      // anything writes over there, this board's layout, viewport, free
+      // drawings and archive are gone. Snapshot it first and say so plainly,
+      // rather than letting a one-line notice imply the trip is free.
+      const backed = await backupBeforeNativeEdit(this.app, file);
       this.nativeOverrides.add(file.path);
       await leaf.setViewState({ type: NATIVE_CANVAS_VIEW_TYPE, state: { file: file.path } });
-      new Notice('Opened with Obsidian\'s native Canvas view.');
+      new Notice(
+        'Opened with Obsidian\'s native Canvas view. Editing here drops board metadata Visual Notes ' +
+        'needs — free drawings and archived cards especially. ' +
+        (backed ? `A backup was saved as "${file.name}${NATIVE_BAK_SUFFIX}".` : 'No backup could be saved.'),
+        12000
+      );
       return;
     }
 
     // Native → Visual Notes: only makes sense for files Visual Notes actually
-    // authored (has its `ib` marker) — anything else, there's no rich card
+    // authored (has its `vn` marker) — anything else, there's no rich card
     // data to render.
     if (!(await isVisualNotesOwnedFile(this.app, file))) {
       new Notice('This canvas wasn\'t created by Visual Notes — nothing to switch to.');

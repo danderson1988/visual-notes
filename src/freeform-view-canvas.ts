@@ -280,7 +280,7 @@ export const canvasMethods = {
       if (vv) {
         const onVVChange = () => {
           const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-          this.container.setCssProps({ '--ib-kb-offset': `${Math.round(kb)}px` });
+          this.container.setCssProps({ '--visual-notes-kb-offset': `${Math.round(kb)}px` });
         };
         vv.addEventListener('resize', onVVChange);
         vv.addEventListener('scroll', onVVChange);
@@ -306,11 +306,11 @@ export const canvasMethods = {
       this.longPressPointerId = e.pointerId;
       this.longPressStartX = e.clientX; this.longPressStartY = e.clientY;
       this.longPressTarget = target;
-      target.addClass('ib-longpress-active');
+      target.addClass('visual-notes-longpress-active');
       const clientX = e.clientX, clientY = e.clientY;
       this.longPressTimer = window.setTimeout(() => {
         this.longPressTimer = null;
-        target.removeClass('ib-longpress-active');
+        target.removeClass('visual-notes-longpress-active');
         this.longPressTarget = null;
         if (!target.isConnected) return;
         target.dispatchEvent(new MouseEvent('contextmenu', {
@@ -752,7 +752,7 @@ export const canvasMethods = {
 
   cancelLongPress(this: FreeformRenderer): void {
     if (this.longPressTimer !== null) { window.clearTimeout(this.longPressTimer); this.longPressTimer = null; }
-    this.longPressTarget?.removeClass('ib-longpress-active');
+    this.longPressTarget?.removeClass('visual-notes-longpress-active');
     this.longPressTarget = null;
     this.longPressPointerId = null;
   },
@@ -807,14 +807,14 @@ export const canvasMethods = {
     const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
     this.marqueeEl.style.left = `${sx}px`;
     this.marqueeEl.style.top = `${sy}px`;
-    this.marqueeEl.setCssProps({ '--ib-marquee-w': '0px', '--ib-marquee-h': '0px' });
+    this.marqueeEl.setCssProps({ '--visual-notes-marquee-w': '0px', '--visual-notes-marquee-h': '0px' });
     this.marqueeEl.show();
     this.outer.setPointerCapture(e.pointerId);
     const onMove = (e: PointerEvent) => {
       const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
       this.marqueeEl.style.left = `${Math.min(sx, cx)}px`;
       this.marqueeEl.style.top  = `${Math.min(sy, cy)}px`;
-      this.marqueeEl.setCssProps({ '--ib-marquee-w': `${Math.abs(cx - sx)}px`, '--ib-marquee-h': `${Math.abs(cy - sy)}px` });
+      this.marqueeEl.setCssProps({ '--visual-notes-marquee-w': `${Math.abs(cx - sx)}px`, '--visual-notes-marquee-h': `${Math.abs(cy - sy)}px` });
     };
     const onUp = (e: PointerEvent) => {
       this.outer.removeEventListener('pointermove', onMove); this.outer.removeEventListener('pointerup', onUp);
@@ -1883,7 +1883,7 @@ export const canvasMethods = {
       path.setAttribute('fill', stroke.color);
       path.setAttribute('fill-opacity', String(stroke.opacity));
       path.setAttribute('stroke', 'none');
-      path.classList.add('ib-highlight-stroke');
+      path.classList.add('visual-notes-highlight-stroke');
     } else {
       // Filled pressure-tapered ribbon, not a stroked polyline — see
       // buildPenOutlineD.
@@ -2325,7 +2325,7 @@ export const canvasMethods = {
       livePath.setAttribute('fill', stroke.color);
       livePath.setAttribute('fill-opacity', String(stroke.opacity));
       livePath.setAttribute('stroke', 'none');
-      livePath.classList.add('ib-highlight-stroke');
+      livePath.classList.add('visual-notes-highlight-stroke');
     } else {
       livePath.setAttribute('fill', stroke.color);
       livePath.setAttribute('stroke', 'none');
@@ -3475,7 +3475,7 @@ export const canvasMethods = {
   },
 
   resolveDefaultConnectionColor(this: FreeformRenderer): string {
-    const tmp = activeDocument.body.createDiv('ib-color-probe');
+    const tmp = activeDocument.body.createDiv('visual-notes-color-probe');
     const computed = getComputedStyle(tmp).color;
     tmp.remove();
     const m = computed.match(/\d+/g);

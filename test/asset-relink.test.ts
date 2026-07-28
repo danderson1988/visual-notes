@@ -133,7 +133,7 @@ describe('relinkAllBoards', () => {
 
     expect(total).toBe(2);
     const boardAData = JSON.parse(vault.textAt('BoardA.canvas'));
-    expect(boardAData.nodes[0].ib.source.path).toBe('_Assets/Images/cat.png');
+    expect(boardAData.nodes[0].vn.source.path).toBe('_Assets/Images/cat.png');
   });
 
   it('never touches a plain native .canvas file with no Visual Notes marker', async () => {

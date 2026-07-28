@@ -136,8 +136,8 @@ export class FreeformRenderer extends Component {
   // body.hasClass('theme-dark') at construction time never did, which was
   // reported as new strokes staying whatever color the board opened with,
   // regardless of which theme was actually active by the time you drew).
-  // Same var --ib-card-text itself resolves to, so ink always matches
-  // body text — legible against --ib-card-bg/--ib-canvas-bg in any theme.
+  // Same var --visual-notes-card-text itself resolves to, so ink always matches
+  // body text — legible against --visual-notes-card-bg/--visual-notes-canvas-bg in any theme.
   currentInkColor = 'var(--text-normal)';
   currentInkWidth = 4; // Medium — matches the Thin/Medium/Thick picker's own values (2/4/8)
   // Which drawing instrument is active while in pen mode. Highlighter draws
@@ -284,7 +284,7 @@ export class FreeformRenderer extends Component {
   // ── Lifecycle ──────────────────────────────────────────────────
 
   render(): void {
-    this.container.addClass('ib-freeform-host');
+    this.container.addClass('visual-notes-freeform-host');
     // WebKit (desktop Safari, and — confirmed on-device — the iPadOS/iOS
     // app too) has long-standing bugs tracking content-visibility: auto's
     // viewport intersection through a transformed ancestor — cards live
@@ -386,8 +386,8 @@ export class FreeformRenderer extends Component {
   }
 
   setCursor(cursor: '' | 'grab' | 'grabbing' | 'crosshair'): void {
-    this.outer.removeClass('ib-cursor-grab', 'ib-cursor-grabbing', 'ib-cursor-crosshair');
-    if (cursor) this.outer.addClass(`ib-cursor-${cursor}`);
+    this.outer.removeClass('visual-notes-cursor-grab', 'visual-notes-cursor-grabbing', 'visual-notes-cursor-crosshair');
+    if (cursor) this.outer.addClass(`visual-notes-cursor-${cursor}`);
   }
 
   // ── Viewport ───────────────────────────────────────────────────

@@ -6,7 +6,7 @@
       "type": "text",
       "text": "> [!note] 🎬\n> Screenplay HQ — pitch it in one line, break the story into acts and beats, storyboard the key scene panel by panel, and track every scene to a locked draft.",
       "color": "#8B5CF6",
-      "ib": { "kind": "callout", "id": "sc-callout", "text": "Screenplay HQ — pitch it in one line, break the story into acts and beats, storyboard the key scene panel by panel, and track every scene to a locked draft.", "icon": "🎬", "color": "#8B5CF6" }
+      "vn": { "kind": "callout", "id": "sc-callout", "text": "Screenplay HQ — pitch it in one line, break the story into acts and beats, storyboard the key scene panel by panel, and track every scene to a locked draft.", "icon": "🎬", "color": "#8B5CF6" }
     },
     {
       "id": "sc-grp-core",
@@ -14,7 +14,7 @@
       "type": "group",
       "label": "Story Core",
       "color": "#14B8A6",
-      "ib": { "kind": "group", "id": "sc-grp-core", "label": "Story Core", "color": "#14B8A6" }
+      "vn": { "kind": "group", "id": "sc-grp-core", "label": "Story Core", "color": "#14B8A6" }
     },
     {
       "id": "sc-logline",
@@ -22,7 +22,7 @@
       "type": "text",
       "text": "🎯 LOGLINE\nWhen [inciting incident], a [flawed protagonist] must [objective] before [stakes/deadline].",
       "color": "#FEF3C7",
-      "ib": { "kind": "sticky", "id": "sc-logline", "text": "🎯 LOGLINE\nWhen [inciting incident], a [flawed protagonist] must [objective] before [stakes/deadline].", "color": "#FEF3C7" }
+      "vn": { "kind": "sticky", "id": "sc-logline", "text": "🎯 LOGLINE\nWhen [inciting incident], a [flawed protagonist] must [objective] before [stakes/deadline].", "color": "#FEF3C7" }
     },
     {
       "id": "sc-theme",
@@ -30,7 +30,7 @@
       "type": "text",
       "text": "💭 THEME\nWhat is this story really about? State it as an argument, not a topic.",
       "color": "#DBEAFE",
-      "ib": { "kind": "sticky", "id": "sc-theme", "text": "💭 THEME\nWhat is this story really about? State it as an argument, not a topic.", "color": "#DBEAFE" }
+      "vn": { "kind": "sticky", "id": "sc-theme", "text": "💭 THEME\nWhat is this story really about? State it as an argument, not a topic.", "color": "#DBEAFE" }
     },
     {
       "id": "sc-characters",
@@ -38,7 +38,7 @@
       "type": "text",
       "text": "### Characters\n\n| Name | Role | Want | Need |\n| --- | --- | --- | --- |\n| Rae Chen | Protagonist | Win the case | Forgive herself |\n| Marcus Hale | Antagonist | Bury the truth | Be seen |\n|  | Supporting |  |  |",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "table",
         "id": "sc-characters",
         "title": "Characters",
@@ -65,7 +65,7 @@
       "x": 380, "y": -440, "width": 420, "height": 240,
       "type": "link",
       "url": "https://www.youtube.com/watch?v=KxDwieKpawg",
-      "ib": { "kind": "bookmark", "id": "sc-video", "url": "https://www.youtube.com/watch?v=KxDwieKpawg" }
+      "vn": { "kind": "bookmark", "id": "sc-video", "url": "https://www.youtube.com/watch?v=KxDwieKpawg" }
     },
     {
       "id": "sc-act1",
@@ -73,7 +73,7 @@
       "type": "group",
       "label": "Act I — Setup",
       "color": "#3B82F6",
-      "ib": { "kind": "group", "id": "sc-act1", "label": "Act I — Setup", "color": "#3B82F6" }
+      "vn": { "kind": "group", "id": "sc-act1", "label": "Act I — Setup", "color": "#3B82F6" }
     },
     {
       "id": "sc-a1-beat1",
@@ -81,7 +81,7 @@
       "type": "text",
       "text": "Opening image — the world before. Mirror it in the final image.",
       "color": "#DBEAFE",
-      "ib": { "kind": "sticky", "id": "sc-a1-beat1", "text": "Opening image — the world before. Mirror it in the final image.", "color": "#DBEAFE" }
+      "vn": { "kind": "sticky", "id": "sc-a1-beat1", "text": "Opening image — the world before. Mirror it in the final image.", "color": "#DBEAFE" }
     },
     {
       "id": "sc-a1-beat2",
@@ -89,7 +89,7 @@
       "type": "text",
       "text": "Catalyst (~p.12) — the event that breaks the routine. No going back.",
       "color": "#DBEAFE",
-      "ib": { "kind": "sticky", "id": "sc-a1-beat2", "text": "Catalyst (~p.12) — the event that breaks the routine. No going back.", "color": "#DBEAFE" }
+      "vn": { "kind": "sticky", "id": "sc-a1-beat2", "text": "Catalyst (~p.12) — the event that breaks the routine. No going back.", "color": "#DBEAFE" }
     },
     {
       "id": "sc-act2",
@@ -97,7 +97,7 @@
       "type": "group",
       "label": "Act II — Confrontation",
       "color": "#F59E0B",
-      "ib": { "kind": "group", "id": "sc-act2", "label": "Act II — Confrontation", "color": "#F59E0B" }
+      "vn": { "kind": "group", "id": "sc-act2", "label": "Act II — Confrontation", "color": "#F59E0B" }
     },
     {
       "id": "sc-a2-beat1",
@@ -105,7 +105,7 @@
       "type": "text",
       "text": "Midpoint (~p.55) — false victory or false defeat. Stakes double.",
       "color": "#FEF3C7",
-      "ib": { "kind": "sticky", "id": "sc-a2-beat1", "text": "Midpoint (~p.55) — false victory or false defeat. Stakes double.", "color": "#FEF3C7" }
+      "vn": { "kind": "sticky", "id": "sc-a2-beat1", "text": "Midpoint (~p.55) — false victory or false defeat. Stakes double.", "color": "#FEF3C7" }
     },
     {
       "id": "sc-a2-beat2",
@@ -113,7 +113,7 @@
       "type": "text",
       "text": "All is lost (~p.75) — the worst moment. Whiff of death.",
       "color": "#FEF3C7",
-      "ib": { "kind": "sticky", "id": "sc-a2-beat2", "text": "All is lost (~p.75) — the worst moment. Whiff of death.", "color": "#FEF3C7" }
+      "vn": { "kind": "sticky", "id": "sc-a2-beat2", "text": "All is lost (~p.75) — the worst moment. Whiff of death.", "color": "#FEF3C7" }
     },
     {
       "id": "sc-act3",
@@ -121,7 +121,7 @@
       "type": "group",
       "label": "Act III — Resolution",
       "color": "#DC2626",
-      "ib": { "kind": "group", "id": "sc-act3", "label": "Act III — Resolution", "color": "#DC2626" }
+      "vn": { "kind": "group", "id": "sc-act3", "label": "Act III — Resolution", "color": "#DC2626" }
     },
     {
       "id": "sc-a3-beat1",
@@ -129,7 +129,7 @@
       "type": "text",
       "text": "Climax — the protagonist proves they've changed by choosing the need over the want.",
       "color": "#FEE2E2",
-      "ib": { "kind": "sticky", "id": "sc-a3-beat1", "text": "Climax — the protagonist proves they've changed by choosing the need over the want.", "color": "#FEE2E2" }
+      "vn": { "kind": "sticky", "id": "sc-a3-beat1", "text": "Climax — the protagonist proves they've changed by choosing the need over the want.", "color": "#FEE2E2" }
     },
     {
       "id": "sc-a3-beat2",
@@ -137,7 +137,7 @@
       "type": "text",
       "text": "Final image — the world after. The opening image, transformed.",
       "color": "#FEE2E2",
-      "ib": { "kind": "sticky", "id": "sc-a3-beat2", "text": "Final image — the world after. The opening image, transformed.", "color": "#FEE2E2" }
+      "vn": { "kind": "sticky", "id": "sc-a3-beat2", "text": "Final image — the world after. The opening image, transformed.", "color": "#FEE2E2" }
     },
     {
       "id": "sc-grp-storyboard",
@@ -145,7 +145,7 @@
       "type": "group",
       "label": "Storyboard — Key Scene",
       "color": "#8B5CF6",
-      "ib": { "kind": "group", "id": "sc-grp-storyboard", "label": "Storyboard — Key Scene", "color": "#8B5CF6" }
+      "vn": { "kind": "group", "id": "sc-grp-storyboard", "label": "Storyboard — Key Scene", "color": "#8B5CF6" }
     },
     {
       "id": "sc-panel-1",
@@ -153,7 +153,7 @@
       "type": "text",
       "text": "PANEL 1 — WIDE\n\nEstablish the space. One image, one idea.\n\n🖼️ Paste a frame sketch or reference still here.",
       "color": "#F3F4F6",
-      "ib": { "kind": "sticky", "id": "sc-panel-1", "text": "PANEL 1 — WIDE\n\nEstablish the space. One image, one idea.\n\n🖼️ Paste a frame sketch or reference still here.", "color": "#F3F4F6" }
+      "vn": { "kind": "sticky", "id": "sc-panel-1", "text": "PANEL 1 — WIDE\n\nEstablish the space. One image, one idea.\n\n🖼️ Paste a frame sketch or reference still here.", "color": "#F3F4F6" }
     },
     {
       "id": "sc-panel-2",
@@ -161,7 +161,7 @@
       "type": "text",
       "text": "PANEL 2 — MEDIUM\n\nCharacter enters in motion — what are they doing, not saying?",
       "color": "#F3F4F6",
-      "ib": { "kind": "sticky", "id": "sc-panel-2", "text": "PANEL 2 — MEDIUM\n\nCharacter enters in motion — what are they doing, not saying?", "color": "#F3F4F6" }
+      "vn": { "kind": "sticky", "id": "sc-panel-2", "text": "PANEL 2 — MEDIUM\n\nCharacter enters in motion — what are they doing, not saying?", "color": "#F3F4F6" }
     },
     {
       "id": "sc-panel-3",
@@ -169,7 +169,7 @@
       "type": "text",
       "text": "PANEL 3 — CLOSE-UP\n\nThe detail that matters: hands, eyes, the object everything turns on.",
       "color": "#F3F4F6",
-      "ib": { "kind": "sticky", "id": "sc-panel-3", "text": "PANEL 3 — CLOSE-UP\n\nThe detail that matters: hands, eyes, the object everything turns on.", "color": "#F3F4F6" }
+      "vn": { "kind": "sticky", "id": "sc-panel-3", "text": "PANEL 3 — CLOSE-UP\n\nThe detail that matters: hands, eyes, the object everything turns on.", "color": "#F3F4F6" }
     },
     {
       "id": "sc-panel-4",
@@ -177,7 +177,7 @@
       "type": "text",
       "text": "PANEL 4 — OVER-THE-SHOULDER\n\nThe confrontation. What do they see — and what do we see that they don't?",
       "color": "#F3F4F6",
-      "ib": { "kind": "sticky", "id": "sc-panel-4", "text": "PANEL 4 — OVER-THE-SHOULDER\n\nThe confrontation. What do they see — and what do we see that they don't?", "color": "#F3F4F6" }
+      "vn": { "kind": "sticky", "id": "sc-panel-4", "text": "PANEL 4 — OVER-THE-SHOULDER\n\nThe confrontation. What do they see — and what do we see that they don't?", "color": "#F3F4F6" }
     },
     {
       "id": "sc-beats",
@@ -185,7 +185,7 @@
       "type": "text",
       "text": "### Beat Sheet\n\n| Beat | Act | Page | Status |\n| --- | --- | --- | --- |\n| Opening image | I | 1 | To write |\n| Catalyst | I | 12 | To write |\n| Break into two | I | 25 | To write |\n| Midpoint | II | 55 | To write |\n| All is lost | II | 75 | To write |\n| Break into three | III | 85 | To write |\n| Finale | III | 110 | To write |",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "table",
         "id": "sc-beats",
         "title": "Beat Sheet",
@@ -220,7 +220,7 @@
       "x": 40, "y": 660, "width": 620, "height": 400,
       "type": "group",
       "label": "Scene Tracker",
-      "ib": {
+      "vn": {
         "kind": "kanban-board",
         "id": "sc-scenes",
         "title": "Scene Tracker",
@@ -259,14 +259,14 @@
       "x": 52, "y": 732, "width": 190.67, "height": 44,
       "type": "text",
       "text": "- [ ] Sc. 12 — Rooftop confrontation",
-      "ib": { "id": "sni-1", "text": "Sc. 12 — Rooftop confrontation", "done": false }
+      "vn": { "id": "sni-1", "text": "Sc. 12 — Rooftop confrontation", "done": false }
     },
     {
       "id": "sc-scenes::kbitem::sn-outline::sni-2",
       "x": 52, "y": 784, "width": 190.67, "height": 44,
       "type": "text",
       "text": "- [ ] Sc. 18 — The verdict",
-      "ib": { "id": "sni-2", "text": "Sc. 18 — The verdict", "done": false }
+      "vn": { "id": "sni-2", "text": "Sc. 18 — The verdict", "done": false }
     },
     {
       "id": "sc-scenes::kbhdr::sn-drafting",
@@ -280,7 +280,7 @@
       "x": 254.67, "y": 732, "width": 190.67, "height": 44,
       "type": "text",
       "text": "- [ ] Sc. 1 — Cold open",
-      "ib": { "id": "sni-3", "text": "Sc. 1 — Cold open", "done": false }
+      "vn": { "id": "sni-3", "text": "Sc. 1 — Cold open", "done": false }
     },
     {
       "id": "sc-scenes::kbhdr::sn-locked",
@@ -294,7 +294,7 @@
       "x": 457.33, "y": 732, "width": 190.67, "height": 44,
       "type": "text",
       "text": "- [x] Sc. 3 — Meet at the diner",
-      "ib": { "id": "sni-4", "text": "Sc. 3 — Meet at the diner", "done": true }
+      "vn": { "id": "sni-4", "text": "Sc. 3 — Meet at the diner", "done": true }
     },
     {
       "id": "sc-progress",
@@ -302,7 +302,7 @@
       "type": "text",
       "text": "### Draft Progress\n\n- [ ] **Milestones**\n  - [ ] Outline complete\n  - [ ] First draft\n  - [ ] Table read\n  - [ ] Revision pass\n  - [ ] Polish & proof\n- [ ] **Format**\n  - [ ] Title page\n  - [ ] Page count 90–120",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "checklist",
         "id": "sc-progress",
         "title": "Draft Progress",
@@ -329,7 +329,7 @@
       "toNode": "sc-act2",
       "color": "#3B82F6",
       "label": "break into two",
-      "ib": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
+      "vn": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
     },
     {
       "id": "se-2",
@@ -337,28 +337,28 @@
       "toNode": "sc-act3",
       "color": "#F59E0B",
       "label": "break into three",
-      "ib": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
+      "vn": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
     },
     {
       "id": "se-3",
       "fromNode": "sc-panel-1",
       "toNode": "sc-panel-2",
       "color": "#8B5CF6",
-      "ib": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
+      "vn": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
     },
     {
       "id": "se-4",
       "fromNode": "sc-panel-2",
       "toNode": "sc-panel-3",
       "color": "#8B5CF6",
-      "ib": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
+      "vn": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
     },
     {
       "id": "se-5",
       "fromNode": "sc-panel-3",
       "toNode": "sc-panel-4",
       "color": "#8B5CF6",
-      "ib": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
+      "vn": { "routing": "straight", "style": "solid", "arrowhead": "end", "thickness": 2 }
     },
     {
       "id": "se-6",
@@ -366,7 +366,7 @@
       "toNode": "sc-beats",
       "color": "#14B8A6",
       "label": "expand into beats",
-      "ib": { "routing": "elbow", "elbowOrientation": "auto", "style": "dashed", "arrowhead": "end", "thickness": 2 }
+      "vn": { "routing": "elbow", "elbowOrientation": "auto", "style": "dashed", "arrowhead": "end", "thickness": 2 }
     },
     {
       "id": "se-7",
@@ -374,7 +374,7 @@
       "toNode": "sc-grp-storyboard",
       "color": "#8B5CF6",
       "label": "visualize key scenes",
-      "ib": { "routing": "elbow", "elbowOrientation": "auto", "style": "dashed", "arrowhead": "end", "thickness": 2 }
+      "vn": { "routing": "elbow", "elbowOrientation": "auto", "style": "dashed", "arrowhead": "end", "thickness": 2 }
     },
     {
       "id": "se-8",
@@ -382,10 +382,10 @@
       "toNode": "sc-logline",
       "color": "#6B7280",
       "label": "story fundamentals",
-      "ib": { "routing": "straight", "style": "dashed", "arrowhead": "end", "thickness": 2 }
+      "vn": { "routing": "straight", "style": "dashed", "arrowhead": "end", "thickness": 2 }
     }
   ],
-  "ib": {
+  "vn": {
     "version": 1,
     "layout": "freeform",
     "viewport": { "x": 620, "y": 620, "zoom": 1 }

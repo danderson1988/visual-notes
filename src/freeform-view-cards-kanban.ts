@@ -126,7 +126,7 @@ export const cardsKanbanMethods = {
     el.addClass('visual-notes-freeform-kanban-card');
     if (card.bgColor) el.style.backgroundColor = card.bgColor;
     if (card.topColor) {
-      const strip = el.createDiv('ib-card-top-strip');
+      const strip = el.createDiv('visual-notes-card-top-strip');
       strip.style.backgroundColor = card.topColor;
     }
 
@@ -441,7 +441,7 @@ export const cardsKanbanMethods = {
     if (typeof column.width === 'number') columnEl.style.flexGrow = String(column.width);
     if (column.bgColor) columnEl.style.backgroundColor = column.bgColor;
     if (column.topColor) {
-      const strip = columnEl.createDiv('ib-card-top-strip');
+      const strip = columnEl.createDiv('visual-notes-card-top-strip');
       strip.style.backgroundColor = column.topColor;
     }
 
@@ -1402,7 +1402,7 @@ export const cardsKanbanMethods = {
     ghost.style.width = `${itemRect.width}px`;
     ghost.style.left = `${itemRect.left}px`;
     ghost.style.top = `${itemRect.top}px`;
-    ghost.addClass('ib-no-pointer');
+    ghost.addClass('visual-notes-no-pointer');
     activeDocument.body.appendChild(ghost);
 
     itemEl.addClass('is-dragging');

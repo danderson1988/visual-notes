@@ -9,7 +9,7 @@
       "type": "text",
       "text": "> [!note] 🗂️\n> Project Ideas — a moodboard-style project hub: brief, inspiration, palette, budget, and this week's tasks. Replace the sample brand with your own.",
       "color": "#64748B",
-      "ib": {
+      "vn": {
         "kind": "callout",
         "id": "pi-intro",
         "text": "Project Ideas — a moodboard-style project hub: brief, inspiration, palette, budget, and this week's tasks. Replace the sample brand with your own.",
@@ -26,7 +26,7 @@
       "type": "group",
       "label": "About",
       "color": "#94A3B8",
-      "ib": {
+      "vn": {
         "kind": "column",
         "id": "pi-about",
         "title": "About",
@@ -67,7 +67,7 @@
       "type": "text",
       "text": "M I R A",
       "color": "#D9DDE3",
-      "ib": {
+      "vn": {
         "kind": "sticky",
         "id": "pi-logo",
         "text": "M I R A",
@@ -88,7 +88,7 @@
       "type": "text",
       "text": "### This week\n\n- [x] Develop moodboards\n- [x] Present to client\n- [ ] Create website wireframes",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "checklist",
         "id": "pi-week",
         "title": "This week",
@@ -120,7 +120,7 @@
       "height": 440,
       "type": "link",
       "url": "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80",
-      "ib": {
+      "vn": {
         "kind": "image",
         "id": "pi-model",
         "source": {
@@ -139,7 +139,7 @@
       "type": "text",
       "text": "#FF2E58 — Radical Red",
       "color": "#FF2E58",
-      "ib": {
+      "vn": {
         "kind": "swatch",
         "id": "pi-swatch",
         "color": "#FF2E58"
@@ -154,7 +154,7 @@
       "type": "file",
       "file": "Brainstorm.canvas",
       "color": "#A16207",
-      "ib": {
+      "vn": {
         "kind": "tile",
         "id": "pi-tile-brainstorm",
         "label": "Brainstorm",
@@ -176,7 +176,7 @@
       "type": "file",
       "file": "Moodboards.canvas",
       "color": "#1E40AF",
-      "ib": {
+      "vn": {
         "kind": "tile",
         "id": "pi-tile-moodboards",
         "label": "Moodboards",
@@ -198,7 +198,7 @@
       "type": "group",
       "label": "Inspiration",
       "color": "#94A3B8",
-      "ib": {
+      "vn": {
         "kind": "column",
         "id": "pi-inspiration",
         "title": "Inspiration",
@@ -256,7 +256,7 @@
       "type": "text",
       "text": "### Budget\n\n| Project stage | Cost |\n| --- | --- |\n| 2 x directional moodboards | $400.00 |\n| 1 x set of wireframes | $900.00 |\n| 2 x homepage design concepts | $1,600.00 |\n| Total | $2,900.00 |",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "table",
         "id": "pi-budget",
         "title": "Budget",
@@ -315,7 +315,7 @@
       "height": 330,
       "type": "link",
       "url": "https://images.unsplash.com/photo-1550684376-efcbd6e3f031?auto=format&fit=crop&w=800&q=80",
-      "ib": {
+      "vn": {
         "kind": "image",
         "id": "pi-texture",
         "source": {
@@ -335,7 +335,7 @@
       "type": "text",
       "text": "**Marc** _(15/07/2026)_\nWould be great if we could use this honeycomb pattern on the website.",
       "color": "#F8FAFC",
-      "ib": {
+      "vn": {
         "kind": "comment",
         "id": "pi-comment",
         "text": "Would be great if we could use this honeycomb pattern on the website.",
@@ -354,7 +354,7 @@
       "height": 400,
       "type": "link",
       "url": "https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=800&q=80",
-      "ib": {
+      "vn": {
         "kind": "image",
         "id": "pi-look",
         "source": {
@@ -373,7 +373,7 @@
       "type": "text",
       "text": "Sleek\n\nSculptural\n\nEdgy",
       "color": "#FFFFFF",
-      "ib": {
+      "vn": {
         "kind": "sticky",
         "id": "pi-keywords",
         "text": "Sleek\n\nSculptural\n\nEdgy",
@@ -390,7 +390,7 @@
       "fromNode": "pi-swatch",
       "toNode": "pi-logo",
       "color": "#22C55E",
-      "ib": {
+      "vn": {
         "routing": "straight",
         "bend": 60,
         "style": "solid",
@@ -403,7 +403,7 @@
       "fromNode": "pi-comment",
       "toNode": "pi-texture",
       "color": "#22C55E",
-      "ib": {
+      "vn": {
         "routing": "straight",
         "bend": -50,
         "style": "solid",
@@ -416,7 +416,7 @@
       "fromNode": "pi-tile-brainstorm",
       "toNode": "pi-tile-moodboards",
       "color": "#94A3B8",
-      "ib": {
+      "vn": {
         "routing": "straight",
         "style": "solid",
         "arrowhead": "none",
@@ -424,7 +424,7 @@
       }
     }
   ],
-  "ib": {
+  "vn": {
     "version": 1,
     "layout": "freeform",
     "viewport": {

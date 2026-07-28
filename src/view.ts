@@ -1,7 +1,7 @@
 import { FileView, WorkspaceLeaf, TFile, Notice, setIcon } from 'obsidian';
 import type VisualNotesPlugin from './main';
 import { VisualNotesFile } from './file-types';
-import { readBoardFile, writeBoardFile, isVisualNotesOwnedFile } from './file-io';
+import { readBoardFile, writeBoardFile, isVisualNotesOwnedFile, NATIVE_BAK_SUFFIX } from './file-io';
 import { GridRenderer } from './grid-view';
 import { FreeformRenderer } from './freeform-view';
 import { DEFAULT_PEN_DRAW_OPTIONS } from './pen-options-panel';
@@ -61,6 +61,23 @@ export class VisualNotesView extends FileView {
     this.isInternalNavigation = false;
 
     const board = await readBoardFile(this.app, file);
+
+    // Native Canvas stripped this board's root metadata at some point. The
+    // cards survived on their nodes, so writing it back out immediately
+    // restores the root block — without which the board would be treated as
+    // a plain native canvas on every future open. Layout and card data are
+    // recovered; anything that lived only at the root (viewport, free
+    // drawings, the archive) was already gone by the time we read it, hence
+    // pointing at the backup rather than claiming a clean fix.
+    if (board.recoveredFromNativeEdit) {
+      await writeBoardFile(this.app, file, board);
+      new Notice(
+        `Visual Notes: "${file.basename}" had been rewritten by Obsidian's native Canvas, which drops ` +
+        `Visual Notes' board metadata. The cards have been recovered. Free-floating drawings and any ` +
+        `archived cards could not be — they're in "${file.name}${NATIVE_BAK_SUFFIX}" if you need them.`,
+        15000
+      );
+    }
 
     if (this.plugin.settings.autoRelinkOnOpen) {
       const fixed = await relinkBoardData(this.app, board);

@@ -10,8 +10,8 @@ body {
      hard-code a serif stack here regardless of the user's configured Text
      font — now just follows it, same as body copy, so the whole plugin
      respects Obsidian's Appearance → Font settings. */
-  --ib-font-display: var(--font-text);
-  --ib-font-body: var(--font-text);
+  --visual-notes-font-display: var(--font-text);
+  --visual-notes-font-body: var(--font-text);
   /* Card surface + text, and the canvas backdrop it sits on, all resolve
      from Obsidian's own tiered background variables instead of a hardcoded
      light palette + a separate hardcoded dark palette — Obsidian already
@@ -21,27 +21,27 @@ body {
      hex pairs. --background-primary/--background-secondary are reliably
      distinct in virtually every theme (that's the whole point of the two
      tiers), which is what keeps a card visually "on top of" the canvas. */
-  --ib-card-bg: var(--background-primary);
-  --ib-card-text: var(--text-normal);
+  --visual-notes-card-bg: var(--background-primary);
+  --visual-notes-card-text: var(--text-normal);
   /* Column/board container shells (kanban lists, kanban board columns, the
      generic "Column" card) — a real Obsidian theme variable rather than a
      hardcoded gray, so it matches the active theme instead of looking like
      a fixed slab dropped on top of it. */
-  --ib-column-bg: var(--background-primary);
+  --visual-notes-column-bg: var(--background-primary);
   /* Canvas background + grid-dot color when the user hasn't set a custom
      one in Settings (main.ts only ever sets these two as an *inline*
      override, which still wins over this class-level default either way). */
-  --ib-canvas-bg: var(--background-secondary);
-  --ib-dot-color: var(--background-modifier-border);
-  --ib-shadow-low:  0 1px 3px rgba(0,0,0,0.08), 0 1px 6px rgba(0,0,0,0.06);
-  --ib-shadow-mid:  0 3px 10px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.08);
-  --ib-shadow-high: 0 8px 28px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.10);
+  --visual-notes-canvas-bg: var(--background-secondary);
+  --visual-notes-dot-color: var(--background-modifier-border);
+  --visual-notes-shadow-low:  0 1px 3px rgba(0,0,0,0.08), 0 1px 6px rgba(0,0,0,0.06);
+  --visual-notes-shadow-mid:  0 3px 10px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.08);
+  --visual-notes-shadow-high: 0 8px 28px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.10);
 }
 
 body.theme-dark {
-  --ib-shadow-low:  0 1px 3px rgba(0,0,0,0.28), 0 1px 6px rgba(0,0,0,0.18);
-  --ib-shadow-mid:  0 3px 10px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.22);
-  --ib-shadow-high: 0 8px 28px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.30);
+  --visual-notes-shadow-low:  0 1px 3px rgba(0,0,0,0.28), 0 1px 6px rgba(0,0,0,0.18);
+  --visual-notes-shadow-mid:  0 3px 10px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.22);
+  --visual-notes-shadow-high: 0 8px 28px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.30);
 }
 
 /* Container */
@@ -52,7 +52,7 @@ body.theme-dark {
   background: var(--background-primary);
   /* Obsidian applies --font-interface to view panes by default; without
      this, any card text that doesn't explicitly set font-family (i.e.
-     everything not already using --ib-font-body/--ib-font-display, mostly
+     everything not already using --visual-notes-font-body/--visual-notes-font-display, mostly
      plain rendered — not being-edited — card content) silently fell back
      to the Interface font instead of the user's configured Text font. */
   font-family: var(--font-text);
@@ -131,7 +131,7 @@ body.theme-dark {
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
 }
 
 .visual-notes-back-btn {
@@ -236,7 +236,7 @@ body.theme-dark {
 
 /* Keyboard focus ring — appears around the tile square */
 .visual-notes-tile-wrapper:focus-visible .visual-notes-tile {
-  box-shadow: 0 0 0 3px var(--interactive-accent), var(--ib-shadow-mid);
+  box-shadow: 0 0 0 3px var(--interactive-accent), var(--visual-notes-shadow-mid);
   transform: scale(1.04);
 }
 
@@ -251,12 +251,12 @@ body.theme-dark {
   transition: transform 150ms ease, box-shadow 150ms ease;
   position: relative;
   flex-shrink: 0;
-  background-color: var(--ib-tile-color, var(--interactive-accent));
+  background-color: var(--visual-notes-tile-color, var(--interactive-accent));
 }
 
 .visual-notes-tile-wrapper:hover .visual-notes-tile {
   transform: scale(1.04);
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
 }
 
 /* Small chevron in the bottom-right of board tiles */
@@ -343,14 +343,14 @@ body.theme-dark {
   overflow: hidden;
   cursor: default;
   user-select: none;
-  background-color: var(--ib-canvas-bg, #e6e6e6);
+  background-color: var(--visual-notes-canvas-bg, #e6e6e6);
   /* Dot grid background — color/radius configurable via plugin settings
-     (--ib-dot-color / --ib-dot-radius custom properties, set in JS);
+     (--visual-notes-dot-color / --visual-notes-dot-radius custom properties, set in JS);
      fall back to the original look when neither is configured. */
   background-image: radial-gradient(
     circle,
-    var(--ib-dot-color, #d2d2d2) var(--ib-dot-radius, 2px),
-    transparent var(--ib-dot-radius, 2px)
+    var(--visual-notes-dot-color, #d2d2d2) var(--visual-notes-dot-radius, 2px),
+    transparent var(--visual-notes-dot-radius, 2px)
   );
   background-size: 20px 20px;
   outline: none;
@@ -420,7 +420,7 @@ body.theme-dark {
 }
 
 .visual-notes-freeform-card.is-selected {
-  box-shadow: 0 0 0 2px var(--interactive-accent), var(--ib-shadow-mid);
+  box-shadow: 0 0 0 2px var(--interactive-accent), var(--visual-notes-shadow-mid);
 }
 
 /* Tile cards keep a lot of blank padding around the icon+label so a ring
@@ -428,7 +428,7 @@ body.theme-dark {
    pull it inward with a negative outline-offset so it hugs the visible
    content instead. */
 .visual-notes-freeform-tile-card.is-selected {
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
   outline: 2px solid var(--interactive-accent);
   outline-offset: -8px;
   border-radius: 10px;
@@ -456,7 +456,7 @@ body.theme-dark {
   font-size: 11px;
   line-height: 1.6;
   padding: 0 7px;
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   white-space: nowrap;
   max-width: 100%;
   overflow: hidden;
@@ -489,7 +489,7 @@ body.theme-dark {
   font-size: 11px;
   line-height: 1.6;
   padding: 0 8px 0 5px;
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   background: color-mix(in srgb, var(--interactive-accent) 12%, var(--background-primary));
   border: 1px solid color-mix(in srgb, var(--interactive-accent) 35%, transparent);
   color: var(--interactive-accent);
@@ -585,7 +585,7 @@ body.theme-dark {
 /* Visual confirmation during a touch-and-hold (see the manual long-press
    detection in bindCanvasEvents) — without this there's no feedback at all
    that the hold registered until the menu pops up ~500ms later. */
-.ib-longpress-active {
+.visual-notes-longpress-active {
   transition: filter 0.4s ease-out;
   filter: brightness(0.85);
 }
@@ -597,8 +597,8 @@ body.theme-dark {
   background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
   border-radius: 1px;
   z-index: 9999;
-  width: var(--ib-marquee-w, 0px);
-  height: var(--ib-marquee-h, 0px);
+  width: var(--visual-notes-marquee-w, 0px);
+  height: var(--visual-notes-marquee-h, 0px);
 }
 
 /* A connection caught by a marquee drag-box — marked for deletion right
@@ -620,7 +620,7 @@ path.is-marquee-selected {
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 14px;
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
   z-index: 100;
 }
 
@@ -766,7 +766,7 @@ path.is-marquee-selected {
   border: 1px solid var(--background-modifier-border);
   border-radius: 10px;
   padding: 6px;
-  box-shadow: var(--ib-shadow-high);
+  box-shadow: var(--visual-notes-shadow-high);
   z-index: 200;
   min-width: 160px;
   /* Never taller than the board area — on very short windows the item
@@ -837,7 +837,7 @@ path.is-marquee-selected {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
   transition: transform 100ms ease;
 }
 
@@ -846,7 +846,7 @@ path.is-marquee-selected {
 
 @media (max-width: 540px) {
   /* ── Card selected: the context bar rides a full-width bottom bar ── */
-  .visual-notes-freeform-toolbar.ib-ctx-active {
+  .visual-notes-freeform-toolbar.visual-notes-ctx-active {
     left: 0;
     right: 0;
     bottom: 0;
@@ -864,25 +864,25 @@ path.is-marquee-selected {
     gap: 2px;
     /* Replaces (not just cancels) the desktop tb-pos-*'s centering
        translate — also rides above the on-screen keyboard while editing
-       (see the visualViewport handler that maintains --ib-kb-offset). */
-    transform: translateY(calc(-1 * var(--ib-kb-offset, 0px)));
+       (see the visualViewport handler that maintains --visual-notes-kb-offset). */
+    transform: translateY(calc(-1 * var(--visual-notes-kb-offset, 0px)));
   }
   /* More buttons than fit a phone width (e.g. sticky's Edit + 4 format +
      Color + trash) scroll sideways instead of clipping. Row direction
      forced: the desktop tb-pos-left/right rules stack the panel into a
      column, which is wrong for the phone bottom bar regardless of the
      configured toolbar side. */
-  .ib-ctx-active .ib-ctx-panel {
+  .visual-notes-ctx-active .visual-notes-ctx-panel {
     flex-direction: row;
     width: auto;
     overflow-x: auto;
     max-width: 100%;
   }
-  .ib-ctx-active .visual-notes-tb-btn {
+  .visual-notes-ctx-active .visual-notes-tb-btn {
     width: 48px;
     height: 48px;
   }
-  .ib-ctx-active .visual-notes-tb-btn-label {
+  .visual-notes-ctx-active .visual-notes-tb-btn-label {
     display: none;
   }
 
@@ -894,7 +894,7 @@ path.is-marquee-selected {
      add panel as a labeled bottom-sheet grid. Always bottom-right
      regardless of the desktop toolbarPosition setting (thumb-reachable,
      standard mobile placement). */
-  .visual-notes-freeform-toolbar:not(.ib-ctx-active) {
+  .visual-notes-freeform-toolbar:not(.visual-notes-ctx-active) {
     top: auto;
     bottom: auto;
     left: auto;
@@ -910,22 +910,22 @@ path.is-marquee-selected {
   }
   /* Corner is user-configurable (Settings → Mobile "+" button position) —
      default matches the old hard-coded bottom-right. */
-  .visual-notes-freeform-toolbar.fab-corner-bottom-right:not(.ib-ctx-active) {
+  .visual-notes-freeform-toolbar.fab-corner-bottom-right:not(.visual-notes-ctx-active) {
     right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   }
-  .visual-notes-freeform-toolbar.fab-corner-bottom-left:not(.ib-ctx-active) {
+  .visual-notes-freeform-toolbar.fab-corner-bottom-left:not(.visual-notes-ctx-active) {
     left: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   }
-  .visual-notes-freeform-toolbar.fab-corner-top-right:not(.ib-ctx-active) {
+  .visual-notes-freeform-toolbar.fab-corner-top-right:not(.visual-notes-ctx-active) {
     right: 12px; top: calc(12px + env(safe-area-inset-top, 0px));
   }
-  .visual-notes-freeform-toolbar.fab-corner-top-left:not(.ib-ctx-active) {
+  .visual-notes-freeform-toolbar.fab-corner-top-left:not(.visual-notes-ctx-active) {
     left: 12px; top: calc(12px + env(safe-area-inset-top, 0px));
   }
-  .visual-notes-freeform-toolbar:not(.ib-ctx-active) .ib-add-panel {
+  .visual-notes-freeform-toolbar:not(.visual-notes-ctx-active) .visual-notes-add-panel {
     display: none;
   }
-  .visual-notes-freeform-toolbar:not(.ib-ctx-active).is-open .ib-add-panel {
+  .visual-notes-freeform-toolbar:not(.visual-notes-ctx-active).is-open .visual-notes-add-panel {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
@@ -937,18 +937,18 @@ path.is-marquee-selected {
     border: 1px solid var(--background-modifier-border);
     border-radius: 14px;
     padding: 10px;
-    box-shadow: var(--ib-shadow-high);
+    box-shadow: var(--visual-notes-shadow-high);
     z-index: 250;
     max-height: 60vh;
     overflow-y: auto;
   }
-  .visual-notes-freeform-toolbar:not(.ib-ctx-active).is-open .ib-add-panel .visual-notes-tb-btn {
+  .visual-notes-freeform-toolbar:not(.visual-notes-ctx-active).is-open .visual-notes-add-panel .visual-notes-tb-btn {
     width: auto;
   }
-  .visual-notes-freeform-toolbar:not(.ib-ctx-active) .visual-notes-tb-overflow-sep {
+  .visual-notes-freeform-toolbar:not(.visual-notes-ctx-active) .visual-notes-tb-overflow-sep {
     display: none;
   }
-  .visual-notes-freeform-toolbar:not(.ib-ctx-active) .visual-notes-freeform-toolbar-fab {
+  .visual-notes-freeform-toolbar:not(.visual-notes-ctx-active) .visual-notes-freeform-toolbar-fab {
     display: flex;
   }
 
@@ -1006,7 +1006,7 @@ path.is-marquee-selected {
   background: var(--background-primary);
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
-  box-shadow: var(--ib-shadow-high);
+  box-shadow: var(--visual-notes-shadow-high);
   padding: 4px 8px calc(10px + env(safe-area-inset-bottom, 0px));
   max-height: 70vh;
   overflow-y: auto;
@@ -1091,49 +1091,49 @@ path.is-marquee-selected {
 /* ── Context bar slot ────────────────────────────────────────── */
 
 /* Add panel: flex wrapper for the toolbar buttons */
-.ib-add-panel {
+.visual-notes-add-panel {
   display: flex;
   align-items: center;
   gap: 2px;
 }
-.tb-pos-left .ib-add-panel,
-.tb-pos-right .ib-add-panel {
+.tb-pos-left .visual-notes-add-panel,
+.tb-pos-right .visual-notes-add-panel {
   flex-direction: column;
   width: 100%;
 }
-.tb-pos-top .ib-add-panel,
-.tb-pos-bottom .ib-add-panel {
+.tb-pos-top .visual-notes-add-panel,
+.tb-pos-bottom .visual-notes-add-panel {
   flex-direction: row;
   height: 100%;
 }
-.ib-ctx-active .ib-add-panel {
+.visual-notes-ctx-active .visual-notes-add-panel {
   display: none;
 }
 
 /* Context panel: hidden by default */
-.ib-ctx-panel {
+.visual-notes-ctx-panel {
   display: none;
   align-items: center;
   gap: 4px;
   pointer-events: none;
 }
-.tb-pos-left .ib-ctx-panel,
-.tb-pos-right .ib-ctx-panel {
+.tb-pos-left .visual-notes-ctx-panel,
+.tb-pos-right .visual-notes-ctx-panel {
   flex-direction: column;
   width: 100%;
 }
-.tb-pos-top .ib-ctx-panel,
-.tb-pos-bottom .ib-ctx-panel {
+.tb-pos-top .visual-notes-ctx-panel,
+.tb-pos-bottom .visual-notes-ctx-panel {
   flex-direction: row;
   height: 100%;
 }
-.ib-ctx-active .ib-ctx-panel {
+.visual-notes-ctx-active .visual-notes-ctx-panel {
   display: flex;
   pointer-events: auto;
 }
 
 /* Back button */
-.ib-ctx-back-btn {
+.visual-notes-ctx-back-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1145,70 +1145,70 @@ path.is-marquee-selected {
   flex-shrink: 0;
   transition: background 80ms ease, color 80ms ease;
 }
-.ib-ctx-back-btn:hover,
-.ib-ctx-back-btn:focus-visible {
+.visual-notes-ctx-back-btn:hover,
+.visual-notes-ctx-back-btn:focus-visible {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
   outline: none;
 }
-.ib-ctx-back-btn svg {
+.visual-notes-ctx-back-btn svg {
   width: 18px;
   height: 18px;
 }
 
 /* Spacer and separator before trash */
-.ib-ctx-spacer {
+.visual-notes-ctx-spacer {
   flex-shrink: 0;
 }
-.tb-pos-left .ib-ctx-spacer,
-.tb-pos-right .ib-ctx-spacer {
+.tb-pos-left .visual-notes-ctx-spacer,
+.tb-pos-right .visual-notes-ctx-spacer {
   height: 8px;
 }
-.tb-pos-top .ib-ctx-spacer,
-.tb-pos-bottom .ib-ctx-spacer {
+.tb-pos-top .visual-notes-ctx-spacer,
+.tb-pos-bottom .visual-notes-ctx-spacer {
   width: 8px;
 }
-.ib-ctx-trash-sep {
+.visual-notes-ctx-trash-sep {
   background: var(--background-modifier-border);
   flex-shrink: 0;
 }
-.tb-pos-left .ib-ctx-trash-sep,
-.tb-pos-right .ib-ctx-trash-sep {
+.tb-pos-left .visual-notes-ctx-trash-sep,
+.tb-pos-right .visual-notes-ctx-trash-sep {
   width: 40px;
   height: 1px;
   margin: 2px 0;
 }
-.tb-pos-top .ib-ctx-trash-sep,
-.tb-pos-bottom .ib-ctx-trash-sep {
+.tb-pos-top .visual-notes-ctx-trash-sep,
+.tb-pos-bottom .visual-notes-ctx-trash-sep {
   width: 1px;
   height: 40px;
   margin: 0 2px;
 }
 
 /* Trash confirm state */
-.visual-notes-tb-btn.ib-ctx-trash--confirm {
+.visual-notes-tb-btn.visual-notes-ctx-trash--confirm {
   background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
 }
 
 /* Color swatch grid */
-.ib-ctx-color-grid {
+.visual-notes-ctx-color-grid {
   display: flex;
   gap: 4px;
   padding: 2px 0;
   justify-content: center;
 }
-.tb-pos-left .ib-ctx-color-grid,
-.tb-pos-right .ib-ctx-color-grid {
+.tb-pos-left .visual-notes-ctx-color-grid,
+.tb-pos-right .visual-notes-ctx-color-grid {
   flex-flow: row wrap;
   width: 100%;
 }
-.tb-pos-top .ib-ctx-color-grid,
-.tb-pos-bottom .ib-ctx-color-grid {
+.tb-pos-top .visual-notes-ctx-color-grid,
+.tb-pos-bottom .visual-notes-ctx-color-grid {
   flex-flow: column wrap;
   height: 100%;
 }
-.ib-ctx-color-swatch {
+.visual-notes-ctx-color-swatch {
   width: 14px;
   height: 14px;
   border-radius: 50%;
@@ -1216,18 +1216,18 @@ path.is-marquee-selected {
   flex-shrink: 0;
   transition: transform 80ms ease;
 }
-.ib-ctx-color-swatch:hover {
+.visual-notes-ctx-color-swatch:hover {
   transform: scale(1.2);
 }
 
 /* "None" swatch — diagonal slash to indicate removal */
-.ib-ctx-color-swatch--none {
+.visual-notes-ctx-color-swatch--none {
   background: #ffffff;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
   position: relative;
   overflow: hidden;
 }
-.ib-ctx-color-swatch--none::after {
+.visual-notes-ctx-color-swatch--none::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -1235,25 +1235,25 @@ path.is-marquee-selected {
 }
 
 /* Two-tab color picker (Background / Top strip) — stacked to fit 72px panel */
-.ib-ctx-tab-row {
+.visual-notes-ctx-tab-row {
   display: flex;
   gap: 2px;
   padding: 0 4px;
 }
-.tb-pos-left .ib-ctx-tab-row,
-.tb-pos-right .ib-ctx-tab-row {
+.tb-pos-left .visual-notes-ctx-tab-row,
+.tb-pos-right .visual-notes-ctx-tab-row {
   flex-direction: column;
   width: 100%;
 }
-.tb-pos-top .ib-ctx-tab-row,
-.tb-pos-bottom .ib-ctx-tab-row {
+.tb-pos-top .visual-notes-ctx-tab-row,
+.tb-pos-bottom .visual-notes-ctx-tab-row {
   flex-direction: row;
   height: 100%;
 }
-.ib-ctx-tab {
+.visual-notes-ctx-tab {
   text-align: center;
   font-size: 9px;
-  font-family: var(--ib-font-body);
+  font-family: var(--visual-notes-font-body);
   color: var(--text-muted);
   padding: 4px 4px;
   border-radius: 5px;
@@ -1265,42 +1265,42 @@ path.is-marquee-selected {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.tb-pos-left .ib-ctx-tab,
-.tb-pos-right .ib-ctx-tab {
+.tb-pos-left .visual-notes-ctx-tab,
+.tb-pos-right .visual-notes-ctx-tab {
   width: 100%;
 }
-.tb-pos-top .ib-ctx-tab,
-.tb-pos-bottom .ib-ctx-tab {
+.tb-pos-top .visual-notes-ctx-tab,
+.tb-pos-bottom .visual-notes-ctx-tab {
   flex: 1;
 }
-.ib-ctx-tab:hover {
+.visual-notes-ctx-tab:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
-.ib-ctx-tab--active,
-.ib-ctx-tab.ib-ctx-tab--active:hover {
+.visual-notes-ctx-tab--active,
+.visual-notes-ctx-tab.visual-notes-ctx-tab--active:hover {
   background: var(--interactive-accent);
   color: #ffffff;
 }
-.ib-ctx-swatch-area {
+.visual-notes-ctx-swatch-area {
   display: flex;
   align-items: center;
   gap: 2px;
 }
-.tb-pos-left .ib-ctx-swatch-area,
-.tb-pos-right .ib-ctx-swatch-area {
+.tb-pos-left .visual-notes-ctx-swatch-area,
+.tb-pos-right .visual-notes-ctx-swatch-area {
   flex-direction: column;
   width: 100%;
 }
-.tb-pos-top .ib-ctx-swatch-area,
-.tb-pos-bottom .ib-ctx-swatch-area {
+.tb-pos-top .visual-notes-ctx-swatch-area,
+.tb-pos-bottom .visual-notes-ctx-swatch-area {
   flex-direction: row;
   height: 100%;
 }
 
 /* ── Floating context bar (desktop/iPad) ─────────────────────────
    Above the selected card instead of occupying the fixed toolbar's own
-   slot — see ContextBar's `floating` mode. Content classes (.ib-ctx-panel
+   slot — see ContextBar's `floating` mode. Content classes (.visual-notes-ctx-panel
    and its children) are shared with the docked/phone mode; the tb-pos-*
    ancestor selectors above that pick row vs. column layout can't match
    here (this panel isn't inside .visual-notes-freeform-toolbar at all),
@@ -1309,7 +1309,7 @@ path.is-marquee-selected {
    Icon-only and tightly packed, matching native Obsidian Canvas's
    selection toolbar rather than the main add-card toolbar's larger
    icon+label buttons — labels move to native hover tooltips instead
-   (see ContextBar's setTooltip calls), and .ib-ctx-color-grid switches
+   (see ContextBar's setTooltip calls), and .visual-notes-ctx-color-grid switches
    from column-wrap flex (which relies on a parent height it doesn't have
    here — see below) to a fixed-column CSS grid, so it lays out as an
    actual box instead of one tall single-file column. */
@@ -1322,11 +1322,11 @@ path.is-marquee-selected {
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 10px;
-  box-shadow: var(--ib-shadow-high);
+  box-shadow: var(--visual-notes-shadow-high);
   z-index: 150;
   pointer-events: auto;
 }
-.visual-notes-ctx-bar-panel.ib-ctx-panel {
+.visual-notes-ctx-bar-panel.visual-notes-ctx-panel {
   flex-direction: row;
 }
 .visual-notes-ctx-bar-panel .visual-notes-tb-btn {
@@ -1347,15 +1347,15 @@ path.is-marquee-selected {
   width: 16px;
   height: 16px;
 }
-.visual-notes-ctx-bar-panel .ib-ctx-back-btn {
+.visual-notes-ctx-bar-panel .visual-notes-ctx-back-btn {
   width: 32px;
   height: 32px;
   border-radius: 7px;
 }
-.visual-notes-ctx-bar-panel .ib-ctx-spacer {
+.visual-notes-ctx-bar-panel .visual-notes-ctx-spacer {
   width: 4px;
 }
-.visual-notes-ctx-bar-panel .ib-ctx-trash-sep {
+.visual-notes-ctx-bar-panel .visual-notes-ctx-trash-sep {
   width: 1px;
   height: 24px;
   margin: 0 2px;
@@ -1364,29 +1364,29 @@ path.is-marquee-selected {
    that relies on `height: 100%` resolving from a toolbar's fixed height,
    which the floating panel (sized to its own auto-height content) doesn't
    have, so column-wrap here never actually wrapped. */
-.visual-notes-ctx-bar-panel .ib-ctx-color-grid {
+.visual-notes-ctx-bar-panel .visual-notes-ctx-color-grid {
   display: grid;
   grid-template-columns: repeat(4, 18px);
   gap: 6px;
   padding: 4px;
   justify-content: center;
 }
-.visual-notes-ctx-bar-panel .ib-ctx-color-swatch {
+.visual-notes-ctx-bar-panel .visual-notes-ctx-color-swatch {
   width: 18px;
   height: 18px;
 }
-.visual-notes-ctx-bar-panel .ib-ctx-tab-row {
+.visual-notes-ctx-bar-panel .visual-notes-ctx-tab-row {
   flex-direction: row;
 }
-.visual-notes-ctx-bar-panel .ib-ctx-tab {
+.visual-notes-ctx-bar-panel .visual-notes-ctx-tab {
   flex: 1;
 }
-.visual-notes-ctx-bar-panel .ib-ctx-swatch-area {
+.visual-notes-ctx-bar-panel .visual-notes-ctx-swatch-area {
   flex-direction: row;
 }
 
 /* Custom color wheel input — invisible, triggered by its sibling button */
-.ib-ctx-color-wheel-input {
+.visual-notes-ctx-color-wheel-input {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -1395,7 +1395,7 @@ path.is-marquee-selected {
 }
 
 /* ── Toolbar drag ghost ──────────────────────────────────────── */
-.ib-toolbar-drag-ghost {
+.visual-notes-toolbar-drag-ghost {
   position: fixed;
   width: 44px;
   height: 44px;
@@ -1411,7 +1411,7 @@ path.is-marquee-selected {
   transform: translate(-50%, -50%);
   opacity: 0.92;
 }
-.ib-toolbar-drag-ghost svg {
+.visual-notes-toolbar-drag-ghost svg {
   width: 22px;
   height: 22px;
 }
@@ -1431,7 +1431,7 @@ path.is-marquee-selected {
   border: 1px solid var(--background-modifier-border);
   border-radius: 3px;
   padding: 6px 10px;
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
   z-index: 101;
   white-space: nowrap;
   max-width: calc(100vw - 40px);
@@ -1577,7 +1577,7 @@ path.is-marquee-selected {
   color: var(--text-muted);
   cursor: pointer;
   z-index: 100;
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   transition: color 80ms ease, border-color 80ms ease;
   user-select: none;
 }
@@ -1602,7 +1602,7 @@ path.is-marquee-selected {
   color: var(--text-muted);
   cursor: pointer;
   z-index: 100;
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   transition: color 80ms ease, border-color 80ms ease, background 80ms ease;
 }
 
@@ -1642,7 +1642,7 @@ path.is-marquee-selected {
   justify-content: center;
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   color: var(--text-muted);
   cursor: pointer;
   flex-shrink: 0;
@@ -1669,7 +1669,7 @@ path.is-marquee-selected {
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 10px;
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
   overflow: hidden;
 }
 
@@ -1759,7 +1759,7 @@ path.is-marquee-selected {
   justify-content: center;
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   color: var(--text-muted);
   cursor: pointer;
   flex-shrink: 0;
@@ -1786,7 +1786,7 @@ path.is-marquee-selected {
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 18px;
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
   padding: 4px 8px 4px 12px;
   order: -1; /* bar expands to the LEFT of the fixed toggle circle */
 }
@@ -1872,7 +1872,7 @@ input.visual-notes-search-input {
   justify-content: center;
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   color: var(--text-muted);
   cursor: pointer;
   flex-shrink: 0;
@@ -1922,7 +1922,7 @@ input.visual-notes-search-input {
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 10px;
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
   padding: 8px 10px 10px;
   gap: 6px;
 }
@@ -2036,8 +2036,8 @@ input.visual-notes-table-date-input {
   outline: none;
   padding: 0;
   font-size: 11px;
-  font-family: var(--ib-font-body);
-  color: var(--ib-card-text);
+  font-family: var(--visual-notes-font-body);
+  color: var(--visual-notes-card-text);
   cursor: pointer;
 }
 
@@ -2089,7 +2089,7 @@ input.visual-notes-table-date-input {
   max-width: calc(100% - 28px);
   padding: 3px 11px;
   border-radius: 6px;
-  font-family: var(--ib-font-display);
+  font-family: var(--visual-notes-font-display);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -2098,7 +2098,7 @@ input.visual-notes-table-date-input {
   text-overflow: ellipsis;
   user-select: none;
   cursor: grab;
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
 }
 
 .visual-notes-group-label.is-empty {
@@ -2128,9 +2128,9 @@ input.visual-notes-table-date-input {
   gap: 0;
   border-radius: 10px;
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   overflow: hidden;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
 }
 
 /* PDF variant: header drag handle + live iframe preview (same reasoning
@@ -2164,7 +2164,7 @@ input.visual-notes-table-date-input {
 .visual-notes-file-header-title {
   font-size: 12px;
   font-weight: 600;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2208,7 +2208,7 @@ input.visual-notes-table-date-input {
 .visual-notes-file-tile-name {
   font-size: 13px;
   font-weight: 600;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   word-break: break-word;
   max-width: 100%;
   overflow: hidden;
@@ -2245,7 +2245,7 @@ input.visual-notes-table-date-input {
   border-radius: 8px;
   border: 1px solid var(--background-modifier-border);
   border-left-width: 4px; /* accent edge — color set inline from card.color */
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   overflow: hidden;
 }
 
@@ -2260,7 +2260,7 @@ input.visual-notes-table-date-input {
   flex: 1;
   min-width: 0;
   outline: none;
-  font-family: var(--ib-font-body);
+  font-family: var(--visual-notes-font-body);
   font-size: 14px;
   line-height: 1.5;
   color: var(--text-normal);
@@ -2289,7 +2289,7 @@ input.visual-notes-table-date-input {
   gap: 6px;
   font-size: 11.5px;
   line-height: 1.35;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
 }
 
 .visual-notes-kanban-subtask.is-done .visual-notes-kanban-subtask-text {
@@ -2486,7 +2486,7 @@ input.visual-notes-table-date-input {
   border-radius: 4px;
   padding: 4px 8px;
   z-index: 100;
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   white-space: nowrap;
 }
 
@@ -2543,8 +2543,8 @@ input.visual-notes-table-date-input {
   justify-content: flex-start;
   border-radius: 10px;
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
-  background: var(--ib-column-bg);
+  box-shadow: var(--visual-notes-shadow-low);
+  background: var(--visual-notes-column-bg);
   overflow: hidden;
   gap: 0;
   padding: 0;
@@ -2583,7 +2583,7 @@ input.visual-notes-table-date-input {
 .visual-notes-kanban-title,
 .visual-notes-checklist-title,
 .visual-notes-column-title {
-  font-family: var(--ib-font-display);
+  font-family: var(--visual-notes-font-display);
   font-size: 16px;
   font-weight: 700;
   text-transform: uppercase;
@@ -2610,7 +2610,7 @@ input.visual-notes-table-date-input {
 }
 
 .visual-notes-kanban-col-count {
-  font-family: var(--ib-font-body);
+  font-family: var(--visual-notes-font-body);
   font-size: 12px;
   font-weight: 400;
   color: var(--text-muted);
@@ -2688,13 +2688,13 @@ input.visual-notes-table-date-input {
 }
 
 .visual-notes-kanban-item {
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
   padding: 10px 12px;
   font-size: 13px;
-  font-family: var(--ib-font-body);
-  color: var(--ib-card-text);
+  font-family: var(--visual-notes-font-body);
+  color: var(--visual-notes-card-text);
   line-height: 1.5;
   flex-shrink: 0;
   display: flex;
@@ -2976,19 +2976,19 @@ input.visual-notes-table-date-input {
   z-index: 9999;
   margin: 0;
   cursor: grabbing;
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
 }
 
 .visual-notes-kanban-drag-ghost.is-tilting {
-  box-shadow: var(--ib-shadow-high);
+  box-shadow: var(--visual-notes-shadow-high);
   will-change: transform;
 }
 
 .visual-notes-kanban-item.is-item-settling {
-  animation: ib-kanban-item-settle 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: visual-notes-kanban-item-settle 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes ib-kanban-item-settle {
+@keyframes visual-notes-kanban-item-settle {
   0%   { transform: scale(1.035); }
   60%  { transform: scale(0.99); }
   100% { transform: scale(1); }
@@ -3028,7 +3028,7 @@ input.visual-notes-table-date-input {
   gap: 6px;
   padding: 8px 16px 12px;
   color: var(--text-faint);
-  font-family: var(--ib-font-body);
+  font-family: var(--visual-notes-font-body);
   font-size: 12px;
   cursor: pointer;
   flex-shrink: 0;
@@ -3196,7 +3196,7 @@ input.visual-notes-table-date-input {
   justify-content: flex-start;
   padding: 0;
   border-radius: 3px;
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   gap: 0;
   overflow: hidden;
 }
@@ -3211,7 +3211,7 @@ input.visual-notes-table-date-input {
 .visual-notes-sticky-text {
   font-size: 14px;
   line-height: 1.5;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   word-break: break-word;
   cursor: text;
   /* let clicks through to the card div for dragging */
@@ -3232,7 +3232,7 @@ input.visual-notes-table-date-input {
   font-size: 14px;
   line-height: 1.5;
   font-family: var(--font-text);
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   padding: 0;
   word-break: break-word;
   cursor: text;
@@ -3240,7 +3240,7 @@ input.visual-notes-table-date-input {
 
 .visual-notes-sticky-editor:empty::before {
   content: 'Start typing…';
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   opacity: 0.4;
   font-style: italic;
   pointer-events: none;
@@ -3267,7 +3267,7 @@ input.visual-notes-table-date-input {
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 10px;
-  box-shadow: var(--ib-shadow-high);
+  box-shadow: var(--visual-notes-shadow-high);
   z-index: 300;
   user-select: none;
   /* Defensive cap even where the Platform.isPhone gate doesn't apply
@@ -3409,18 +3409,18 @@ input.visual-notes-table-date-input {
   padding: 0;
   border-radius: 6px;
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   gap: 0;
   overflow: hidden;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
 }
 
 .visual-notes-freeform-checklist-card.is-selected {
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
 }
 
 /* 4px accent bar at top — shared by checklist, sticky, and kanban */
-.ib-card-top-strip,
+.visual-notes-card-top-strip,
 .visual-notes-checklist-accent {
   width: 100%;
   height: 5px;
@@ -3436,7 +3436,7 @@ input.visual-notes-checklist-title {
   padding: 10px 12px 6px;
   box-sizing: border-box;
   /* Input elements ignore inherited font rules — force them explicitly */
-  font-family: var(--ib-font-display);
+  font-family: var(--visual-notes-font-display);
   font-size: 16px;
   font-weight: 700;
   text-transform: uppercase;
@@ -3516,7 +3516,7 @@ input.visual-notes-checklist-title {
   cursor: grabbing;
   background: var(--background-secondary);
   border-radius: 4px;
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
   padding-left: 4px;
   padding-right: 4px;
 }
@@ -3575,7 +3575,7 @@ input.visual-notes-checklist-cb {
   flex: 1;
   outline: none;
   font-size: 12px;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   min-width: 0;
   word-break: break-word;
   line-height: 1.4;
@@ -3618,21 +3618,21 @@ input.visual-notes-checklist-cb {
 /* ── Comment card ───────────────────────────────────────────── */
 
 .visual-notes-freeform-comment-card {
-  --ib-comment-accent: #eab308;
+  --visual-notes-comment-accent: #eab308;
   align-items: stretch;
   justify-content: flex-start;
   padding: 0;
   border-radius: 5px;
   border: 1px solid var(--background-modifier-border);
-  border-left: 2px solid var(--ib-comment-accent);
-  box-shadow: var(--ib-shadow-low);
+  border-left: 2px solid var(--visual-notes-comment-accent);
+  box-shadow: var(--visual-notes-shadow-low);
   gap: 0;
   overflow: hidden;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
 }
 
 .visual-notes-freeform-comment-card.is-selected {
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
 }
 
 .visual-notes-freeform-comment-card.is-resolved {
@@ -3654,7 +3654,7 @@ input.visual-notes-checklist-cb {
   height: 15px;
   min-width: 15px;
   border-radius: 50%;
-  background: var(--ib-comment-accent);
+  background: var(--visual-notes-comment-accent);
   color: #fff;
   display: flex;
   align-items: center;
@@ -3675,7 +3675,7 @@ input.visual-notes-checklist-cb {
 .visual-notes-comment-author {
   font-size: 11px;
   font-weight: 600;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3716,7 +3716,7 @@ input.visual-notes-checklist-cb {
   outline: none;
   font-size: 12px;
   line-height: 1.4;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   word-break: break-word;
 }
 
@@ -3756,7 +3756,7 @@ input.visual-notes-checklist-cb {
 .visual-notes-comment-reply-author {
   font-size: 11px;
   font-weight: 700;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
 }
 
 .visual-notes-comment-reply-time {
@@ -3786,7 +3786,7 @@ input.visual-notes-checklist-cb {
   outline: none;
   font-size: 11px;
   line-height: 1.4;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   word-break: break-word;
 }
 
@@ -3798,7 +3798,7 @@ input.visual-notes-comment-reply-ghost-input {
   outline: none;
   padding: 3px 0;
   font-size: 11px;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
 }
 
 input.visual-notes-comment-reply-ghost-input::placeholder {
@@ -3813,14 +3813,14 @@ input.visual-notes-comment-reply-ghost-input::placeholder {
   padding: 0;
   border-radius: 6px;
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
   gap: 0;
   overflow: hidden;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
 }
 
 .visual-notes-freeform-table-card.is-selected {
-  box-shadow: var(--ib-shadow-high);
+  box-shadow: var(--visual-notes-shadow-high);
 }
 
 input.visual-notes-table-title {
@@ -3831,7 +3831,7 @@ input.visual-notes-table-title {
   outline: none;
   padding: 10px 12px 6px;
   box-sizing: border-box;
-  font-family: var(--ib-font-display);
+  font-family: var(--visual-notes-font-display);
   font-size: 16px;
   font-weight: 700;
   text-transform: uppercase;
@@ -3879,7 +3879,7 @@ input.visual-notes-table-title {
 }
 
 .visual-notes-table-header-row {
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
   border-radius: 8px 8px 0 0;
   position: sticky;
   top: 0;
@@ -3920,7 +3920,7 @@ input.visual-notes-table-title {
   outline: none;
   font-size: 11px;
   line-height: 1.4;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   word-break: break-word;
   min-height: 15px;
   /* Sheets model: click/drag selects cells, so static text must not be
@@ -4085,7 +4085,7 @@ input.visual-notes-table-zoom-slider {
   border: 1px solid var(--background-modifier-border);
   border-radius: 10px;
   padding: 10px;
-  box-shadow: var(--ib-shadow-high);
+  box-shadow: var(--visual-notes-shadow-high);
   z-index: 200;
 }
 
@@ -4132,10 +4132,10 @@ input.visual-notes-accent-pop-hex {
   padding: 0;
   border-radius: 3px;
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   gap: 0;
   overflow: hidden;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
 }
 
 .visual-notes-notelink-titlebar {
@@ -4145,7 +4145,7 @@ input.visual-notes-accent-pop-hex {
   padding: 8px 10px;
   border-bottom: 1px solid var(--background-modifier-border);
   flex-shrink: 0;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
   cursor: grab;
 }
 
@@ -4165,7 +4165,7 @@ input.visual-notes-accent-pop-hex {
   flex: 1;
   font-size: 13px;
   font-weight: 700;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4203,7 +4203,7 @@ input.visual-notes-accent-pop-hex {
   font-size: 13px;
   line-height: 1.5;
   min-height: 0;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
 }
 
 .visual-notes-notelink-preview > * { pointer-events: none; }
@@ -4320,7 +4320,7 @@ input.visual-notes-accent-pop-hex {
   align-items: stretch;
   justify-content: flex-start;
   padding: 0;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
   border: 1px solid var(--background-modifier-border);
   border-radius: 3px;
   overflow: hidden;
@@ -4354,7 +4354,7 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-audio-title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4381,9 +4381,9 @@ input.visual-notes-accent-pop-hex {
   padding: 0;
   border-radius: 3px;
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   overflow: hidden;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
   gap: 0;
   cursor: pointer;
 }
@@ -4416,7 +4416,7 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-bookmark-title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -4557,7 +4557,7 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-tile-ghost .visual-notes-tile {
   outline: 2px dashed var(--interactive-accent);
   outline-offset: 2px;
-  --ib-tile-color: transparent;
+  --visual-notes-tile-color: transparent;
 }
 
 .visual-notes-tile-ghost .visual-notes-tile-icon,
@@ -5039,30 +5039,30 @@ input.visual-notes-accent-pop-hex {
 /* ── Validator fixes ────────────────────────────────────────── */
 
 /* settings.ts: bookmark days input width */
-.ib-bookmark-days-input { width: 70px; }
+.visual-notes-bookmark-days-input { width: 70px; }
 
 /* context-bar.ts: swatch border for light colours */
-.ib-swatch-border-light { box-shadow: inset 0 0 0 1px rgba(0,0,0,0.13); }
+.visual-notes-swatch-border-light { box-shadow: inset 0 0 0 1px rgba(0,0,0,0.13); }
 
 /* text-format-toolbar.ts: format button styles */
-.ib-fmt-bold { font-weight: 700; }
-.ib-fmt-italic { font-style: italic; }
-.ib-fmt-strike { text-decoration: line-through; }
-.ib-fmt-underline { text-decoration: underline; }
+.visual-notes-fmt-bold { font-weight: 700; }
+.visual-notes-fmt-italic { font-style: italic; }
+.visual-notes-fmt-strike { text-decoration: line-through; }
+.visual-notes-fmt-underline { text-decoration: underline; }
 
 /* text-format-toolbar.ts: hidden popover state */
-.ib-invisible { visibility: hidden; }
+.visual-notes-invisible { visibility: hidden; }
 
 /* freeform-view.ts: container host */
-.ib-freeform-host { overflow: hidden; position: relative; }
+.visual-notes-freeform-host { overflow: hidden; position: relative; }
 
 /* freeform-view.ts: cursor classes */
-.ib-cursor-grab { cursor: grab; }
-.ib-cursor-grabbing { cursor: grabbing; }
-.ib-cursor-crosshair { cursor: crosshair; }
+.visual-notes-cursor-grab { cursor: grab; }
+.visual-notes-cursor-grabbing { cursor: grabbing; }
+.visual-notes-cursor-crosshair { cursor: crosshair; }
 
 /* freeform-view.ts: kanban drag ghost no pointer events */
-.ib-no-pointer { pointer-events: none; }
+.visual-notes-no-pointer { pointer-events: none; }
 
 /* freeform-view.ts: SVG connection layers */
 .visual-notes-connections-svg {
@@ -5082,10 +5082,10 @@ input.visual-notes-accent-pop-hex {
 }
 
 /* freeform-view.ts: color probe for resolving CSS variables */
-.ib-color-probe { position: absolute; visibility: hidden; color: var(--text-muted); }
+.visual-notes-color-probe { position: absolute; visibility: hidden; color: var(--text-muted); }
 
 /* freeform-view.ts: modal inputs */
-.ib-modal-text-input {
+.visual-notes-modal-text-input {
   width: 100%;
   margin-bottom: 12px;
   padding: 6px 10px;
@@ -5095,7 +5095,7 @@ input.visual-notes-accent-pop-hex {
   color: var(--text-normal);
   box-sizing: border-box;
 }
-.ib-modal-btn-row {
+.visual-notes-modal-btn-row {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
@@ -5232,7 +5232,7 @@ input.visual-notes-accent-pop-hex {
 /* ── Kanban item color modal: "default/none" swatch ──────────── */
 
 .visual-notes-modal-swatch--none {
-  background: var(--ib-card-bg, #ffffff);
+  background: var(--visual-notes-card-bg, #ffffff);
   border: 1px dashed var(--background-modifier-border);
   position: relative;
 }
@@ -5271,7 +5271,7 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-kanban-board-titlebar .visual-notes-kanban-board-menu-btn { right: 82px; }
 
 .visual-notes-kanban-board-title {
-  font-family: var(--ib-font-display);
+  font-family: var(--visual-notes-font-display);
   font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
@@ -5319,7 +5319,7 @@ input.visual-notes-accent-pop-hex {
   flex-direction: column;
   flex: 1 0 0;
   min-width: 160px;
-  background: var(--ib-column-bg);
+  background: var(--visual-notes-column-bg);
   position: relative;
 }
 .visual-notes-kanban-board-column + .visual-notes-kanban-board-column {
@@ -5412,7 +5412,7 @@ input.visual-notes-accent-pop-hex {
    sibling regardless of DOM order — including the top strip, which is
    just a static flex child. Without its own stacking context the strip
    is invisible on notes no matter where it's inserted in the DOM. */
-.visual-notes-freeform-sticky-card .ib-card-top-strip {
+.visual-notes-freeform-sticky-card .visual-notes-card-top-strip {
   position: relative;
   z-index: 1;
 }
@@ -5468,7 +5468,7 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-bookmark-youtube-title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5523,9 +5523,9 @@ input.visual-notes-accent-pop-hex {
   gap: 0;
   border-radius: 12px;
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   overflow: hidden;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
 }
 
 /* Permanent drag handle — the map itself is fully live (scroll-zoom,
@@ -5561,7 +5561,7 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-map-header-title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5611,9 +5611,9 @@ input.visual-notes-accent-pop-hex {
   gap: 0;
   border-radius: 10px;
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   overflow: hidden;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
 }
 
 .visual-notes-swatch-color-area {
@@ -5627,7 +5627,7 @@ input.visual-notes-accent-pop-hex {
   top: 10px;
   left: 12px;
   right: 12px;
-  font-family: var(--ib-font-display);
+  font-family: var(--visual-notes-font-display);
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -5683,17 +5683,17 @@ input.visual-notes-accent-pop-hex {
   gap: 6px;
   flex-shrink: 0;
   padding: 8px 8px 8px 12px;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
   border-top: 1px solid var(--background-modifier-border);
 }
 
 .visual-notes-swatch-name {
   flex: 1;
   min-width: 0;
-  font-family: var(--ib-font-body);
+  font-family: var(--visual-notes-font-body);
   font-size: 12px;
   font-weight: 500;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5731,9 +5731,9 @@ input.visual-notes-accent-pop-hex {
   gap: 0;
   border-radius: 10px;
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   overflow: hidden;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
 }
 
 .visual-notes-checkers-header {
@@ -5750,12 +5750,12 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-checkers-header:active { cursor: grabbing; }
 
 .visual-notes-checkers-status {
-  font-family: var(--ib-font-display);
+  font-family: var(--visual-notes-font-display);
   font-size: 13px;
   font-weight: 700;
 }
 .visual-notes-checkers-status.is-red   { color: #dc2626; }
-.visual-notes-checkers-status.is-black { color: var(--ib-card-text); }
+.visual-notes-checkers-status.is-black { color: var(--visual-notes-card-text); }
 
 .visual-notes-checkers-reset {
   display: flex;
@@ -5859,8 +5859,8 @@ input.visual-notes-accent-pop-hex {
   justify-content: flex-start;
   border-radius: 10px;
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
-  background: var(--ib-column-bg);
+  box-shadow: var(--visual-notes-shadow-low);
+  background: var(--visual-notes-column-bg);
   overflow: hidden;
   gap: 0;
   padding: 0;
@@ -5885,7 +5885,7 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-freeform-column-card.is-collapsed .visual-notes-column-header { border-bottom: none; }
 
 .visual-notes-column-count {
-  font-family: var(--ib-font-body);
+  font-family: var(--visual-notes-font-body);
   font-size: 12px;
   color: var(--text-muted);
   flex-shrink: 0;
@@ -5942,9 +5942,9 @@ input.visual-notes-accent-pop-hex {
    hole, so give tile children the same card-style backdrop everything
    else in the tray already gets. */
 .visual-notes-column-child.visual-notes-freeform-tile-card {
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   padding: 10px;
   /* Icon-left, name-right row instead of the standalone canvas layout
      (icon above, name centered below) — a grid rather than a flex row so
@@ -6004,19 +6004,19 @@ input.visual-notes-accent-pop-hex {
   z-index: 9999;
   margin: 0;
   cursor: grabbing;
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
 }
 
 .visual-notes-column-drag-ghost.is-tilting {
-  box-shadow: var(--ib-shadow-high);
+  box-shadow: var(--visual-notes-shadow-high);
   will-change: transform;
 }
 
 .visual-notes-column-child.is-child-settling {
-  animation: ib-column-child-settle 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: visual-notes-column-child-settle 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes ib-column-child-settle {
+@keyframes visual-notes-column-child-settle {
   0%   { transform: scale(1.035); }
   60%  { transform: scale(0.99); }
   100% { transform: scale(1); }
@@ -6070,7 +6070,7 @@ input.visual-notes-accent-pop-hex {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
   border-radius: 20px;
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
   font-size: 12px;
   font-weight: 600;
   pointer-events: none;
@@ -6122,7 +6122,7 @@ input.visual-notes-accent-pop-hex {
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 10px;
-  box-shadow: var(--ib-shadow-high);
+  box-shadow: var(--visual-notes-shadow-high);
   z-index: 200;
 }
 
@@ -6188,7 +6188,7 @@ input.visual-notes-accent-pop-hex {
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 10px;
-  box-shadow: var(--ib-shadow-high);
+  box-shadow: var(--visual-notes-shadow-high);
   z-index: 201; /* above the pen picker (200) it was opened from */
   overflow: hidden;
 }
@@ -6309,7 +6309,7 @@ input.visual-notes-accent-pop-hex {
    through fluoro yellow) instead of washing it out — how a real marker
    layers. Where the browser can't blend across the SVG boundary the
    fill-opacity set on the path still gives a translucent marker look. */
-path.ib-highlight-stroke {
+path.visual-notes-highlight-stroke {
   mix-blend-mode: multiply;
 }
 
@@ -6320,15 +6320,15 @@ path.ib-highlight-stroke {
   position: absolute;
   bottom: 16px;
   left: 16px;
-  width: var(--ib-trash-zone-size, 56px);
-  height: var(--ib-trash-zone-size, 56px);
+  width: var(--visual-notes-trash-zone-size, 56px);
+  height: var(--visual-notes-trash-zone-size, 56px);
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   color: var(--text-faint);
   z-index: 10002;
   transition: transform 120ms ease, color 120ms ease, background 120ms ease;
@@ -6354,7 +6354,7 @@ path.ib-highlight-stroke {
    keyboard-less iPad Pencil session has no way to walk back a stroke. */
 .visual-notes-undo-redo-group {
   position: absolute;
-  bottom: calc(16px + var(--ib-trash-zone-size, 56px) + 8px);
+  bottom: calc(16px + var(--visual-notes-trash-zone-size, 56px) + 8px);
   left: 16px;
   display: flex;
   gap: 4px;
@@ -6370,7 +6370,7 @@ path.ib-highlight-stroke {
   border-radius: 8px;
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   color: var(--text-muted);
   cursor: pointer;
   transition: background 80ms ease, color 80ms ease, opacity 80ms ease;
@@ -6437,10 +6437,10 @@ path.ib-highlight-stroke {
 }
 
 .visual-notes-freeform-card.is-settling {
-  animation: ib-card-settle 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: visual-notes-card-settle 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes ib-card-settle {
+@keyframes visual-notes-card-settle {
   0%   { transform: scale(1.03); box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22); }
   60%  { transform: scale(0.985); }
   100% { transform: scale(1); box-shadow: none; }
@@ -6495,7 +6495,7 @@ path.ib-highlight-stroke {
 }
 
 .visual-notes-dataview-title {
-  font-family: var(--ib-font-display);
+  font-family: var(--visual-notes-font-display);
   font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
@@ -6536,8 +6536,8 @@ input.visual-notes-dataview-title-input {
   align-items: stretch;
   border-radius: 10px;
   border: 1px solid var(--background-modifier-border);
-  box-shadow: var(--ib-shadow-low);
-  background: var(--ib-card-bg);
+  box-shadow: var(--visual-notes-shadow-low);
+  background: var(--visual-notes-card-bg);
   overflow: hidden;
   gap: 0;
   padding: 0;
@@ -6649,7 +6649,7 @@ input.visual-notes-calendar-month-input {
 
 .visual-notes-cal-cell:hover {
   transform: translateY(-2px);
-  box-shadow: var(--ib-shadow-low);
+  box-shadow: var(--visual-notes-shadow-low);
   z-index: 2;
 }
 
@@ -6781,9 +6781,9 @@ input.visual-notes-calendar-month-input {
   line-height: 1.3;
   padding: 1px 4px;
   border-radius: 3px;
-  background: color-mix(in srgb, var(--vn-chip-color, var(--interactive-accent)) 20%, var(--ib-card-bg));
+  background: color-mix(in srgb, var(--vn-chip-color, var(--interactive-accent)) 20%, var(--visual-notes-card-bg));
   border-left: 2px solid var(--vn-chip-color, var(--interactive-accent));
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   cursor: grab;
   flex-shrink: 0;
   min-width: 0;
@@ -6835,7 +6835,7 @@ input.visual-notes-calendar-month-input {
   z-index: 10000;
   pointer-events: none;
   opacity: 0.9;
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
 }
 
 .visual-notes-cal-more {
@@ -6929,8 +6929,8 @@ input.visual-notes-calendar-month-input {
   font-size: 10px;
   padding: 1px 7px;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--vn-chip-color, var(--text-faint)) 25%, var(--ib-card-bg));
-  color: var(--ib-card-text);
+  background: color-mix(in srgb, var(--vn-chip-color, var(--text-faint)) 25%, var(--visual-notes-card-bg));
+  color: var(--visual-notes-card-text);
   white-space: nowrap;
 }
 
@@ -6960,7 +6960,7 @@ input.visual-notes-calendar-month-input {
 
 .visual-notes-table-list-label {
   font-size: 12px;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   flex-shrink: 0;
 }
 
@@ -6988,8 +6988,8 @@ input.visual-notes-calendar-month-input {
 .visual-notes-table-gallery-card {
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
-  background: var(--ib-card-bg);
-  box-shadow: var(--ib-shadow-low);
+  background: var(--visual-notes-card-bg);
+  box-shadow: var(--visual-notes-shadow-low);
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
@@ -7006,7 +7006,7 @@ input.visual-notes-calendar-month-input {
 .visual-notes-table-gallery-title {
   font-size: 12px;
   font-weight: 600;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -7097,8 +7097,8 @@ input.visual-notes-calendar-month-input {
 .visual-notes-table-board-rowcard {
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
-  background: var(--ib-card-bg);
-  box-shadow: var(--ib-shadow-low);
+  background: var(--visual-notes-card-bg);
+  box-shadow: var(--visual-notes-shadow-low);
   padding: 6px 8px;
   display: flex;
   flex-direction: column;
@@ -7110,7 +7110,7 @@ input.visual-notes-calendar-month-input {
 
 .visual-notes-table-board-rowlabel {
   font-size: 11px;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
 }
 
 .visual-notes-table-board-rowlabel.is-done { text-decoration: line-through; opacity: 0.55; }
@@ -7129,13 +7129,13 @@ input.visual-notes-calendar-month-input {
   z-index: 10000;
   pointer-events: none;
   opacity: 0.9;
-  box-shadow: var(--ib-shadow-mid);
+  box-shadow: var(--visual-notes-shadow-mid);
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
-  background: var(--ib-card-bg);
+  background: var(--visual-notes-card-bg);
   padding: 6px 8px;
   font-size: 11px;
-  color: var(--ib-card-text);
+  color: var(--visual-notes-card-text);
 }
 
 /* Table calendar view */
@@ -7174,7 +7174,7 @@ input.visual-notes-calendar-month-input {
 
 /* ── Context bar: labelled toggle row (group frame's Background tab) ── */
 
-.ib-ctx-toggle-row {
+.visual-notes-ctx-toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -7184,11 +7184,11 @@ input.visual-notes-calendar-month-input {
   color: var(--text-muted);
 }
 
-.ib-ctx-toggle-label {
-  font-family: var(--ib-font-body);
+.visual-notes-ctx-toggle-label {
+  font-family: var(--visual-notes-font-body);
 }
 
-.ib-ctx-toggle {
+.visual-notes-ctx-toggle {
   position: relative;
   width: 28px;
   height: 16px;
@@ -7199,11 +7199,11 @@ input.visual-notes-calendar-month-input {
   transition: background-color 0.12s ease;
 }
 
-.ib-ctx-toggle.is-on {
+.visual-notes-ctx-toggle.is-on {
   background: var(--interactive-accent);
 }
 
-.ib-ctx-toggle-knob {
+.visual-notes-ctx-toggle-knob {
   position: absolute;
   top: 2px;
   left: 2px;
@@ -7214,6 +7214,6 @@ input.visual-notes-calendar-month-input {
   transition: transform 0.12s ease;
 }
 
-.ib-ctx-toggle.is-on .ib-ctx-toggle-knob {
+.visual-notes-ctx-toggle.is-on .visual-notes-ctx-toggle-knob {
   transform: translateX(12px);
 }

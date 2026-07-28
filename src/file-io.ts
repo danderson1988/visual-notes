@@ -1,8 +1,54 @@
 import { App, Notice, TFile, TFolder } from 'obsidian';
 import { VisualNotesFile } from './file-types';
-import { CanvasData, visualNotesToCanvas, canvasToVisualNotes, isVisualNotesCanvas } from './canvas-format';
+import { CanvasData, visualNotesToCanvas, canvasToVisualNotes, isVisualNotesCanvas, hasLostRootMetadata } from './canvas-format';
 import { migrateLegacyKanbanColumns } from './kanban-migrate';
 import { NamePromptModal } from './tile-modal';
+
+// ── Backups ───────────────────────────────────────────────────
+
+// Written when a file won't parse at all. Never overwritten — the first
+// copy is the one taken closest to whatever broke it.
+const CORRUPT_BAK_SUFFIX = '.bak';
+
+// Written either side of native Canvas touching a board: before a deliberate
+// switch into the native view, and again if we later find it came back with
+// its root metadata stripped. Kept separate from CORRUPT_BAK_SUFFIX so
+// neither can clobber the other.
+export const NATIVE_BAK_SUFFIX = '.native-backup.bak';
+
+// `overwrite: false` keeps the earliest copy (best when the current state is
+// the damaged one); `true` refreshes it (best when the current state is known
+// good and a newer snapshot is strictly more useful).
+async function writeBackup(app: App, path: string, raw: string, overwrite: boolean): Promise<void> {
+  try {
+    const existing = app.vault.getAbstractFileByPath(path);
+    if (existing instanceof TFile) {
+      if (overwrite) await app.vault.modify(existing, raw);
+    } else {
+      await app.vault.create(path, raw);
+    }
+  } catch { /* best effort — never block the open on a failed backup */ }
+}
+
+/**
+ * Snapshots a board before handing it to Obsidian's native Canvas view.
+ * Only snapshots a file that currently reads as a healthy Visual Notes
+ * board, so refreshing an existing backup can never replace a good copy
+ * with an already-stripped one. Returns true if a backup now exists.
+ */
+export async function backupBeforeNativeEdit(app: App, file: TFile): Promise<boolean> {
+  try {
+    const raw = await app.vault.read(file);
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return false;
+    if (hasLostRootMetadata(parsed as CanvasData)) return false; // already damaged
+    if (!isVisualNotesCanvas(parsed as CanvasData)) return false;
+    await writeBackup(app, file.path + NATIVE_BAK_SUFFIX, raw, true);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // ── Read ──────────────────────────────────────────────────────
 
@@ -16,12 +62,21 @@ export async function readBoardFile(app: App, file: TFile): Promise<VisualNotesF
     // Board or by Obsidian's own Canvas / another plugin.
     if (Array.isArray((parsed as Record<string, unknown>).nodes)) {
       const data = parsed as CanvasData;
-      return migrateLegacyKanbanColumns(canvasToVisualNotes(data));
+      const board = migrateLegacyKanbanColumns(canvasToVisualNotes(data));
+      // Root metadata gone but the cards still stashed on their nodes:
+      // native Canvas has rewritten this file. Preserve the damaged state
+      // before anything writes over it, and flag it so the caller can put
+      // the root block back (see canvas-format's hasLostRootMetadata).
+      if (hasLostRootMetadata(data)) {
+        await writeBackup(app, file.path + NATIVE_BAK_SUFFIX, raw, false);
+        board.recoveredFromNativeEdit = true;
+      }
+      return board;
     }
 
     throw new Error('Unrecognized file structure');
   } catch {
-    const backupPath = file.path + '.bak';
+    const backupPath = file.path + CORRUPT_BAK_SUFFIX;
     try {
       if (!app.vault.getAbstractFileByPath(backupPath)) {
         await app.vault.create(backupPath, raw);
@@ -29,14 +84,14 @@ export async function readBoardFile(app: App, file: TFile): Promise<VisualNotesF
     } catch { /* ignore */ }
     new Notice(
       `Visual Notes: Could not read "${file.name}" — it may be corrupted. ` +
-      `A backup was saved as "${file.name}.bak".`,
+      `A backup was saved as "${file.name}${CORRUPT_BAK_SUFFIX}".`,
       8000
     );
     return emptyBoard('grid');
   }
 }
 
-/** True if the given vault file is a JSON Canvas authored by Visual Notes (has our `ib` marker at the root). */
+/** True if the given vault file is a JSON Canvas authored by Visual Notes (carries our `vn` marker, or the legacy `ib` one). */
 export async function isVisualNotesOwnedFile(app: App, file: TFile): Promise<boolean> {
   try {
     const raw = await app.vault.read(file);

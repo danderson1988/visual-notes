@@ -2,6 +2,22 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.0
+
+### Fixed
+- **Boards could be permanently emptied by opening them normally from the file explorer.** Obsidian's built-in Canvas view rebuilds a `.canvas` file from its own model whenever it saves, and that model has no room for the board-level data Visual Notes stores alongside the cards. Because Obsidian's Canvas — not Visual Notes — is what opens a `.canvas` file first, anything that made it save in that split second wiped that data. The board then stopped being recognised as a Visual Notes board at all: it opened as a plain canvas from then on, and the menu option to switch back refused it with "This canvas wasn't created by Visual Notes" — even though every card was still sitting in the file untouched. Kanban boards, to-do lists, sticky notes and note cards all appeared to be gone for good; connections were unaffected, which is what made the cause hard to spot. This was most likely to happen with other canvas plugins installed (Advanced Canvas and similar patch the built-in Canvas view and save as soon as a file loads), but the plugin's own "Toggle native Canvas view" command could trigger it too.
+  - A board in this state is now recognised and repaired automatically the next time you open it — the cards and layout come back, and the file is re-marked so it can't degrade further.
+  - Anything stored only at board level — the saved viewport position, free-floating pen drawings, and archived cards — cannot be recovered once the built-in Canvas view has overwritten it. A copy of the damaged file is saved next to the board as `<board>.canvas.native-backup.bak` so those are still retrievable by hand.
+  - Kanban items are no longer deleted when their board loses its card data. They're preserved untouched instead, matching how the plugin already treats any other content it doesn't recognise.
+  - "Toggle native Canvas view" now takes a backup first and explains what editing over there costs.
+- Note this makes the damage recoverable rather than impossible: the built-in Canvas view still discards board-level data when it saves, so it's best not to edit a Visual Notes board there.
+
+### Changed
+- **Internal rename, with one thing to watch.** The plugin stored its data in `.canvas` files under a key named `ib`, left over from the plugin's original name before it became Visual Notes. That key is now `vn`, and the matching `ib-` prefix on the plugin's CSS class names and theme variables is now `visual-notes-`.
+  - **Existing boards are safe and need no action.** The old key is still read, permanently — boards created by any earlier version open exactly as before and quietly move to the new key the first time you save them.
+  - **If you have a CSS snippet or theme targeting Visual Notes**, anything referring to `--ib-…` variables or `.ib-…` classes needs updating to the `--visual-notes-…` / `.visual-notes-…` equivalents. Everything else is internal and invisible.
+  - **Downgrading below 1.1.0 is not supported** for a board that has been saved by this version: an older build won't recognise the new key and will treat the board as a plain canvas.
+
 ## 1.0.75
 
 ### Added

@@ -308,7 +308,7 @@ export const cardsColumnMethods = {
     // silently breaking the ghost's viewport-fixed positioning. Override it
     // explicitly rather than relying on the stylesheet.
     ghost.setCssStyles({ position: 'fixed', width: `${rect.width}px`, height: `${rect.height}px`, left: `${rect.left}px`, top: `${rect.top}px` });
-    ghost.addClass('ib-no-pointer');
+    ghost.addClass('visual-notes-no-pointer');
     activeDocument.body.appendChild(ghost);
     childEl.addClass('is-dragging');
 

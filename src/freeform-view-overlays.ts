@@ -558,7 +558,7 @@ export const overlaysMethods = {
     tb.addClass(`tb-pos-${this.toolbarPosition}`);
 
     // ── Add panel (slot layer shown when no card is selected) ──
-    const addPanel = tb.createDiv('ib-add-panel');
+    const addPanel = tb.createDiv('visual-notes-add-panel');
 
     // ── Primary buttons ──
     const mkBtn = (label: string, icon: string, tool: string, onClick?: () => void): HTMLElement => {
@@ -586,7 +586,7 @@ export const overlaysMethods = {
           const onMove = (me: PointerEvent) => {
             if (!dragging && Math.hypot(me.clientX - sx, me.clientY - sy) > 8) {
               dragging = true;
-              ghost = activeDocument.body.createDiv('ib-toolbar-drag-ghost');
+              ghost = activeDocument.body.createDiv('visual-notes-toolbar-drag-ghost');
               setIcon(ghost, icon);
             }
             if (ghost) { ghost.style.left = `${me.clientX}px`; ghost.style.top = `${me.clientY}px`; }
@@ -1471,10 +1471,10 @@ export const overlaysMethods = {
         if (card?.kind !== 'sticky' || !el) return;
         this.pushUndo();
         card.topColor = e.hex ?? undefined;
-        let strip = el.querySelector<HTMLElement>('.ib-card-top-strip');
+        let strip = el.querySelector<HTMLElement>('.visual-notes-card-top-strip');
         if (card.topColor) {
           if (!strip) {
-            strip = el.createDiv('ib-card-top-strip');
+            strip = el.createDiv('visual-notes-card-top-strip');
             el.insertBefore(strip, el.querySelector('.visual-notes-sticky-inner'));
           }
           strip.style.backgroundColor = card.topColor;
@@ -1533,7 +1533,7 @@ export const overlaysMethods = {
         if (card?.kind !== 'comment' || !el) return;
         this.pushUndo();
         card.color = e.hex;
-        el.style.setProperty('--ib-comment-accent', e.hex);
+        el.style.setProperty('--visual-notes-comment-accent', e.hex);
         this.scheduleSave();
         break;
       }
@@ -1669,10 +1669,10 @@ export const overlaysMethods = {
         if (card?.kind !== 'kanban-column' || !el) return;
         this.pushUndo();
         card.topColor = e.hex ?? undefined;
-        let strip = el.querySelector<HTMLElement>('.ib-card-top-strip');
+        let strip = el.querySelector<HTMLElement>('.visual-notes-card-top-strip');
         if (card.topColor) {
           if (!strip) {
-            strip = el.createDiv('ib-card-top-strip');
+            strip = el.createDiv('visual-notes-card-top-strip');
             el.insertBefore(strip, el.firstChild);
           }
           strip.style.backgroundColor = card.topColor;

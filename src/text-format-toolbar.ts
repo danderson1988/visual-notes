@@ -88,10 +88,10 @@ export class TextFormatToolbar {
       labelSpan.setText(label);
       btn.addEventListener('click', () => this.applyInlineTag(tag));
     };
-    mkBtn('B', 'strong', 'Bold (⌘B)', 'ib-fmt-bold');
-    mkBtn('I', 'em',     'Italic (⌘I)', 'ib-fmt-italic');
-    mkBtn('S', 's',      'Strikethrough (⌘⇧S)', 'ib-fmt-strike');
-    mkBtn('U', 'u',      'Underline (⌘U)', 'ib-fmt-underline');
+    mkBtn('B', 'strong', 'Bold (⌘B)', 'visual-notes-fmt-bold');
+    mkBtn('I', 'em',     'Italic (⌘I)', 'visual-notes-fmt-italic');
+    mkBtn('S', 's',      'Strikethrough (⌘⇧S)', 'visual-notes-fmt-strike');
+    mkBtn('U', 'u',      'Underline (⌘U)', 'visual-notes-fmt-underline');
   }
 
   // ── Inline tag toggle (bold, italic, strikethrough, underline) ─
@@ -175,7 +175,7 @@ export class TextFormatToolbar {
   // ── Positioning (above the actual selected text) ───────────────
 
   private position(pop: HTMLElement): void {
-    pop.addClass('ib-invisible');
+    pop.addClass('visual-notes-invisible');
     window.requestAnimationFrame(() => {
       if (!this.popover || !this.savedRange) return;
 
@@ -206,7 +206,7 @@ export class TextFormatToolbar {
 
       pop.style.top  = `${top}px`;
       pop.style.left = `${left}px`;
-      pop.removeClass('ib-invisible');
+      pop.removeClass('visual-notes-invisible');
     });
   }
 

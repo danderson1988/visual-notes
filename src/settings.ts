@@ -23,7 +23,7 @@ class BoardPickerModal extends FuzzySuggestModal<TFile> {
     // Lists every .canvas file. FuzzySuggestModal requires a synchronous
     // item list, so this can't filter out plain native canvases by content
     // here (that check is async — see isVisualNotesOwnedFile in file-io.ts).
-    // Picking a non-Icon-Board canvas as the default board is harmless:
+    // Picking a non-Visual-Notes canvas as the default board is harmless:
     // opening it will simply hand off to Obsidian's native Canvas view
     // instead of Visual Notes' UI.
     return this.app.vault.getAllLoadedFiles()
@@ -501,7 +501,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           });
         text.inputEl.type = 'number';
         text.inputEl.min = '1';
-        text.inputEl.addClass('ib-bookmark-days-input');
+        text.inputEl.addClass('visual-notes-bookmark-days-input');
       });
   }
 

@@ -170,7 +170,7 @@ export const cardsBasicMethods = {
     if (card.shape === 'round') shapeFill.addClass('is-shape-round');
 
     if (card.topColor) {
-      const strip = el.createDiv('ib-card-top-strip');
+      const strip = el.createDiv('visual-notes-card-top-strip');
       strip.style.backgroundColor = card.topColor;
     }
     const inner = el.createDiv('visual-notes-sticky-inner');
@@ -181,8 +181,8 @@ export const cardsBasicMethods = {
     // white theme text on a pale yellow sticky was reported as barely
     // readable. Auto-contrast against the card's own background unless the
     // user picked an explicit text color; skipped for theme-driven
-    // defaults (e.g. a blank Note's `var(--ib-card-bg)`), which already
-    // pair correctly with the CSS-level --ib-card-text fallback.
+    // defaults (e.g. a blank Note's `var(--visual-notes-card-bg)`), which already
+    // pair correctly with the CSS-level --visual-notes-card-text fallback.
     const autoTextColor = card.textColor ?? (isHexColor(card.color) ? contrastColor(card.color) : undefined);
     if (autoTextColor) textEl.style.color = autoTextColor;
     if (card.textAlign) textEl.style.textAlign = card.textAlign;
@@ -518,7 +518,7 @@ export const cardsBasicMethods = {
     ghost.style.width = `${itemRect.width}px`;
     ghost.style.left = `${itemRect.left}px`;
     ghost.style.top = `${itemRect.top}px`;
-    ghost.addClass('ib-no-pointer');
+    ghost.addClass('visual-notes-no-pointer');
     activeDocument.body.appendChild(ghost);
 
     itemEl.addClass('is-dragging');
@@ -695,7 +695,7 @@ export const cardsBasicMethods = {
   renderCommentContent(this: FreeformRenderer, el: HTMLElement, card: CommentCard): void {
     el.addClass('visual-notes-freeform-comment-card');
     el.toggleClass('is-resolved', !!card.resolved);
-    el.style.setProperty('--ib-comment-accent', card.color ?? '#eab308');
+    el.style.setProperty('--visual-notes-comment-accent', card.color ?? '#eab308');
 
     const header = el.createDiv('visual-notes-comment-header');
     const avatar = header.createDiv('visual-notes-comment-avatar');
@@ -1241,8 +1241,8 @@ export const cardsBasicMethods = {
     // primary)' default) instead of a hardcoded near-white hex — the
     // hardcoded value stayed near-white in a dark theme too, which read as
     // "white background, white text" once paired with the dark theme's
-    // own (light) --ib-card-text.
-    const card: StickyCard = { id: crypto.randomUUID(), kind: 'sticky', x, y, w: STICKY_DEFAULT_W, z: this.nextZ(), text: '', color: 'var(--ib-card-bg)', blank: true };
+    // own (light) --visual-notes-card-text.
+    const card: StickyCard = { id: crypto.randomUUID(), kind: 'sticky', x, y, w: STICKY_DEFAULT_W, z: this.nextZ(), text: '', color: 'var(--visual-notes-card-bg)', blank: true };
     this.pushUndo(); this.board.cards.push(card); void this.saveNow();
     const el = this.createCardEl(card);
     this.selection.select(card.id); this.refreshSelectionVisuals();

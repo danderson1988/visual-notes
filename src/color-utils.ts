@@ -37,7 +37,7 @@ export function isDarkTheme(): boolean {
 
 /**
  * True for a plain 6-digit hex color ("#FDE68A"), false for anything else —
- * in particular a CSS var()/keyword reference like "var(--ib-card-bg)",
+ * in particular a CSS var()/keyword reference like "var(--visual-notes-card-bg)",
  * which isDark()/contrastColor() can't meaningfully evaluate (they'd just
  * parseInt() garbage out of it). Callers use this to skip per-card contrast
  * computation for theme-driven default colors and fall back to the

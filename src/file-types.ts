@@ -9,7 +9,7 @@ export interface VisualNotesFile {
   connections: Connection[];  // empty for grid; freeform only
   drawings: DrawingStroke[];  // empty for grid; freeform only — free-floating pen ink, not bound to any card
   // Trello-style archive: hidden from the canvas but recoverable. Stashed
-  // in the file's ib metadata (not as canvas nodes) so archived cards
+  // in the file's `vn` metadata (not as canvas nodes) so archived cards
   // don't show up in Obsidian's native Canvas view either.
   archived?: Card[];
 
@@ -19,6 +19,12 @@ export interface VisualNotesFile {
   // silently deleted. See canvas-format.ts.
   foreignNodes?: import('./canvas-format').CanvasNode[];
   foreignEdges?: import('./canvas-format').CanvasEdge[];
+
+  // Runtime-only, never serialized (visualNotesToCanvas doesn't emit it):
+  // set by readBoardFile when this board came back off disk with its root
+  // metadata stripped by native Canvas, so the view knows to write the root
+  // block straight back out and tell the user what was recovered.
+  recoveredFromNativeEdit?: boolean;
 }
 
 // ── Drawing (free-floating pen ink) ─────────────────────────────

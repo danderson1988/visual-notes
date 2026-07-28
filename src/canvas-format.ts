@@ -13,20 +13,23 @@
 //      (including Obsidian's own built-in Canvas view) can open the file and
 //      see something sensible — a rendered checklist, a linked note, an
 //      embedded image, a playable audio file, and so on.
-//   2. Additionally stash each card's full original data on an `ib` key on
+//   2. Additionally stash each card's full original data on a `vn` key on
 //      its node (the spec explicitly allows arbitrary extra keys for
 //      forward-compatibility). When Visual Notes itself opens the file, it
-//      reads `ib` back for full fidelity — kanban WIP limits, checklist
+//      reads `vn` back for full fidelity — kanban WIP limits, checklist
 //      headers, sticky text-color spans, connection arrowhead style, etc.
+//      Boards written before the plugin was renamed off "Icon Board" use `ib`
+//      for this instead; that spelling is still read, never written. See
+//      META_KEY / LEGACY_META_KEY below.
 //   3. NEVER destroy content we don't understand. Any node or edge with no
-//      `ib` tag that Visual Notes can't confidently round-trip is preserved
+//      `vn` tag that Visual Notes can't confidently round-trip is preserved
 //      byte-for-byte in `VisualNotesFile.foreignNodes` / `foreignEdges` and
 //      re-emitted unchanged on save. This matters because a user (or another
 //      plugin) may add plain native content directly in Obsidian's Canvas
 //      view — Visual Notes must not silently delete it next time it saves.
 //
-// Known v1 limitation: if a foreign tool edits the *native* projection of an
-// `ib`-tagged node (e.g. someone hand-edits the markdown text of a checklist
+// Known v1 limitation: if a foreign tool edits the *native* projection of a
+// `vn`-tagged node (e.g. someone hand-edits the markdown text of a checklist
 // node in native Canvas), Visual Notes does a best-effort one-way patch of the
 // simple text-bearing fields back into the structured card (see
 // `reconcileNativeEdits` below) but does not attempt a full markdown parse
@@ -48,6 +51,23 @@ import { nearestColorName } from './named-colors';
 export type CanvasColor = string; // hex "#RRGGBB" or a preset "1".."6"
 export type CanvasEdgeSide = 'top' | 'right' | 'bottom' | 'left';
 
+// The extra key Visual Notes stashes its own data under, on the root object
+// and on each node/edge. The spec explicitly allows arbitrary extra keys.
+//
+// `ib` is the original name, from before the plugin was renamed off "Icon
+// Board". It is still READ so every board written by an earlier version keeps
+// opening exactly as it did, but it is never written again — a board moves to
+// `vn` the first time it's saved. Removing the legacy read would disown every
+// board authored before this version, so it stays permanently.
+export const META_KEY = 'vn';
+export const LEGACY_META_KEY = 'ib';
+
+/** Reads the Visual Notes stash off a node/edge/root object, new key first. */
+function readStash(o: { vn?: unknown; ib?: unknown } | null | undefined): unknown {
+  if (!o) return undefined;
+  return o.vn ?? o.ib;
+}
+
 export interface CanvasNodeBase {
   id: string;
   x: number;
@@ -55,7 +75,8 @@ export interface CanvasNodeBase {
   width: number;
   height: number;
   color?: CanvasColor;
-  ib?: unknown; // Visual Notes's stashed rich card data (extra key; spec-legal)
+  vn?: unknown; // Visual Notes' stashed rich card data (extra key; spec-legal)
+  ib?: unknown; // legacy spelling of `vn` — read, never written
   [key: string]: unknown;
 }
 
@@ -76,35 +97,77 @@ export interface CanvasEdge {
   toSide?: CanvasEdgeSide;
   color?: CanvasColor;
   label?: string;
-  ib?: unknown; // Visual Notes's stashed connection style data
+  vn?: unknown; // Visual Notes' stashed connection style data
+  ib?: unknown; // legacy spelling of `vn` — read, never written
   [key: string]: unknown;
+}
+
+// Visual Notes' file-level metadata (viewport, layout mode, dotsHidden).
+// Root-level extra keys are spec-legal the same way node/edge extras are.
+export interface BoardMeta {
+  version: number; layout: 'grid' | 'freeform'; dotsHidden?: boolean;
+  viewport?: { x: number; y: number; zoom: number }; drawings?: DrawingStroke[];
+  // Connections with a free (non-card) end at either side — the JSON
+  // Canvas edge spec requires both fromNode/toNode to reference real
+  // nodes, so these can't become edges and are stashed here instead,
+  // same idea as `drawings`.
+  freeLines?: Connection[];
+  // Archived cards — deliberately NOT emitted as nodes so they stay
+  // hidden in native Canvas too; fully recoverable from here.
+  archived?: Card[];
 }
 
 export interface CanvasData {
   nodes: CanvasNode[];
   edges: CanvasEdge[];
-  // Visual Notes's file-level metadata (viewport, layout mode, dotsHidden).
-  // Root-level extra keys are spec-legal the same way node/edge extras are.
-  ib?: {
-    version: number; layout: 'grid' | 'freeform'; dotsHidden?: boolean;
-    viewport?: { x: number; y: number; zoom: number }; drawings?: DrawingStroke[];
-    // Connections with a free (non-card) end at either side — the JSON
-    // Canvas edge spec requires both fromNode/toNode to reference real
-    // nodes, so these can't become edges and are stashed here instead,
-    // same idea as `drawings`.
-    freeLines?: Connection[];
-    // Archived cards — deliberately NOT emitted as nodes so they stay
-    // hidden in native Canvas too; fully recoverable from here.
-    archived?: Card[];
-  };
+  vn?: BoardMeta;
+  ib?: BoardMeta; // legacy spelling of `vn` — read, never written
   [key: string]: unknown;
 }
 
-export const IB_FORMAT_VERSION = 1;
+export const VN_FORMAT_VERSION = 1;
 
-/** True if this JSON was authored (at some point) by Visual Notes. */
+/** The root metadata block — layout, viewport, drawings, archive. */
+function hasRootMarker(data: CanvasData): boolean {
+  const meta = readStash(data);
+  return !!meta && typeof meta === 'object' && typeof (meta as { version?: unknown }).version === 'number';
+}
+
+/** The per-node half of the marker: at least one node with a stashed card. */
+function hasNodeMarker(data: CanvasData): boolean {
+  return (data.nodes ?? []).some(n => {
+    const stash = readStash(n);
+    return !!stash && typeof stash === 'object' && typeof (stash as { kind?: unknown }).kind === 'string';
+  });
+}
+
+/**
+ * True if this JSON was authored (at some point) by Visual Notes.
+ *
+ * Deliberately accepts EITHER marker. Obsidian's native Canvas rebuilds a
+ * file from its own model whenever it saves, and that model has no room for
+ * root-level extra keys — so a board that native Canvas has written once
+ * comes back with its root `vn` gone while the per-node stashes survive
+ * (those ride along in Obsidian's own `unknownData` passthrough). Requiring
+ * the root marker meant such a board was disowned permanently: the file-open
+ * takeover skipped it, so it opened natively forever, and even the manual
+ * switch refused it — with every card still sitting intact in the file.
+ * Recognising the node-level marker is what makes that recoverable; see
+ * hasLostRootMetadata for the repair.
+ */
 export function isVisualNotesCanvas(data: CanvasData): boolean {
-  return !!data.ib && typeof data.ib === 'object' && typeof (data.ib as { version?: unknown }).version === 'number';
+  return hasRootMarker(data) || hasNodeMarker(data);
+}
+
+/**
+ * True for a board whose root `vn` block is gone but whose per-node stashes
+ * remain — the signature of native Canvas having re-serialized it. The cards
+ * survive; layout, viewport, dot-grid, free-floating drawings and the whole
+ * archive do not, since those live only at the root. Callers should back the
+ * file up and write it straight back out to restore the root block.
+ */
+export function hasLostRootMetadata(data: CanvasData): boolean {
+  return !hasRootMarker(data) && hasNodeMarker(data);
 }
 
 // Sub-nodes synthesized for kanban board content carry structured ids so we
@@ -118,6 +181,10 @@ const isKanbanItemNodeId = (id: string) => id.includes('__item__') || id.include
 
 const kanbanBoardHeaderNodeId = (boardId: string, columnId: string) => `${boardId}::kbhdr::${columnId}`;
 const kanbanBoardItemNodeId = (boardId: string, columnId: string, itemId: string) => `${boardId}::kbitem::${columnId}::${itemId}`;
+
+// The top-level card a kanban sub-node belongs to, from its id alone.
+const kanbanOwnerId = (id: string): string | null =>
+  id.includes('__item__') ? id.split('__item__')[0] : parseKanbanBoardNodeId(id)?.boardId ?? null;
 
 function parseKanbanBoardNodeId(id: string): { boardId: string; columnId: string; itemId: string | null } | null {
   let m = id.match(/^(.+)::kbitem::(.+)::(.+)$/);
@@ -174,8 +241,8 @@ export function visualNotesToCanvas(board: VisualNotesFile): CanvasData {
   return {
     nodes,
     edges,
-    ib: {
-      version: IB_FORMAT_VERSION,
+    vn: {
+      version: VN_FORMAT_VERSION,
       layout: board.layout,
       dotsHidden: board.dotsHidden,
       viewport: board.viewport,
@@ -191,10 +258,10 @@ function baseRect(card: Card): { x: number; y: number; w: number; h: number } {
   return { x: card.x ?? 0, y: card.y ?? 0, w: card.w ?? d.w, h: card.h ?? d.h };
 }
 
-// Strip positional fields before stashing a card in `ib` — position already
+// Strip positional fields before stashing a card in `vn` — position already
 // lives at the top level of the node, and we don't want two sources of truth
 // that can silently drift apart. z is deliberately NOT stripped here: unlike
-// x/y/w/h it has no top-level equivalent in the JSON Canvas spec, so `ib` is
+// x/y/w/h it has no top-level equivalent in the JSON Canvas spec, so `vn` is
 // the only place it can survive a round trip.
 function stashable<T extends Card>(card: T): T {
   const { x: _x, y: _y, w: _w, h: _h, ...rest } = card;
@@ -209,67 +276,67 @@ function cardToNodes(card: Card): CanvasNode[] {
     case 'tile': {
       const t = card;
       if (t.target.kind === 'folder') {
-        return [{ ...base, type: 'text', text: `📁 **${t.label}**${t.subtitle ? `\n${t.subtitle}` : ''}`, color: t.color, ib: stashable(t) }];
+        return [{ ...base, type: 'text', text: `📁 **${t.label}**${t.subtitle ? `\n${t.subtitle}` : ''}`, color: t.color, vn: stashable(t) }];
       }
-      return [{ ...base, type: 'file', file: t.target.path, color: t.color, ib: stashable(t) }];
+      return [{ ...base, type: 'file', file: t.target.path, color: t.color, vn: stashable(t) }];
     }
 
     case 'sticky': {
       const s = card;
-      return [{ ...base, type: 'text', text: s.text, color: s.color, ib: stashable(s) }];
+      return [{ ...base, type: 'text', text: s.text, color: s.color, vn: stashable(s) }];
     }
 
     case 'checklist': {
       const c = card;
-      return [{ ...base, type: 'text', text: checklistToMarkdown(c), color: c.color, ib: stashable(c) }];
+      return [{ ...base, type: 'text', text: checklistToMarkdown(c), color: c.color, vn: stashable(c) }];
     }
 
     case 'comment': {
       const c = card;
-      return [{ ...base, type: 'text', text: commentToMarkdown(c), color: c.color, ib: stashable(c) }];
+      return [{ ...base, type: 'text', text: commentToMarkdown(c), color: c.color, vn: stashable(c) }];
     }
 
     case 'table': {
       const t = card;
-      return [{ ...base, type: 'text', text: tableToMarkdown(t), color: t.color, ib: stashable(t) }];
+      return [{ ...base, type: 'text', text: tableToMarkdown(t), color: t.color, vn: stashable(t) }];
     }
 
     case 'image': {
       const img = card;
       if (img.source.type === 'external') {
-        return [{ ...base, type: 'link', url: img.source.url, ib: stashable(img) }];
+        return [{ ...base, type: 'link', url: img.source.url, vn: stashable(img) }];
       }
-      return [{ ...base, type: 'file', file: img.source.path, ib: stashable(img) }];
+      return [{ ...base, type: 'file', file: img.source.path, vn: stashable(img) }];
     }
 
     case 'audio': {
       const a = card;
-      return [{ ...base, type: 'file', file: a.source.path, ib: stashable(a) }];
+      return [{ ...base, type: 'file', file: a.source.path, vn: stashable(a) }];
     }
 
     case 'note-link': {
       const n = card;
-      return [{ ...base, type: 'file', file: n.path, ib: stashable(n) }];
+      return [{ ...base, type: 'file', file: n.path, vn: stashable(n) }];
     }
 
     case 'bookmark': {
       const b = card;
-      return [{ ...base, type: 'link', url: b.url, ib: stashable(b) }];
+      return [{ ...base, type: 'link', url: b.url, vn: stashable(b) }];
     }
 
     case 'map': {
       const m = card;
-      return [{ ...base, type: 'link', url: m.url, ib: stashable(m) }];
+      return [{ ...base, type: 'link', url: m.url, vn: stashable(m) }];
     }
 
     case 'swatch': {
       const s = card;
-      return [{ ...base, type: 'text', text: `${s.color.toUpperCase()} — ${nearestColorName(s.color)}`, color: s.color, ib: stashable(s) }];
+      return [{ ...base, type: 'text', text: `${s.color.toUpperCase()} — ${nearestColorName(s.color)}`, color: s.color, vn: stashable(s) }];
     }
 
     case 'file': {
       const f = card;
-      return [{ ...base, type: 'file', file: f.path, ib: stashable(f) }];
+      return [{ ...base, type: 'file', file: f.path, vn: stashable(f) }];
     }
 
     case 'callout': {
@@ -277,15 +344,15 @@ function cardToNodes(card: Card): CanvasNode[] {
       // Obsidian callout markdown so native Canvas renders it as a proper
       // callout block rather than plain text.
       const body = c.text.split('\n').map(l => `> ${l}`).join('\n');
-      return [{ ...base, type: 'text', text: `> [!note] ${c.icon ?? '💡'}\n${body}`, color: c.color, ib: stashable(c) }];
+      return [{ ...base, type: 'text', text: `> [!note] ${c.icon ?? '💡'}\n${body}`, color: c.color, vn: stashable(c) }];
     }
 
     case 'group': {
       // This is a 1:1 match with the JSON Canvas spec's own group node —
       // native Canvas renders and lets you drag/resize this exactly like
-      // one of its own groups, no ib fallback needed for the visuals.
+      // one of its own groups, no vn fallback needed for the visuals.
       const g = card;
-      const group: CanvasGroupNode = { ...base, type: 'group', label: g.label, color: g.color, ib: stashable(g) };
+      const group: CanvasGroupNode = { ...base, type: 'group', label: g.label, color: g.color, vn: stashable(g) };
       return [group];
     }
 
@@ -293,7 +360,7 @@ function cardToNodes(card: Card): CanvasNode[] {
       const k = card;
       const group: CanvasGroupNode = {
         ...base, type: 'group', label: k.titleHidden ? undefined : k.title,
-        color: k.topColor ?? k.color, ib: stashable(k),
+        color: k.topColor ?? k.color, vn: stashable(k),
       };
       const itemNodes = layoutKanbanItems(k, x, y, w, h);
       return [group, ...itemNodes];
@@ -302,7 +369,7 @@ function cardToNodes(card: Card): CanvasNode[] {
     case 'kanban-board': {
       const b = card;
       const group: CanvasGroupNode = {
-        ...base, type: 'group', label: b.titleHidden ? undefined : b.title, ib: stashable(b),
+        ...base, type: 'group', label: b.titleHidden ? undefined : b.title, vn: stashable(b),
       };
       return [group, ...layoutKanbanBoard(b, x, y, w, h)];
     }
@@ -310,28 +377,28 @@ function cardToNodes(card: Card): CanvasNode[] {
     case 'column': {
       // v1: no per-child native-canvas projection (unlike kanban-board's
       // header/item text nodes) — just a labeled group, with the full
-      // children array preserved in `ib`. Opening this in native Canvas
+      // children array preserved in `vn`. Opening this in native Canvas
       // shows an empty labeled box rather than a degraded child preview;
       // Column Board's own view still renders every child in full.
       const col = card;
       const group: CanvasGroupNode = {
         ...base, type: 'group', label: col.titleHidden ? undefined : col.title,
-        color: col.color, ib: stashable(col),
+        color: col.color, vn: stashable(col),
       };
       return [group];
     }
 
     // Calendar is a pure view over other cards' data — there are no items
     // of its own to project, so native Canvas just gets a placeholder text
-    // node and the view config rides along in `ib`.
+    // node and the view config rides along in `vn`.
     case 'calendar': {
       const c = card;
-      return [{ ...base, type: 'text', text: `📅 **${c.title ?? 'Calendar'}**\n*(Visual Notes calendar view)*`, ib: stashable(c) }];
+      return [{ ...base, type: 'text', text: `📅 **${c.title ?? 'Calendar'}**\n*(Visual Notes calendar view)*`, vn: stashable(c) }];
     }
 
     case 'checkers': {
       const c = card;
-      return [{ ...base, type: 'text', text: checkersToMarkdown(c), ib: stashable(c) }];
+      return [{ ...base, type: 'text', text: checkersToMarkdown(c), vn: stashable(c) }];
     }
   }
 }
@@ -388,7 +455,7 @@ function layoutKanbanBoard(b: KanbanBoardCard, gx: number, gy: number, gw: numbe
         x: cx, y: itemsStartY + ii * (itemH + 8),
         width: colW, height: itemH,
         text: item.done ? `- [x] ${item.text}` : `- [ ] ${item.text}`,
-        ib: item,
+        vn: item,
       });
     });
   });
@@ -442,7 +509,7 @@ function layoutKanbanItems(k: KanbanColumnCard, gx: number, gy: number, gw: numb
       width: Math.max(60, gw - pad * 2),
       height: itemH,
       text: item.done ? `- [x] ${item.text}` : `- [ ] ${item.text}`,
-      ib: item,
+      vn: item,
     });
   });
   return nodes;
@@ -450,7 +517,7 @@ function layoutKanbanItems(k: KanbanColumnCard, gx: number, gy: number, gw: numb
 
 // Only ever called for connections with both ends card-anchored (see the
 // fromCardId/toCardId filter in visualNotesToCanvas) — free-point ends can't
-// become a spec-legal edge and are stashed in ib.freeLines instead.
+// become a spec-legal edge and are stashed in vn.freeLines instead.
 function connectionToEdge(conn: Connection): CanvasEdge {
   const { fromCardId: _f, toCardId: _t, color: _c, label: _l, id: _id, ...rest } = conn;
   return {
@@ -459,13 +526,13 @@ function connectionToEdge(conn: Connection): CanvasEdge {
     toNode: conn.toCardId!,
     // Spec-standard side hints, so a pinned connection still leaves/enters
     // the right edge in any other JSON Canvas tool. The exact position
-    // along that side (our `t`) has no spec equivalent and rides in `ib`
+    // along that side (our `t`) has no spec equivalent and rides in `vn`
     // with everything else — other tools just use their own edge midpoint.
     fromSide: anchorToEdgeSide(conn.fromAnchor),
     toSide: anchorToEdgeSide(conn.toAnchor),
     color: conn.color,
     label: conn.label,
-    ib: rest, // routing, elbowOrientation, style, arrowhead, thickness, from/toAnchor
+    vn: rest, // routing, elbowOrientation, style, arrowhead, thickness, from/toAnchor
   };
 }
 
@@ -481,7 +548,7 @@ function anchorToEdgeSide(anchor: ConnectionAnchor | undefined): CanvasEdgeSide 
 }
 
 /**
- * An edge end's anchor, preferring our own `ib` record (which carries the
+ * An edge end's anchor, preferring our own `vn` record (which carries the
  * position along the side) and falling back to the spec's `fromSide`/
  * `toSide`. The fallback is what makes a connection drawn in Obsidian's
  * native Canvas — or any other JSON Canvas editor — arrive here already
@@ -506,17 +573,35 @@ export function canvasToVisualNotes(data: CanvasData): VisualNotesFile {
   // id of the top-level card that owns them.
   for (const node of data.nodes) {
     if (!isKanbanItemNodeId(node.id)) continue;
-    const ownerId = node.id.includes('__item__')
-      ? node.id.split('__item__')[0]
-      : parseKanbanBoardNodeId(node.id)?.boardId ?? null;
+    const ownerId = kanbanOwnerId(node.id);
     if (!ownerId) continue;
     const list = kanbanSubNodesByCardId.get(ownerId) ?? [];
     list.push(node);
     kanbanSubNodesByCardId.set(ownerId, list);
   }
 
+  // Which owners will actually be rebuilt from their own `vn` stash — only
+  // those can absorb their sub-nodes back into a card.
+  const reboundOwners = new Set<string>();
   for (const node of data.nodes) {
-    if (isKanbanItemNodeId(node.id)) continue; // handled via their parent group
+    if (isKanbanItemNodeId(node.id)) continue;
+    const kind = (readStash(node) as { kind?: unknown } | undefined)?.kind;
+    if (kind === 'kanban-board' || kind === 'kanban-column') reboundOwners.add(node.id);
+  }
+
+  for (const node of data.nodes) {
+    if (isKanbanItemNodeId(node.id)) {
+      // Normally these are pure projections of data held in the parent
+      // card's `vn`, so dropping them here is right — the parent re-emits
+      // them on save. But if the parent lost its stash (native Canvas
+      // rewrote the file, or the board was assembled by hand) there is
+      // nothing left to rebuild them from, and skipping them would delete
+      // every kanban item on the board the next time we saved. Keep them
+      // verbatim instead, like any other node we can't interpret.
+      const owner = kanbanOwnerId(node.id);
+      if (!owner || !reboundOwners.has(owner)) foreignNodes.push(node);
+      continue;
+    }
 
     const card = nodeToCard(node, kanbanSubNodesByCardId.get(node.id));
     if (card) cards.push(card);
@@ -536,8 +621,8 @@ export function canvasToVisualNotes(data: CanvasData): VisualNotesFile {
     }
   }
 
-  const meta = data.ib;
-  // Free-point-ended connections round-trip through ib.freeLines (see
+  const meta = readStash(data) as BoardMeta | undefined;
+  // Free-point-ended connections round-trip through vn.freeLines (see
   // visualNotesToCanvas) rather than as edges — merge them back in. Drop any
   // whose surviving end no longer references a real card (the card was
   // deleted by something that doesn't know about freeLines).
@@ -564,8 +649,9 @@ export function canvasToVisualNotes(data: CanvasData): VisualNotesFile {
 function nodeToCard(node: CanvasNode, itemNodes?: CanvasNode[]): Card | null {
   const pos = { x: node.x, y: node.y, w: node.width, h: node.height };
 
-  if (node.ib && typeof node.ib === 'object') {
-    const card = reconcileNativeEdits({ ...(node.ib as Card), id: node.id, ...pos }, node);
+  const stash = readStash(node);
+  if (stash && typeof stash === 'object') {
+    const card = reconcileNativeEdits({ ...(stash as Card), id: node.id, ...pos }, node);
     if (card.kind === 'kanban-column' && itemNodes) {
       card.items = reconcileKanbanItemsGeneric(card.items, itemNodes, id => id.split('__item__')[1] ?? null);
     }
@@ -676,21 +762,21 @@ function reconcileKanbanItemsGeneric(
 }
 
 function edgeToConnection(edge: CanvasEdge): Connection | null {
-  const ib = edge.ib as Partial<Connection> | undefined;
+  const stash = readStash(edge) as Partial<Connection> | undefined;
   return {
     id: edge.id,
     fromCardId: edge.fromNode,
     toCardId: edge.toNode,
-    fromAnchor: edgeSideToAnchor(ib?.fromAnchor, edge.fromSide),
-    toAnchor: edgeSideToAnchor(ib?.toAnchor, edge.toSide),
-    color: edge.color ?? ib?.color ?? '#6b7280',
-    label: edge.label ?? ib?.label,
-    labelSize: ib?.labelSize,
-    routing: ib?.routing ?? 'straight',
-    elbowOrientation: ib?.elbowOrientation,
-    bend: ib?.bend,
-    style: ib?.style ?? 'solid',
-    arrowhead: ib?.arrowhead ?? 'end',
-    thickness: ib?.thickness ?? 2,
+    fromAnchor: edgeSideToAnchor(stash?.fromAnchor, edge.fromSide),
+    toAnchor: edgeSideToAnchor(stash?.toAnchor, edge.toSide),
+    color: edge.color ?? stash?.color ?? '#6b7280',
+    label: edge.label ?? stash?.label,
+    labelSize: stash?.labelSize,
+    routing: stash?.routing ?? 'straight',
+    elbowOrientation: stash?.elbowOrientation,
+    bend: stash?.bend,
+    style: stash?.style ?? 'solid',
+    arrowhead: stash?.arrowhead ?? 'end',
+    thickness: stash?.thickness ?? 2,
   };
 }
