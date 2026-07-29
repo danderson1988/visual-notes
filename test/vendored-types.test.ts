@@ -28,12 +28,15 @@ describe('vendored Obsidian API typings', () => {
     expect(existsSync(VENDORED), `${VENDORED} is missing — tsconfig paths resolves the API from it`).toBe(true);
   });
 
-  it('matches the installed obsidian devDependency exactly', () => {
+  it('matches the installed obsidian devDependency', () => {
     expect(existsSync(UPSTREAM), 'obsidian devDependency not installed — run npm ci').toBe(true);
-    const vendored = readFileSync(VENDORED);
-    const upstream = readFileSync(UPSTREAM);
+    // Line endings are normalised before comparing. .gitattributes marks the
+    // vendored file `-text` so it stays LF like the npm tarball, but a
+    // contributor's git config shouldn't be able to turn a checkout into a
+    // test failure — what matters here is the declarations, not the bytes.
+    const norm = (p: string) => readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
     expect(
-      vendored.equals(upstream),
+      norm(VENDORED) === norm(UPSTREAM),
       'types/obsidian.d.ts has drifted from node_modules/obsidian/obsidian.d.ts. ' +
       'Because tsconfig `paths` resolves the API from the committed copy, the build is ' +
       'compiling against the stale one. Run: npm run sync-obsidian-types',

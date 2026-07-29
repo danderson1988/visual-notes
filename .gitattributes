@@ -1,0 +1,6 @@
+# The vendored Obsidian API typings are compared byte-for-byte against the
+# copy npm installs (see test/vendored-types.test.ts), and the npm tarball
+# ships LF. Without this, a clone on Windows with core.autocrlf=true would
+# check the file out as CRLF and the comparison would fail for reasons that
+# have nothing to do with the typings having changed.
+types/obsidian.d.ts -text
