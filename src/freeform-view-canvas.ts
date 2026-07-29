@@ -25,6 +25,7 @@ import {
   isGoogleMapsUrl,
 } from './thumbnail-utils';
 import { TileModal } from './tile-modal';
+import { toggleYouTubePlayback } from './freeform-view-cards-media';
 import { snap } from './canvas/snap';
 import {
   applyWheelZoom, applyPinchZoom,
@@ -944,6 +945,13 @@ export const canvasMethods = {
 
       let dragMoved = false;
 
+      // A YouTube card's drag overlay can't detect its own click: the drag
+      // path below takes pointer capture on `el`, which retargets the rest
+      // of the gesture (the compatibility `click` included) at the capturing
+      // element, so nothing on the overlay ever sees it. Noted here and acted
+      // on in onUp, once it's known whether this turned into a drag.
+      const onYouTubeOverlay = !!target.closest('.visual-notes-bookmark-youtube-overlay');
+
       if (this.connectMode) {
         e.stopPropagation(); e.preventDefault();
         if (!this.connectSourceId) {
@@ -1185,6 +1193,9 @@ export const canvasMethods = {
         // on a normal canvas drop.
         const absorbing = !!(dragMoved && hoveredCardId) || trashing;
         endLift(dragMoved && !absorbing);
+        // Pressed the video overlay and let go without dragging — that's the
+        // "Click to play or pause" the overlay's tooltip promises.
+        if (onYouTubeOverlay && !dragMoved) toggleYouTubePlayback(el);
         if (trashing) {
           // pushUndo already ran when the drag crossed its threshold, so a
           // single undo restores the cards at their pre-drag positions.

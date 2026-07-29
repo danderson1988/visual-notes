@@ -2,6 +2,18 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.1
+
+### Fixed
+- **Clicking a YouTube card didn't start the video**, even though hovering it said "Click to play". The only thing that worked was Shift-clicking, and after clicking anything else on the canvas you had to Shift-click again. Reported by a user on Windows 10; it affected every platform.
+  - The cause was that the card takes pointer capture when you press it, so it can be dragged. Pointer capture redirects the rest of that press — the click included — at the card itself, so the video's own click handler never heard about it. Shift-click was the sole exception because holding Shift selects the card and stops before capture is taken, which is exactly why that one gesture worked.
+
+### Changed
+- **YouTube cards now play and pause with a single click, every time.** Previously the first click after touching anything else was spent "waking up" the video and a second was needed to actually pause it. A click now goes straight to the player, so it responds the same whether you just started the video or come back to it ten minutes later.
+  - Dragging a video card from anywhere on it, and zooming the canvas with the scroll wheel over it, both keep working exactly as before — the click no longer has to disable those to reach the player.
+  - **To reach YouTube's own controls** — the seek bar, volume, fullscreen — hover the video and use the small button at its top-right. Clicking anywhere outside the card hands the video back to Visual Notes so it's draggable again; playback carries on regardless.
+  - Playback keeps running when you click away, click other cards, or pan around the board.
+
 ## 1.1.0
 
 ### Fixed

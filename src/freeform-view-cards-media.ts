@@ -203,45 +203,57 @@ export const cardsMediaMethods = {
       }
 
       // A live iframe swallows every pointer event over it (it's a separate
-      // browsing context), so the card underneath never sees a drag start.
-      // `body` wraps the iframe with an invisible overlay on top of it —
-      // the overlay is a normal element, so pointerdown on it bubbles to
-      // the card's own drag handler exactly like clicking anywhere else on
-      // the card ("draggable via the main body"). Double-click the overlay
-      // to punch through it and interact with the video (play/seek/
-      // fullscreen); clicking anywhere outside the card restores the
-      // overlay so the body is draggable again.
+      // browsing context), so the card underneath would never see a drag
+      // start. `body` wraps the iframe with an invisible overlay on top of
+      // it — the overlay is a normal element, so pointerdown on it bubbles
+      // to the card's own drag handler exactly like clicking anywhere else
+      // on the card ("draggable via the main body"), and the wheel keeps
+      // zooming the canvas rather than disappearing into the player.
+      //
+      // The overlay therefore STAYS on top for good, and a plain click on it
+      // drives play/pause through the iframe API instead of punching
+      // through. Letting the click punch through instead would mean the card
+      // could no longer be dragged from its body and the canvas could no
+      // longer be zoomed over the video — and it would still cost two clicks
+      // to pause after touching anything else, since the punch-through had
+      // to be re-done every time. Reaching YouTube's own controls (seek,
+      // volume, fullscreen) is a deliberate extra step via the button below.
       const body = el.createDiv('visual-notes-bookmark-youtube-body');
       const iframe = body.createEl('iframe', { cls: 'visual-notes-bookmark-youtube-iframe' });
-      // enablejsapi lets the overlay start playback with a postMessage
-      // command instead of needing the user to reach the player's own
-      // play button underneath it.
+      // enablejsapi is what makes the postMessage commands below work at all
+      // — both the play/pause commands we send and the state updates the
+      // player sends back.
       iframe.src = `https://www.youtube.com/embed/${youTubeId}?enablejsapi=1`;
       iframe.setAttribute('title', card.title || 'YouTube video player');
       iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
       iframe.setAttribute('allowfullscreen', 'true');
       iframe.setAttribute('frameborder', '0');
+      watchYouTubeState(iframe);
 
       const overlay = body.createDiv('visual-notes-bookmark-youtube-overlay');
-      overlay.setAttribute('title', 'Click to play. Drag to move.');
-      // A plain click (no drag movement) punches through the overlay AND
-      // starts playback in one go via the iframe API — no hunting for the
-      // player's own play button. A click that was actually a drag (card
-      // move) is ignored. Clicking outside the card restores the overlay
-      // so the body is draggable again; the video keeps playing.
-      let downAt: { x: number; y: number } | null = null;
-      overlay.addEventListener('pointerdown', (e) => { downAt = { x: e.clientX, y: e.clientY }; });
-      overlay.addEventListener('click', (e) => {
-        if (downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 4) return; // was a drag
+      overlay.setAttribute('title', 'Click to play or pause. Drag to move.');
+      // The play/pause trigger deliberately does NOT live on the overlay.
+      // The card's own pointerdown handler calls setPointerCapture() on the
+      // card element to drive dragging, and pointer capture retargets the
+      // rest of that gesture — the compatibility `click` included — at the
+      // capturing element, so a listener here never fires for a plain click.
+      // It only ever fired with Shift held, because that path returns before
+      // capture is taken; that was the whole reason Shift-click was once the
+      // only way to start playback. The card's own pointerup calls
+      // toggleYouTubePlayback() instead, where the drag/no-drag distinction
+      // is already known.
+
+      // Escape hatch to YouTube's own UI. A real <button> on purpose: the
+      // card's delegated pointerdown handler returns early for BUTTON
+      // targets, so this is exempt from both the drag path and the
+      // play/pause toggle without needing its own guards.
+      const controlsBtn = overlay.createEl('button', { cls: 'visual-notes-bookmark-youtube-controls-btn' });
+      controlsBtn.setAttribute('title', 'Use YouTube\'s own controls (seek, volume, fullscreen)');
+      controlsBtn.setAttribute('aria-label', 'Use YouTube\'s own controls');
+      setIcon(controlsBtn, 'settings-2');
+      controlsBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        el.addClass('is-embed-interactive');
-        iframe.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
-        const onOutside = (ev: PointerEvent) => {
-          if (el.contains(ev.target as Node)) return;
-          el.removeClass('is-embed-interactive');
-          activeDocument.removeEventListener('pointerdown', onOutside, true);
-        };
-        window.setTimeout(() => activeDocument.addEventListener('pointerdown', onOutside, true), 0);
+        activateYouTubeEmbed(el);
       });
 
       this.appendResizeHandles(el);
@@ -604,3 +616,123 @@ export const cardsMediaMethods = {
     this.createCardEl(card); this.selection.select(card.id); this.refreshSelectionVisuals();
   },
 };
+
+// ── YouTube embed playback ───────────────────────────────────────────────
+//
+// The overlay sits on the iframe permanently (see renderBookmarkContent), so
+// a click on it can't reach the player directly — it drives playback through
+// YouTube's postMessage API instead. To know whether a click means "play" or
+// "pause" we track the player's state: `enablejsapi=1` plus a `listening`
+// handshake makes the player post its own state changes back to us.
+//
+// Everything degrades gracefully if that channel never opens (blocked, API
+// changed, offline): the optimistic flip in toggleYouTubePlayback still
+// alternates play and pause, it just can't self-correct if the two fall out
+// of step.
+
+// 1 = playing, 3 = buffering (treated as playing — a click should pause it).
+const YT_PLAYING_STATES = new Set([1, 3]);
+
+// Keyed by the iframe's contentWindow, which is exactly what arrives as
+// `event.source` on the messages coming back. A WeakMap so a removed card's
+// entry is collected with its window — no teardown to forget.
+const ytPlaybackStates = new WeakMap<Window, { playing: boolean }>();
+const ytListenerBoundWindows = new WeakSet<Window>();
+
+function ytStateFor(iframe: HTMLIFrameElement): { playing: boolean } | null {
+  const win = iframe.contentWindow;
+  if (!win) return null;
+  let state = ytPlaybackStates.get(win);
+  if (!state) { state = { playing: false }; ytPlaybackStates.set(win, state); }
+  return state;
+}
+
+/** Subscribes to a YouTube iframe's player-state messages. */
+function watchYouTubeState(iframe: HTMLIFrameElement): void {
+  // The window hosting the iframe, not the top-level one — a board opened in
+  // a popout window receives its own players' messages there.
+  const hostWin = iframe.ownerDocument.defaultView;
+  if (!hostWin) return;
+
+  if (!ytListenerBoundWindows.has(hostWin)) {
+    ytListenerBoundWindows.add(hostWin);
+    hostWin.addEventListener('message', (e: MessageEvent) => {
+      if (typeof e.data !== 'string') return;
+      const source = e.source as Window | null;
+      if (!source) return;
+      const state = ytPlaybackStates.get(source);
+      if (!state) return; // not one of ours
+      let payload: { event?: unknown; info?: unknown };
+      try { payload = JSON.parse(e.data) as typeof payload; } catch { return; }
+      // The player reports state under two shapes depending on which
+      // message it is: onStateChange carries the code directly, while the
+      // periodic infoDelivery nests it. Both are worth reading — relying on
+      // onStateChange alone misses the state a player was already in.
+      const raw = payload.info;
+      let playerState: number | null = null;
+      if (payload.event === 'onStateChange' && typeof raw === 'number') {
+        playerState = raw;
+      } else if (raw && typeof raw === 'object' && typeof (raw as { playerState?: unknown }).playerState === 'number') {
+        playerState = (raw as { playerState: number }).playerState;
+      }
+      if (playerState === null) return;
+      state.playing = YT_PLAYING_STATES.has(playerState);
+    });
+  }
+
+  const handshake = () => {
+    const win = iframe.contentWindow;
+    if (!win) return;
+    if (!ytPlaybackStates.has(win)) ytPlaybackStates.set(win, { playing: false });
+    win.postMessage(JSON.stringify({ event: 'listening' }), '*');
+  };
+  // Once now for an iframe that's already up, and again on load — whichever
+  // lands second is harmless, and between them the player is always reached.
+  iframe.addEventListener('load', handshake);
+  handshake();
+}
+
+function ytCommand(iframe: HTMLIFrameElement, func: 'playVideo' | 'pauseVideo'): void {
+  iframe.contentWindow?.postMessage(
+    JSON.stringify({ event: 'command', func, args: [] }), '*'
+  );
+}
+
+/**
+ * Plays or pauses a YouTube card, depending on what the player is currently
+ * doing. Called from the card's pointerup handler — see renderBookmarkContent
+ * for why this can't be a listener on the overlay itself.
+ */
+export function toggleYouTubePlayback(el: HTMLElement): void {
+  const iframe = el.querySelector<HTMLIFrameElement>('.visual-notes-bookmark-youtube-iframe');
+  if (!iframe) return;
+  // While the player's own UI is exposed, its controls own play/pause — a
+  // click there is going to the player directly, not through us.
+  if (el.hasClass('is-embed-interactive')) return;
+  const state = ytStateFor(iframe);
+  const playing = state?.playing ?? false;
+  ytCommand(iframe, playing ? 'pauseVideo' : 'playVideo');
+  // Flip immediately rather than waiting for the player to report back, so
+  // two quick clicks don't both read the same stale state and send the same
+  // command twice. The real state message corrects this if they disagree.
+  if (state) state.playing = !playing;
+}
+
+/**
+ * Hands the card over to YouTube's own UI (seek bar, volume, fullscreen) by
+ * making the drag overlay click-through. Clicking anywhere outside the card
+ * puts the overlay back, which restores body-dragging and canvas zoom over
+ * the video; playback carries on either way.
+ */
+export function activateYouTubeEmbed(el: HTMLElement): void {
+  if (el.hasClass('is-embed-interactive')) return;
+  el.addClass('is-embed-interactive');
+  const onOutside = (ev: PointerEvent) => {
+    if (el.contains(ev.target as Node)) return;
+    el.removeClass('is-embed-interactive');
+    activeDocument.removeEventListener('pointerdown', onOutside, true);
+  };
+  // Deferred a tick so the click that triggered this doesn't immediately
+  // register as the "outside" press that tears it back down.
+  window.setTimeout(() => activeDocument.addEventListener('pointerdown', onOutside, true), 0);
+}

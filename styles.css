@@ -5492,9 +5492,11 @@ input.visual-notes-accent-pop-hex {
 
 /* Sits on top of the iframe so pointerdown bubbles to the card's own drag
    handler instead of being swallowed by the iframe's separate browsing
-   context — this is what makes the card body draggable. Double-clicking it
-   (see renderBookmarkContent) flips on .is-embed-interactive, which turns
-   this transparent so clicks reach the video underneath. */
+   context — this is what keeps the card body draggable and the canvas
+   zoomable over the video. It stays on top for good: a plain click on it
+   drives play/pause through the iframe API. The controls button below flips
+   on .is-embed-interactive, which turns this click-through so YouTube's own
+   UI can be reached; clicking outside the card puts it back. */
 .visual-notes-bookmark-youtube-overlay {
   position: absolute;
   inset: 0;
@@ -5505,6 +5507,49 @@ input.visual-notes-accent-pop-hex {
 
 .visual-notes-freeform-card.is-embed-interactive .visual-notes-bookmark-youtube-overlay {
   pointer-events: none;
+}
+
+/* Escape hatch to YouTube's own controls. Only shown on hover so the card
+   still reads as a bare video at rest, and parked top-right where it clears
+   the player's own control bar along the bottom. */
+.visual-notes-bookmark-youtube-controls-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease, background 120ms ease;
+  box-shadow: none;
+}
+
+.visual-notes-bookmark-youtube-overlay:hover .visual-notes-bookmark-youtube-controls-btn,
+.visual-notes-bookmark-youtube-controls-btn:focus-visible {
+  opacity: 1;
+}
+
+.visual-notes-bookmark-youtube-controls-btn:hover {
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.visual-notes-bookmark-youtube-controls-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Once the player's own UI is exposed the button has done its job — hiding
+   it keeps it from sitting over YouTube's controls. */
+.visual-notes-freeform-card.is-embed-interactive .visual-notes-bookmark-youtube-controls-btn {
+  display: none;
 }
 
 /* Rounder corners on the YouTube embed specifically — the live iframe's

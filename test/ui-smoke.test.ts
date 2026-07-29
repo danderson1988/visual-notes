@@ -25,7 +25,7 @@ import { Platform, Menu } from 'obsidian';
 import type {
   VisualNotesFile, StickyCard, TileCard, TableCard, CommentCard,
   CalloutCard, GroupCard, CalendarCard, ColumnCard, KanbanColumnCard,
-  KanbanBoardCard, DrawingStroke,
+  KanbanBoardCard, DrawingStroke, BookmarkCard,
 } from '../src/file-types';
 
 function setup(
@@ -2454,5 +2454,125 @@ describe('UI smoke: calendar month/year jump and lock', () => {
     navBtn(el, 'Next').dispatchEvent(new MouseEvent('click', { bubbles: true }));
     saved = board.cards.find(c => c.id === 'c1') as CalendarCard;
     expect(saved.anchor).not.toBe('2007-06-15');
+  });
+});
+
+describe('UI smoke: YouTube embed play/pause (pointer-capture regression)', () => {
+  // Reported by a user: the overlay's tooltip promised "Click to play", but a
+  // plain click did nothing — only Shift-click started the video.
+  //
+  // Cause: bindDelegatedCardEvents calls el.setPointerCapture() on the card to
+  // drive dragging, and pointer capture retargets the rest of that gesture —
+  // the compatibility `click` included — at the capturing element. A click
+  // listener on the overlay (a descendant) therefore never fired. The Shift
+  // branch returns before capture is taken, which is exactly why Shift-click
+  // was the one thing that worked.
+  //
+  // These tests drive pointerdown/pointerup only and never dispatch a click,
+  // so they fail against any implementation that depends on one.
+  const ytCard = (): BookmarkCard => ({
+    id: 'yt1', kind: 'bookmark', x: 0, y: 0, w: 400, h: 240,
+    url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  });
+
+  // Commands the plugin sent to the player, oldest first. Filters out the
+  // `listening` handshake, which is sent at render and isn't a command.
+  function commandsSentTo(el: HTMLElement): string[] {
+    const iframe = el.querySelector<HTMLIFrameElement>('.visual-notes-bookmark-youtube-iframe')!;
+    const spy = (iframe.contentWindow!.postMessage as unknown as { mock?: { calls: unknown[][] } }).mock;
+    return (spy?.calls ?? [])
+      .map(c => { try { return JSON.parse(String(c[0])) as { event?: string; func?: string }; } catch { return {}; } })
+      .filter(m => m.event === 'command')
+      .map(m => m.func!)
+      ;
+  }
+
+  function setupYt() {
+    const ctx = setup([ytCard()]);
+    const el = ctx.container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="yt1"]')!;
+    const iframe = el.querySelector<HTMLIFrameElement>('.visual-notes-bookmark-youtube-iframe')!;
+    vi.spyOn(iframe.contentWindow!, 'postMessage').mockImplementation(() => {});
+    const overlay = el.querySelector<HTMLElement>('.visual-notes-bookmark-youtube-overlay')!;
+    return { ...ctx, el, overlay };
+  }
+
+  const press = (el: HTMLElement, overlay: HTMLElement) => {
+    overlay.dispatchEvent(pointer('pointerdown', 50, 50));
+    el.dispatchEvent(pointer('pointerup', 50, 50, { buttons: 0 }));
+  };
+
+  it('renders a live embed with a drag overlay for a YouTube URL', () => {
+    const { el } = setupYt();
+    expect(el.classList.contains('is-youtube-embed')).toBe(true);
+    expect(el.querySelector('.visual-notes-bookmark-youtube-overlay')).toBeTruthy();
+    expect(el.querySelector('.visual-notes-bookmark-youtube-iframe')).toBeTruthy();
+  });
+
+  it('a press that is not a drag plays the video — with no click event', () => {
+    const { el, overlay } = setupYt();
+    press(el, overlay);
+    expect(commandsSentTo(el)).toEqual(['playVideo']);
+  });
+
+  it('does not need Shift held — the plain press is enough', () => {
+    const { el, overlay } = setupYt();
+    overlay.dispatchEvent(pointer('pointerdown', 50, 50, { shiftKey: false }));
+    el.dispatchEvent(pointer('pointerup', 50, 50, { buttons: 0 }));
+    expect(commandsSentTo(el)).toEqual(['playVideo']);
+  });
+
+  it('pressing again pauses, and again plays — one click each way', () => {
+    const { el, overlay } = setupYt();
+    press(el, overlay);
+    press(el, overlay);
+    press(el, overlay);
+    expect(commandsSentTo(el)).toEqual(['playVideo', 'pauseVideo', 'playVideo']);
+  });
+
+  it('keeps the overlay on top after playing, so the card stays draggable', () => {
+    // The whole point of driving playback through the API rather than
+    // punching through: body-drag and canvas zoom keep working, and pausing
+    // later costs one click rather than two.
+    const { el, overlay, board } = setupYt();
+    press(el, overlay);
+    expect(el.classList.contains('is-embed-interactive')).toBe(false);
+
+    overlay.dispatchEvent(pointer('pointerdown', 50, 50));
+    el.dispatchEvent(pointer('pointermove', 140, 140));
+    el.dispatchEvent(pointer('pointerup', 140, 140, { buttons: 0 }));
+    expect(board.cards[0].x).not.toBe(0);
+  });
+
+  it('dragging the overlay moves the card instead of touching playback', () => {
+    const { el, overlay, board } = setupYt();
+    overlay.dispatchEvent(pointer('pointerdown', 50, 50));
+    el.dispatchEvent(pointer('pointermove', 140, 140)); // past the drag threshold
+    el.dispatchEvent(pointer('pointerup', 140, 140, { buttons: 0 }));
+
+    expect(commandsSentTo(el)).toEqual([]);
+    expect(board.cards[0].x).not.toBe(0);
+  });
+
+  it('a press elsewhere on the card does not touch playback', () => {
+    const { el } = setupYt();
+    el.dispatchEvent(pointer('pointerdown', 50, 50));
+    el.dispatchEvent(pointer('pointerup', 50, 50, { buttons: 0 }));
+    expect(commandsSentTo(el)).toEqual([]);
+  });
+
+  it('the controls button hands over to YouTube\'s own UI', () => {
+    const { el } = setupYt();
+    const btn = el.querySelector<HTMLElement>('.visual-notes-bookmark-youtube-controls-btn')!;
+    expect(btn).toBeTruthy();
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(el.classList.contains('is-embed-interactive')).toBe(true);
+  });
+
+  it('while YouTube\'s own UI is exposed, presses are left to the player', () => {
+    const { el, overlay } = setupYt();
+    const btn = el.querySelector<HTMLElement>('.visual-notes-bookmark-youtube-controls-btn')!;
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    press(el, overlay);
+    expect(commandsSentTo(el)).toEqual([]);
   });
 });
