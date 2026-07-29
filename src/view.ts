@@ -99,14 +99,20 @@ export class VisualNotesView extends FileView {
   }
 
   // Called when there is no file (e.g. workspace restore with missing state).
-  // Nothing here awaits, but the signature is Obsidian's, not ours: View
-  // declares onOpen(): Promise<void>, and dropping `async` to satisfy
-  // require-await would mean hand-rolling a resolved promise for no gain.
-  // eslint-disable-next-line @typescript-eslint/require-await
-  protected override async onOpen(): Promise<void> {
+  //
+  // Deliberately not `async`. Nothing here awaits, but the signature is
+  // Obsidian's rather than ours — View declares onOpen(): Promise<void> — so
+  // returning an already-resolved promise satisfies it without needing a
+  // lint suppression. 1.1.3 used `async` plus an eslint-disable for
+  // require-await instead, and Obsidian's plugin check rejected that
+  // outright: its config requires every disable directive to carry an inline
+  // `-- reason` description, and a plain one is a hard error. Avoiding the
+  // directive altogether is simpler than describing it.
+  protected override onOpen(): Promise<void> {
     if (!this.file) {
       this.renderEmpty();
     }
+    return Promise.resolve();
   }
 
   // ── Public navigation API (called by GridRenderer) ───────────

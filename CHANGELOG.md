@@ -2,6 +2,16 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.4
+
+### Fixed
+- **1.1.3 failed Obsidian's plugin check on update. This release fixes that** — please update if you're on 1.1.3.
+  - The cause was a single line added in 1.1.3: a comment telling the linter to skip one rule. Obsidian's check requires such comments to state their reason on the comment itself, and 1.1.3 put the explanation on the lines above instead, which counts as no reason at all — a hard error rather than a warning. The code it referred to has been rewritten so no such comment is needed, which is the better fix anyway. No behaviour changed.
+  - A check now runs with the tests that fails the build if any lint-suppression comment lacks an inline reason, so this can't ship again.
+
+### Known issue
+- The "unsafe call" warnings behind the plugin's health rating are **not** resolved, and 1.1.3's attempt at them did not work. Those warnings are still spurious — they come from the code being analysed without Obsidian's own type definitions available, which makes every value obtained from the Obsidian API look untyped. Nothing in the plugin is doing anything unsafe, and nothing about its behaviour is affected. 1.1.3 added a lint configuration hoping the check would use it; the identical warning list on 1.1.4's predecessor shows it doesn't. Being warnings rather than errors, they affect the rating shown but not whether the plugin installs or updates. Still being looked into.
+
 ## 1.1.3
 
 ### Changed
