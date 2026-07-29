@@ -7201,6 +7201,15 @@ input.visual-notes-calendar-month-input {
   margin-bottom: 14px;
 }
 
+/* Obsidian 1.13+ renders settings declaratively, so the version line arrives
+   wrapped in a Setting row rather than dropped straight into the tab. Strip
+   that row's chrome so the line looks identical on both rendering paths. */
+.visual-notes-version-host {
+  display: block;
+  border: none;
+  padding: 0;
+}
+
 /* Shown only when main.js and manifest.json disagree — a half-applied
    update. Styled as a warning because the practical symptom is "features
    are silently missing", which otherwise gives the user nothing to go on. */

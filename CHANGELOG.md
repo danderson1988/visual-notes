@@ -2,6 +2,14 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.2
+
+### Fixed
+- **Two settings were missing entirely on Obsidian 1.13 and above**, with no sign anything was wrong. Obsidian 1.13 changed how plugin settings are built, and these two hadn't been registered for the new way — so on 1.13 they simply weren't there, while on 1.12 and below they showed up normally. Reported by a user who went as far as reading the compiled plugin code to find the cause, having reinstalled twice on the strength of advice that could never have worked. Thank you — that was a genuinely good catch.
+  - **"Pan the canvas with"** (added in 1.0.71) is now present on every supported Obsidian version. If you're on 1.13+ and have been unable to find it, it's under Freeform canvas where it always should have been. Your saved choice was being honoured the whole time; only the dropdown to change it was missing.
+  - **The version line at the top of the settings tab** is back on 1.13+ too. This is the more annoying of the two, because its whole job is to warn you when an update only half-applied — `manifest.json` updated but `main.js` not — which is exactly the state where features look mysteriously absent. It was invisible on the versions that most needed it, so "check what build you're actually running" wasn't available as a first step.
+- Both settings paths are now covered by a test that fails if a setting is ever added to one and not the other, which is how this went unnoticed since 1.0.71. Nothing enforced that the two lists agreed.
+
 ## 1.1.1
 
 ### Fixed

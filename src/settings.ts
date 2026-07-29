@@ -59,11 +59,24 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
 
   override getSettingDefinitions(): SettingDefinitionItem[] {
     return [
+      // Not a labelled control but a status line, so it gets the setting's
+      // own element as a plain container and drops the Setting chrome —
+      // that way the exact same body renders it on both paths. Leaving it
+      // out of this list is why the stale-build warning, whose entire job is
+      // to explain "the update didn't take", was itself invisible on 1.13+
+      // — precisely for the users who needed it.
+      { name: 'Visual Notes version', render: (s) => {
+        s.settingEl.empty();
+        s.settingEl.addClass('visual-notes-version-host');
+        this.buildVersionNotice(s.settingEl);
+      } },
       { name: 'Open on startup', desc: 'Automatically open Visual Notes when Obsidian starts.',
         render: (s) => this.buildOpenOnStartup(s) },
       { name: 'Default board', desc: 'Board opened when you click the ribbon icon or use the "Open" command.',
         render: (s) => this.buildDefaultBoard(s) },
       { type: 'group', heading: 'Freeform canvas', items: [
+        { name: 'Pan the canvas with', desc: 'Which mouse button drags the freeform canvas around. Space+left-click always works no matter what you pick here. Takes effect when you next open a board.',
+          render: (s) => this.buildPanButton(s) },
         { name: 'Toolbar position', desc: 'Where the card-creation toolbar appears on the canvas. Takes effect when you next open a board.',
           render: (s) => this.buildToolbarPosition(s) },
         { name: 'Mobile "+" button position', desc: 'Corner the phone-width add-card button sits in. Move it if it overlaps the minimap/zoom/snap controls. Takes effect when you next open a board.',
