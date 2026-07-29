@@ -27,7 +27,7 @@ describe('relinkBoardData (asset relinking)', () => {
     const img: ImageCard = { id: 'img1', kind: 'image', source: { type: 'vault', path: 'OldFolder/cat.png' } };
     const b = board([img]);
 
-    const fixed = await relinkBoardData(app, b);
+    const fixed = relinkBoardData(app, b);
 
     expect(fixed).toBe(1);
     expect((b.cards[0] as ImageCard).source).toEqual({ type: 'vault', path: 'Assets/Images/cat.png' });
@@ -38,7 +38,7 @@ describe('relinkBoardData (asset relinking)', () => {
     const img: ImageCard = { id: 'img1', kind: 'image', source: { type: 'vault', path: 'Assets/Images/cat.png' } };
     const b = board([img]);
 
-    const fixed = await relinkBoardData(app, b);
+    const fixed = relinkBoardData(app, b);
 
     expect(fixed).toBe(0);
     expect((b.cards[0] as ImageCard).source.path).toBe('Assets/Images/cat.png');
@@ -49,7 +49,7 @@ describe('relinkBoardData (asset relinking)', () => {
     const img: ImageCard = { id: 'img1', kind: 'image', source: { type: 'vault', path: 'OldFolder/cat.png' } };
     const b = board([img]);
 
-    const fixed = await relinkBoardData(app, b);
+    const fixed = relinkBoardData(app, b);
 
     expect(fixed).toBe(0);
     expect((b.cards[0] as ImageCard).source.path).toBe('OldFolder/cat.png');
@@ -63,7 +63,7 @@ describe('relinkBoardData (asset relinking)', () => {
     const img: ImageCard = { id: 'img1', kind: 'image', source: { type: 'vault', path: 'OldFolder/cat.png' } };
     const b = board([img]);
 
-    const fixed = await relinkBoardData(app, b);
+    const fixed = relinkBoardData(app, b);
 
     expect(fixed).toBe(0);
     expect((b.cards[0] as ImageCard).source.path).toBe('OldFolder/cat.png');
@@ -74,7 +74,7 @@ describe('relinkBoardData (asset relinking)', () => {
     const note: NoteLinkCard = { id: 'n1', kind: 'note-link', path: 'Old/Notes.md', displayMode: 'preview' };
     const b = board([note]);
 
-    const fixed = await relinkBoardData(app, b);
+    const fixed = relinkBoardData(app, b);
 
     expect(fixed).toBe(1);
     expect((b.cards[0] as NoteLinkCard).path).toBe('Vault/Notes.md');
@@ -91,7 +91,7 @@ describe('relinkBoardData (asset relinking)', () => {
     };
     const b = board([kc]);
 
-    const fixed = await relinkBoardData(app, b);
+    const fixed = relinkBoardData(app, b);
 
     expect(fixed).toBe(2);
     expect(kc.items[0].imagePath).toBe('Assets/Images/shot.png');
@@ -106,7 +106,7 @@ describe('relinkBoardData (asset relinking)', () => {
     };
     const b = board([tile]);
 
-    const fixed = await relinkBoardData(app, b);
+    const fixed = relinkBoardData(app, b);
 
     expect(fixed).toBe(0);
     expect((b.cards[0] as TileCard).target).toEqual({ kind: 'folder', path: 'Some/Folder' });

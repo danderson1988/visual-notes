@@ -12,10 +12,7 @@
     "noImplicitOverride": true,
     "useUnknownInCatchVariables": true,
     "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true,
-    "paths": {
-      "obsidian": ["./node_modules/obsidian/obsidian.d.ts"]
-    }
+    "allowSyntheticDefaultImports": true
   },
   "include": ["src/**/*.ts"]
 }

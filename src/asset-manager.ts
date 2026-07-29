@@ -61,7 +61,12 @@ export async function saveNewAsset(app: App, data: ArrayBuffer, filename: string
 
 // Mutates board in place: for each broken vault path, searches the vault by filename.
 // Auto-fixes if exactly one match is found. Returns the number of links fixed.
-export async function relinkBoardData(app: App, board: VisualNotesFile): Promise<number> {
+//
+// Synchronous: every lookup goes through findMatch, which only consults
+// Vault's in-memory file list. It was previously declared async despite never
+// awaiting anything, which made callers look as though they were waiting on
+// disk I/O that never happened.
+export function relinkBoardData(app: App, board: VisualNotesFile): number {
   let fixed = 0;
   for (const card of board.cards) {
     if (card.kind === 'image' && card.source.type === 'vault') {
@@ -101,7 +106,7 @@ export async function relinkAllBoards(app: App): Promise<number> {
     try {
       if (!(await isVisualNotesOwnedFile(app, bf))) continue;
       const board = await readBoardFile(app, bf);
-      const n = await relinkBoardData(app, board);
+      const n = relinkBoardData(app, board);
       if (n > 0) { await writeBoardFile(app, bf, board); total += n; }
     } catch { /* skip unreadable boards */ }
   }

@@ -2,6 +2,16 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.3
+
+### Changed
+- **Addresses the "risky" health rating Obsidian showed for this plugin.** The rating came from a code-safety check reporting thousands of "unsafe call" warnings across nearly every file. Those warnings were not real: the check analysed the source without Obsidian's own type definitions available, so every value obtained from the Obsidian API looked untyped to it, and every use of one was counted as unsafe. The give-away was that the only calls *not* flagged were the handful that never touch the Obsidian API. Nothing about the plugin's behaviour was ever affected, and nothing in it was doing anything unsafe.
+  - The plugin now ships its own lint configuration, so a checker no longer has to guess how to analyse the code, and the type definitions are resolved from the project itself. Running the same rules with the types present reports no unsafe calls at all.
+  - Linting is now part of the build and runs in CI on every change, so this is verified before each release rather than discovered after one.
+
+### Fixed
+- A handful of genuine tidy-ups surfaced while confirming the above, none of them user-visible: three leftover variables that were assigned but never read (including a vestigial flag in the pen tool's straight-line mode), and two functions declared as asynchronous that never actually waited for anything — one of which made the asset-relink scan look like it performed disk reads it never did.
+
 ## 1.1.2
 
 ### Fixed

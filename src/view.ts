@@ -80,7 +80,7 @@ export class VisualNotesView extends FileView {
     }
 
     if (this.plugin.settings.autoRelinkOnOpen) {
-      const fixed = await relinkBoardData(this.app, board);
+      const fixed = relinkBoardData(this.app, board);
       if (fixed > 0) {
         await writeBoardFile(this.app, file, board);
         new Notice(`Visual Notes: Fixed ${fixed} broken link${fixed === 1 ? '' : 's'}.`);
@@ -99,6 +99,10 @@ export class VisualNotesView extends FileView {
   }
 
   // Called when there is no file (e.g. workspace restore with missing state).
+  // Nothing here awaits, but the signature is Obsidian's, not ours: View
+  // declares onOpen(): Promise<void>, and dropping `async` to satisfy
+  // require-await would mean hand-rolling a resolved promise for no gain.
+  // eslint-disable-next-line @typescript-eslint/require-await
   protected override async onOpen(): Promise<void> {
     if (!this.file) {
       this.renderEmpty();

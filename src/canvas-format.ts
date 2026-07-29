@@ -424,7 +424,7 @@ function checkersToMarkdown(c: CheckersCard): string {
   return `**Checkers** — ${status}\n\n${rows.join('\n')}`;
 }
 
-function layoutKanbanBoard(b: KanbanBoardCard, gx: number, gy: number, gw: number, gh: number): CanvasNode[] {
+function layoutKanbanBoard(b: KanbanBoardCard, gx: number, gy: number, gw: number, _gh: number): CanvasNode[] {
   const pad = 12;
   const gap = 12;
   const headerH = 28;
@@ -494,7 +494,7 @@ function checklistToMarkdown(c: ChecklistCard): string {
 // inside the group's rectangle — JSON Canvas groups are purely spatial
 // (a node "belongs" to a group by being inside its bounds), there's no
 // explicit parent-id field, so simple geometric placement is enough.
-function layoutKanbanItems(k: KanbanColumnCard, gx: number, gy: number, gw: number, gh: number): CanvasNode[] {
+function layoutKanbanItems(k: KanbanColumnCard, gx: number, gy: number, gw: number, _gh: number): CanvasNode[] {
   const pad = 12;
   const headerH = k.titleHidden ? 8 : 36;
   const itemH = 44;

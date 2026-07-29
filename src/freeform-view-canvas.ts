@@ -2345,7 +2345,6 @@ export const canvasMethods = {
     livePath.setAttribute('d', this.buildStrokePathD(stroke));
     this.inkSvgEl.appendChild(livePath);
 
-    let shiftLine = false;
     // Every other drag-style gesture in this file (card drag, connection
     // drag, resize handles) filters move/up events to the pointerId that
     // actually started it — this one didn't. Since these listeners live on
@@ -2371,13 +2370,11 @@ export const canvasMethods = {
         // Ruler mode: while Shift is held the stroke is just anchor →
         // pointer, redrawn live as a perfectly straight segment. Releasing
         // Shift mid-stroke resumes freehand from wherever the line ended.
-        shiftLine = true;
         const cp = screenToCanvas(e2.clientX - rect.left, e2.clientY - rect.top, this.vp);
         const p = e2.pressure > 0 && e2.pressure !== 0.5 ? e2.pressure : undefined;
         stroke.points = [{ ...firstPoint }, p != null ? { x: cp.x, y: cp.y, p } : { x: cp.x, y: cp.y }];
         smoothed = { x: cp.x, y: cp.y };
       } else {
-        shiftLine = false;
         addPoint(e2.clientX, e2.clientY, e2.pressure);
       }
       if (!rafId) rafId = window.requestAnimationFrame(redrawLive);

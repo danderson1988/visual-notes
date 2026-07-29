@@ -1,0 +1,37 @@
+name: CI
+
+# Runs the same checks the release workflow does, but on every push and PR —
+# so a typecheck, lint, or test failure surfaces before a tag is cut rather
+# than while a release is being built.
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24.x"
+          cache: "npm"
+
+      # npm ci, not install: the lint is type-aware, so it needs obsidian's
+      # type definitions present. Without them every value from the API is
+      # error-typed and no-unsafe-call fires on essentially every line — which
+      # is exactly the false result that rated this plugin risky.
+      - name: Install dependencies
+        run: npm ci
+
+      # Runs typecheck + lint + bundle.
+      - name: Build plugin
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
