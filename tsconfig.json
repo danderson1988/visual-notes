@@ -12,7 +12,17 @@
     "noImplicitOverride": true,
     "useUnknownInCatchVariables": true,
     "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    // Resolve the Obsidian API from the copy committed under types/ rather
+    // than from node_modules. Obsidian's plugin health check analyses this
+    // repo without installing dependencies, and a type-aware lint with no
+    // types makes every value from the API error-typed — which reported
+    // thousands of bogus "unsafe call" warnings and rated the plugin risky.
+    // types/obsidian.d.ts is byte-identical to the devDependency's copy and
+    // test/vendored-types.test.ts fails if they ever drift.
+    "paths": {
+      "obsidian": ["./types/obsidian.d.ts"]
+    }
   },
   "include": ["src/**/*.ts"]
 }

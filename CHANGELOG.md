@@ -2,6 +2,13 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.5
+
+### Changed
+- **Resolves the "risky" health rating.** Obsidian's code-safety check was reporting thousands of "unsafe call" warnings across nearly every file. Those warnings were never real — the check analyses the source without Obsidian's own type definitions available, so every value obtained from the Obsidian API looks untyped to it and every use of one is counted as unsafe. The plugin now carries its own copy of those type definitions and resolves the API from it, so the analysis has the type information it needs whether or not anything is installed alongside. Measured against a faithful reproduction of the check's environment, this takes it from 9,510 warnings to none.
+  - Nothing about the plugin's behaviour changes, and nothing in it was ever doing anything unsafe. 1.1.3 attempted this by shipping a lint configuration, which turned out not to be read by the check; this addresses the underlying cause instead.
+  - The bundled definitions are Obsidian's own, used under their MIT licence, with the licence included alongside them. They are byte-identical to the version the plugin builds against, and a check that runs with the tests fails the build if the two ever diverge — so the copy can't quietly fall behind and mask a real API change.
+
 ## 1.1.4
 
 ### Fixed

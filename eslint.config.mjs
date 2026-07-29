@@ -16,6 +16,7 @@ export default tseslint.config(
     ignores: [
       'main.js',                  // build output
       'src/starter-templates.ts', // generated — see scripts/generate-starter-templates.mjs
+      'types/**',                 // vendored Obsidian API typings, not ours to lint
       'test/**',
       'scripts/**',
       'benchmarks/**',
