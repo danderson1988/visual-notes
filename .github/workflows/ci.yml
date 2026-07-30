@@ -40,3 +40,12 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      # src/starter-templates.ts is generated from templates-src/ but committed,
+      # because Obsidian's health check lints the repo without running
+      # generators. The pre-hooks regenerate it on every build/test here, so
+      # if templates-src/ changed and the regenerated output wasn't committed,
+      # CI would silently test the fresh version while the checker (and users
+      # reading the repo) see the stale one. Fail instead.
+      - name: Committed generated files match their sources
+        run: git diff --exit-code src/starter-templates.ts

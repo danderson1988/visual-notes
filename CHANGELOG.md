@@ -2,6 +2,20 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.11
+
+### Added
+- **Imported tile JSON is now checked before it replaces anything.** Previously any JSON array was accepted, so a file with the wrong shape would be saved over your existing tiles and only fail later while drawing them, with nothing pointing back to the import as the cause. Each entry is now validated first, and if one is wrong the import is refused with a message naming exactly which entry and which field — nothing is replaced. Import is deliberately all-or-nothing: quietly keeping the valid half would still have thrown away what you had.
+- **Your previous tiles are kept when you import.** Replacing is destructive, so the outgoing tiles are now saved in plugin settings under `preImportBackup` first. (This is separate from `legacyBackup`, which holds the one-time copy from the v1 upgrade and is left alone.)
+
+### Fixed
+- **Corrupted or hand-edited settings no longer break the plugin.** `data.json` is an ordinary file — it gets synced between devices, edited by hand, and written by older versions — and a bad value in it used to survive loading and then fail somewhere unrelated. Settings are now repaired as they load: invalid values are discarded so the normal default applies, out-of-range numbers are brought back into range, and a single unreadable tile is dropped without taking the rest of your board with it.
+- **A clearer message if the Kanban "Create new…" button can't work.** Creating a Kanban board runs a command belonging to the community Kanban plugin, through part of Obsidian not intended for plugins to use. If either changes, that button used to fail silently. It now explains what happened and suggests creating the board from the Kanban plugin directly.
+
+### Changed
+- Updated the build tool to clear a security advisory. It only ever affected the local development server, never the released plugin, but there's no reason to carry it.
+- Internal safeguards, no visible effect: the release process now runs the test suite before publishing (previously tests and releases could run at the same time, so a failing test couldn't reliably stop a release), and a new test runs all 16 starter boards through a full save-and-reload cycle to confirm every kind of card survives it. That last one is aimed squarely at the class of bug behind the data loss fixed in 1.1.0 — verified by reintroducing it deliberately and confirming the test catches it.
+
 ## 1.1.10
 
 ### Changed

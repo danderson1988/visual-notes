@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting, Notice, FuzzySuggestModal, TFile, type SettingDefinitionItem } from 'obsidian';
 import type VisualNotesPlugin from './main';
 import { ConfirmModal } from './tile-modal';
-import { Tile } from './types';
+import { validateTileImport } from './settings-validate';
 import { relinkAllBoards } from './asset-manager';
 import { STICKY_COLORS, resolveDefaultStickyColor } from './freeform-view-shared';
 
@@ -632,18 +632,32 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
               new Notice('Paste some JSON first.');
               return;
             }
-            let parsed: Tile[];
+            let raw: unknown;
             try {
-              parsed = JSON.parse(this.importText) as Tile[];
-              if (!Array.isArray(parsed)) throw new Error('Not an array');
+              raw = JSON.parse(this.importText);
             } catch {
               new Notice('Invalid JSON — please check the format and try again.');
               return;
             }
+            // Validated before it can replace anything: an array of the wrong
+            // shape used to be accepted and persisted, then failed later at
+            // render time with nothing pointing back to the import.
+            const result = validateTileImport(raw);
+            if ('error' in result) {
+              new Notice(`Import cancelled — ${result.error}`);
+              return;
+            }
+            const parsed = result.tiles;
             new ConfirmModal(
               this.app,
               `Replace all ${this.plugin.settings.rootTiles.length} existing tile(s) with the imported data?`,
               () => { void (async () => {
+                // Keep the outgoing tiles recoverable: replacement is
+                // destructive and the only copy otherwise lives in whatever
+                // the user happened to export. Deliberately NOT legacyBackup —
+                // that holds the one-time v1 migration copy, which migration.ts
+                // tells the user about by name.
+                this.plugin.settings.preImportBackup = this.plugin.settings.rootTiles;
                 this.plugin.settings.rootTiles = parsed;
                 await this.plugin.saveSettings();
                 if (this.importAreaEl) this.importAreaEl.value = '';

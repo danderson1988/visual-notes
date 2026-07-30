@@ -13,6 +13,7 @@ import { IconPickerModal } from './icon-picker';
 import { contrastColor } from './color-utils';
 import { createBoardFile } from './file-io';
 import { isCustomIconRef, resolveCustomIconSrc } from './custom-icons';
+import { runCommand, KANBAN_CREATE_BOARD_COMMAND } from './obsidian-commands';
 
 /** Typed wrapper for private Obsidian APIs used in tile-modal. */
 interface AppWithPrivateAPIs extends App {
@@ -365,8 +366,11 @@ export class TileModal extends Modal {
         pathSetting.addButton(btn =>
           btn.setButtonText('Create new…').onClick(() => {
             this.close();
-            // @ts-expect-error — accessing private Obsidian internal API to execute a community plugin command
-            (this.app as { commands: { executeCommandById(id: string): void } }).commands.executeCommandById('obsidian-kanban:create-new-kanban-board');
+            runCommand(
+              this.app,
+              KANBAN_CREATE_BOARD_COMMAND,
+              'Could not open the Kanban plugin’s "create board" command. Create the board from the Kanban plugin directly, then pick it here.',
+            );
           })
         );
       }

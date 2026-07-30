@@ -1,6 +1,16 @@
-# The vendored type definitions under types/ are compared against the copies
-# npm installs (see test/vendored-types.test.ts), and npm tarballs ship LF.
-# Without this, a clone on Windows with core.autocrlf=true would check them out
-# as CRLF and the comparison would fail for reasons that have nothing to do
-# with the declarations having changed.
-types/**/*.d.ts -text
+# Repo-wide: every text file is stored and checked out as LF, on every
+# platform. Windows text handling has shipped two real incidents here (a BOM
+# killing the first CSS rule; CRLF nearly breaking the vendored-types drift
+# comparison) — one policy ends the class.
+* text=auto eol=lf
+
+# Binaries — never touch.
+*.png binary
+*.jpg binary
+*.gif binary
+
+# The vendored type definitions under types/ are compared byte-wise against
+# the copies npm installs, and npm tarballs ship LF. Covered by the rule
+# above; kept explicit because the comparison breaking would look like type
+# drift when it isn't.
+types/**/*.d.ts text eol=lf

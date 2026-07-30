@@ -26,6 +26,13 @@ jobs:
       - name: Build plugin
         run: npm run build
 
+      # Tests must gate the release itself. CI runs them on push to main, but
+      # a commit and its tag are pushed together, so the two workflows race —
+      # without this step a release could publish from a commit whose tests
+      # fail.
+      - name: Run tests
+        run: npm test
+
       # NOTE: no attestation step, deliberately. Attestations generated here
       # (attest-build-provenance v1/v2, actions/attest v4 — all tried) are
       # cryptographically well-formed and correctly identify this repo, but

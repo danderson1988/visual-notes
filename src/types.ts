@@ -24,6 +24,7 @@ export interface VisualNotesSettings {
   defaultBoardPath?: string;    // path to the board opened by the ribbon/command
   v2migrationDone?: boolean;    // prevents re-running migration
   legacyBackup?: Tile[];        // copy of v1 rootTiles saved during migration
+  preImportBackup?: Tile[];     // rootTiles as they were just before the last JSON tile import
   bookmarkCacheDays?: number;   // days before re-fetching bookmark OG metadata; default 30
   defaultStickyColor?: string;  // hex color used when creating new sticky notes
   commentAuthorName?: string;   // name shown on new comments/replies you add to a board

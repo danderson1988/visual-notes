@@ -2,6 +2,7 @@ import { Plugin, TFile, TFolder, TAbstractFile, FileView, Menu, Notice } from 'o
 import { VisualNotesView, VISUAL_NOTES_VIEW_TYPE, NATIVE_CANVAS_VIEW_TYPE } from './view';
 import { VisualNotesSettingsTab } from './settings';
 import { VisualNotesSettings, DEFAULT_SETTINGS } from './types';
+import { normalizeSettings } from './settings-validate';
 import { CreateBoardModal, TemplatePickerModal, TemplateChoice } from './create-board-modal';
 import { needsMigration, migrateV1toV2 } from './migration';
 import { relinkAllBoards } from './asset-manager';
@@ -183,7 +184,10 @@ export default class VisualNotesPlugin extends Plugin {
   async loadSettings(): Promise<void> {
     // No assertion needed: loadData() is typed `unknown`, and intersecting
     // that with DEFAULT_SETTINGS' type already yields VisualNotesSettings.
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    // Normalised because data.json is just a file on disk: hand-edited,
+    // synced across devices, or written by an older version. A bad value used
+    // to survive load and fail much later at a render site instead.
+    this.settings = normalizeSettings(Object.assign({}, DEFAULT_SETTINGS, await this.loadData()));
   }
 
   async saveSettings(): Promise<void> {
