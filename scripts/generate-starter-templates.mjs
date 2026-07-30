@@ -14,11 +14,20 @@ const OUT_FILE = path.join(ROOT, 'src', 'starter-templates.ts');
 
 const files = fs.readdirSync(SRC_DIR)
   .filter(f => f.endsWith('.canvas'))
-  .sort((a, b) => a.localeCompare(b)); // stable, OS-independent ordering
+  // Code-unit order, not localeCompare: two template names contain an em dash,
+  // and localeCompare's handling of punctuation depends on the ICU data the
+  // running Node was built with, which is not the same on Windows and Linux.
+  .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 
 const templates = files.map(file => {
   const name = file.slice(0, -'.canvas'.length);
-  const json = fs.readFileSync(path.join(SRC_DIR, file), 'utf8');
+  // Newlines normalised to LF before embedding. The .canvas sources are text,
+  // so git checks them out with the platform's line endings — CRLF on a
+  // Windows clone, LF on Linux — and this generator bakes the file contents
+  // into a string literal. Without this, the same commit generates different
+  // output on different machines, which CI's generated-file drift check
+  // (correctly) fails on. Only affects newlines inside card text.
+  const json = fs.readFileSync(path.join(SRC_DIR, file), 'utf8').replace(/\r\n/g, '\n');
   try {
     JSON.parse(json);
   } catch (err) {

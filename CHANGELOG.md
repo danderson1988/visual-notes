@@ -2,7 +2,17 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.12
+
+### Fixed
+- **1.1.11's automated checks failed, so it was never published. This release supersedes it** — everything described under 1.1.11 below is included here.
+  - The cause was in the build tooling, not the plugin. The starter boards are stored as `.canvas` files and compiled into the plugin, and the step that does that was copying their line endings through as-is. Line endings depend on the machine a copy of the repository was made on, so the same source produced two slightly different results depending on where it was built — and the check added in 1.1.11 to catch exactly that kind of inconsistency did its job on its own release.
+  - Newlines are now normalised when the boards are compiled in, so the result is identical everywhere. The starter boards themselves are unchanged in content; only the invisible line-ending characters inside their text differ, which nothing can see.
+  - A test now verifies this directly rather than leaving it to the automated checks, so the problem surfaces on the machine that causes it. Verified by reintroducing the fault and confirming the test catches it.
+
 ## 1.1.11
+
+*Superseded by 1.1.12 — this version was never published. Its changes are included there.*
 
 ### Added
 - **Imported tile JSON is now checked before it replaces anything.** Previously any JSON array was accepted, so a file with the wrong shape would be saved over your existing tiles and only fail later while drawing them, with nothing pointing back to the import as the cause. Each entry is now validated first, and if one is wrong the import is refused with a message naming exactly which entry and which field — nothing is replaced. Import is deliberately all-or-nothing: quietly keeping the valid half would still have thrown away what you had.
