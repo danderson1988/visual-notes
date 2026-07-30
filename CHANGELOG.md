@@ -2,6 +2,15 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.6
+
+### Changed
+- **Clears the remaining warnings behind the "caution" health rating.** 1.1.5 fixed the bulk of them by bundling Obsidian's type definitions so the code-safety check has the type information it needs. Two things were left over, both now handled:
+  - **The three other libraries the plugin uses** — for drag-and-drop, pen strokes, and board image export — had the same problem 1.1.5 solved for Obsidian: the check couldn't see their type information either, so a handful of ordinary calls in the drag, pen, and export code were still being reported as unsafe. Their definitions are now bundled the same way.
+  - **The bundled definitions were themselves being checked**, and reported around 240 warnings about their authors' own style choices — none of which can be changed without the copies no longer matching what they mirror. They are now marked as third-party so the check skips them, and only the files that actually needed marking carry it, since a marker with nothing to suppress counts as a warning of its own.
+  - Measured against a reproduction of the check's environment, this takes the plugin from 227 warnings to 2. The last two are `@types/sortablejs`'s own suppression comments, which can't be resolved from here.
+  - Nothing about the plugin's behaviour changes. The compiled `main.js` is byte-for-byte identical to 1.1.5's, which is verified as part of the build — the type definitions are used for checking only and are deliberately kept out of the bundle.
+
 ## 1.1.5
 
 ### Changed

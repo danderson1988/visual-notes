@@ -9,6 +9,11 @@ const manifest = JSON.parse(readFileSync("./manifest.json", "utf8"));
 const context = await esbuild.context({
   entryPoints: ["src/main.ts"],
   bundle: true,
+  // Not tsconfig.json: that maps sortablejs / perfect-freehand / html-to-image
+  // to the vendored .d.ts copies under types/ (so Obsidian's health check can
+  // resolve types without installing anything), and esbuild honours ,
+  // so it would bundle type declarations instead of the real modules.
+  tsconfig: "tsconfig.build.json",
   banner: {
     js: `/* Visual Notes v${manifest.version} — bundled file, do not edit. Source: https://github.com/danderson1988/visual-notes */`,
   },

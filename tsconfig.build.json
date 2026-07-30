@@ -1,0 +1,13 @@
+{
+  // Build-only config. Identical to tsconfig.json except that `paths` is
+  // dropped, so esbuild resolves sortablejs / perfect-freehand / html-to-image
+  // to the real packages in node_modules rather than to the .d.ts copies under
+  // types/ — which would produce a main.js with those modules missing.
+  //
+  // tsconfig.json keeps the mappings because that is the config Obsidian's
+  // plugin health check and `npm run typecheck` read.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {}
+  }
+}

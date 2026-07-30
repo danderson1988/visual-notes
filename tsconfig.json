@@ -13,15 +13,21 @@
     "useUnknownInCatchVariables": true,
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
-    // Resolve the Obsidian API from the copy committed under types/ rather
-    // than from node_modules. Obsidian's plugin health check analyses this
-    // repo without installing dependencies, and a type-aware lint with no
-    // types makes every value from the API error-typed — which reported
-    // thousands of bogus "unsafe call" warnings and rated the plugin risky.
-    // types/obsidian.d.ts is byte-identical to the devDependency's copy and
-    // test/vendored-types.test.ts fails if they ever drift.
+    // Resolve these modules from the copies committed under types/ rather than
+    // from node_modules. Obsidian's plugin health check analyses this repo
+    // without installing dependencies, and a type-aware lint with no types
+    // makes every value from a third-party module error-typed — which reported
+    // 9,510 bogus warnings and rated the plugin risky. Managed by
+    // scripts/vendor-types.mjs; test/vendored-types.test.ts fails on drift.
+    //
+    // NOTE: esbuild honours  too, and would resolve the three bundled
+    // modules below to .d.ts files. tsconfig.build.json drops  and the
+    // build uses that instead — see esbuild.config.mjs.
     "paths": {
-      "obsidian": ["./types/obsidian.d.ts"]
+      "obsidian": ["./types/obsidian/obsidian.d.ts"],
+      "sortablejs": ["./types/sortablejs/index.d.ts"],
+      "perfect-freehand": ["./types/perfect-freehand/index.d.ts"],
+      "html-to-image": ["./types/html-to-image/index.d.ts"]
     }
   },
   "include": ["src/**/*.ts"]

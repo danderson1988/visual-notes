@@ -1,6 +1,6 @@
 {
   "name": "visual-notes",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "Visual Notes — a visual workspace for Obsidian",
   "main": "main.js",
   "scripts": {
@@ -14,7 +14,7 @@
     "test": "vitest run",
     "prelint": "npm run generate-templates",
     "lint": "eslint src",
-    "sync-obsidian-types": "node -e \"require('fs').copyFileSync('node_modules/obsidian/obsidian.d.ts','types/obsidian.d.ts')\"",
+    "sync-types": "node scripts/vendor-types.mjs",
     "build": "npm run typecheck && npm run lint && node esbuild.config.mjs production"
   },
   "keywords": [],
