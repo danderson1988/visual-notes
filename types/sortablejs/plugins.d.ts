@@ -1,4 +1,4 @@
-import Sortable = require("./index");
+import type Sortable from "./index";
 import { SortableEvent } from "./index";
 
 declare class SortablePlugin {}

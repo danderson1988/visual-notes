@@ -2,6 +2,16 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.9
+
+### Changed
+- **Clears the remaining 196 warnings behind the "caution" health rating.** 1.1.8 got the errors to zero, but left 196 warnings — every one of them in the bundled copies of Obsidian's and three other libraries' type definitions, none in this plugin's own code. They were the definitions' authors' own style choices being reported against this plugin: 150 were "unexpected any" on signatures like Obsidian's own `onChange(callback: (value: string) => any)`, and the rest were redundancies like `'woff' | 'woff2' | … | string`, where the `string` already covers the named values.
+  - Previous releases copied those definitions exactly as written, on the reasoning that anything else risked them no longer matching. They're now normalised instead: `any` becomes `unknown`, unions drop members that another member already covers, bare `Function` gets a real signature, and interfaces with no members of their own become plain type aliases. **Warnings measured 196 → 0.**
+  - Every one of those changes either means exactly the same thing to the compiler or is stricter than what was there before, and that direction is the point: if this plugin's code compiles against the normalised copies, it necessarily compiles against the originals. The build now also compiles against the real installed libraries as a separate step, so a change that altered a meaning could not pass both. Both run in CI on every push.
+  - It found one real thing in the process. With `any` narrowed to `unknown`, a type conversion in the settings-loading code turned out to be doing nothing, and it's been removed.
+  - `main.js` is byte-for-byte identical to 1.1.7's and 1.1.8's, verified as part of the build. Type definitions are used for checking only and are deliberately kept out of the bundle, so nothing about behaviour can change.
+  - Checks that run with the tests now fail the build if any of these patterns reappears — including when a future Obsidian release introduces a new one. The minimum supported Obsidian version remains 1.7.2.
+
 ## 1.1.8
 
 ### Fixed

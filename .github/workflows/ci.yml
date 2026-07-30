@@ -29,7 +29,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Runs typecheck + lint + bundle.
+      # Runs both typechecks + lint + bundle. The second typecheck
+      # (typecheck:upstream) compiles against the REAL installed packages
+      # rather than the normalised copies in types/, and is what proves those
+      # copies still mean what upstream wrote. It can only run where
+      # dependencies are installed, which is why it lives here and not in the
+      # health check's environment.
       - name: Build plugin
         run: npm run build
 

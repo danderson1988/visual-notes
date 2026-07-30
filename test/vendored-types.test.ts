@@ -13,12 +13,14 @@
 //     against — hiding real API changes at exactly the moment they matter, an
 //     upstream upgrade. Every copy is compared against its installed source.
 //
-//  2. The copies are written VERBATIM, with no directives of ours. They report
-//     upstream's own `any`s and empty interfaces (~204 warnings) and that is
-//     accepted, because it cannot be fixed: 1.1.6 added a described
+//  2. The copies are NOT verbatim — see scripts/vendor-types.mjs for the
+//     pipeline. They carry no directives of ours (1.1.6 added a described
 //     `eslint-disable` header and the check rejected it as three separate hard
-//     errors, failing the update. Chief among them, a list of rules may never
-//     be disabled at all — including no-explicit-any, which is most of these.
+//     errors, failing the update), and no patterns the check warns about, since
+//     a list of rules may never be disabled at all — including no-explicit-any,
+//     which was 150 of 1.1.8's 196 warnings. Because they are transformed,
+//     `npm run typecheck:upstream` is what proves our code still matches the
+//     real API rather than only these copies.
 //
 //  3. esbuild honours `paths` too and would bundle declarations instead of the
 //     real modules, so the build reads tsconfig.build.json, which drops them.
@@ -104,6 +106,64 @@ describe('vendored third-party type definitions', () => {
         if (s && newer(s)) offenders.push(`${pkg.entry}:${i + 1} extends ${base ?? '?'} (@since ${s} > minAppVersion ${floor})`);
       });
       expect(offenders, `obsidianmd/no-unsupported-api reports these as errors: ${offenders.join(', ')}`).toEqual([]);
+    });
+  });
+
+  describe('normalised copies carry no warning-triggering patterns', () => {
+    // Every pattern below is one the check reported against 1.1.8's copies —
+    // 196 warnings, 150 of them no-explicit-any, and the reason the rating sat
+    // at "caution". None can be suppressed (no-explicit-any is on the
+    // never-disable list), so cleanDeclarations() normalises them away instead.
+    // If one comes back, the rating regresses, so this fails the build.
+    const ATOM = "(?:[A-Za-z0-9_$.]+(?:<[^<>]*>)?(?:\\[\\])?|'[^']*'|\"[^\"]*\")";
+    const union = new RegExp(ATOM + '(?:\\s*\\|\\s*' + ATOM + ')+', 'g');
+    const isComment = (s: string) => {
+      const t = s.trim();
+      return t.startsWith('*') || t.startsWith('//') || t.startsWith('/*');
+    };
+
+    const files = PACKAGES.flatMap((pkg: typeof PACKAGES[number]) =>
+      dts(join(ROOT, pkg.dest)).map(f => [`${pkg.dest}/${f}`, read(join(ROOT, pkg.dest, f))] as const));
+
+    it('scans every vendored file', () => {
+      expect(files.length).toBeGreaterThan(20);
+    });
+
+    it('has no explicit `any`', () => {
+      const hits = files.flatMap(([name, text]) => text.split('\n')
+        .map((line, i) => (!isComment(line) && /\bany\b/.test(line) ? `${name}:${i + 1}` : null))
+        .filter((x): x is string => x !== null));
+      expect(hits, `no-explicit-any is on the check's never-disable list, so these cannot be silenced: ${hits.join(', ')}`).toEqual([]);
+    });
+
+    it('has no redundant union members', () => {
+      const hits: string[] = [];
+      for (const [name, text] of files) {
+        text.split('\n').forEach((line, i) => {
+          if (isComment(line)) return;
+          for (const m of line.match(union) ?? []) {
+            const atoms = m.split('|').map(s => s.trim());
+            const absorbed = atoms.includes('unknown')
+              || (atoms.includes('string') && atoms.some(a => /^['"]/.test(a)));
+            if (absorbed) hits.push(`${name}:${i + 1} (${m.trim().slice(0, 48)})`);
+          }
+        });
+      }
+      expect(hits, `"x is overridden by" / "overrides all other types" warnings: ${hits.join(', ')}`).toEqual([]);
+    });
+
+    it('has no bare `Function`, empty interface, or non-type CommonJS import', () => {
+      const hits: string[] = [];
+      for (const [name, text] of files) {
+        text.split('\n').forEach((line, i) => {
+          if (isComment(line)) return;
+          if (/\bFunction\b(?=\s*[;,)\]}]|$)/.test(line)) hits.push(`${name}:${i + 1} bare Function`);
+          if (/^import \* as \w+ from /.test(line)) hits.push(`${name}:${i + 1} non-type namespace import`);
+          if (/\brequire\(/.test(line)) hits.push(`${name}:${i + 1} require() import`);
+        });
+        for (const m of text.match(/^export interface [^{]*\{\s*\}/gm) ?? []) hits.push(`${name} empty interface: ${m.slice(0, 48)}`);
+      }
+      expect(hits, `remaining warning triggers: ${hits.join(', ')}`).toEqual([]);
     });
   });
 

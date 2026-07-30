@@ -5,14 +5,14 @@
 
 import { Extension, StateField } from '@codemirror/state';
 import { EditorView, ViewPlugin } from '@codemirror/view';
-import * as Moment from 'moment';
+import type * as Moment from 'moment';
 
 declare global {
     interface ObjectConstructor {
-        isEmpty(object: Record<string, any>): boolean;
+        isEmpty(object: Record<string, unknown>): boolean;
         each<T>(object: {
             [key: string]: T;
-        }, callback: (value: T, key?: string) => boolean | void, context?: any): boolean;
+        }, callback: (value: T, key?: string) => boolean | void, context?: unknown): boolean;
     }
     interface ArrayConstructor {
         combine<T>(arrays: T[][]): T[];
@@ -35,7 +35,7 @@ declare global {
         square(value: number): number;
     }
     interface StringConstructor {
-        isString(obj: any): obj is string;
+        isString(obj: unknown): obj is string;
     }
     interface String {
         contains(target: string): boolean;
@@ -44,7 +44,7 @@ declare global {
         format(...args: string[]): string;
     }
     interface NumberConstructor {
-        isNumber(obj: any): obj is number;
+        isNumber(obj: unknown): obj is number;
     }
     interface Node {
         detach(): void;
@@ -117,7 +117,7 @@ declare global {
         setCssStyles(styles: Partial<CSSStyleDeclaration>): void;
         setCssProps(props: Record<string, string>): void;
     }
-    function isBoolean(obj: any): obj is boolean;
+    function isBoolean(obj: unknown): obj is boolean;
     function fish(selector: string): HTMLElement | null;
     function fishAll(selector: string): HTMLElement[];
     interface Element extends Node {
@@ -196,36 +196,36 @@ declare global {
     function createFragment(callback?: (el: DocumentFragment) => void): DocumentFragment;
     interface EventListenerInfo {
         selector: string;
-        listener: Function;
+        listener: ((...args: unknown[]) => unknown);
         options?: boolean | AddEventListenerOptions;
-        callback: Function;
+        callback: ((...args: unknown[]) => unknown);
     }
     interface HTMLElement extends Element {
         _EVENTS?: {
             [K in keyof HTMLElementEventMap]?: EventListenerInfo[];
         };
-        on<K extends keyof HTMLElementEventMap>(this: HTMLElement, type: K, selector: string, listener: (this: HTMLElement, ev: HTMLElementEventMap[K], delegateTarget: HTMLElement) => any, options?: boolean | AddEventListenerOptions): void;
-        off<K extends keyof HTMLElementEventMap>(this: HTMLElement, type: K, selector: string, listener: (this: HTMLElement, ev: HTMLElementEventMap[K], delegateTarget: HTMLElement) => any, options?: boolean | AddEventListenerOptions): void;
-        onClickEvent(this: HTMLElement, listener: (this: HTMLElement, ev: MouseEvent) => any, options?: boolean | AddEventListenerOptions): void;
+        on<K extends keyof HTMLElementEventMap>(this: HTMLElement, type: K, selector: string, listener: (this: HTMLElement, ev: HTMLElementEventMap[K], delegateTarget: HTMLElement) => unknown, options?: boolean | AddEventListenerOptions): void;
+        off<K extends keyof HTMLElementEventMap>(this: HTMLElement, type: K, selector: string, listener: (this: HTMLElement, ev: HTMLElementEventMap[K], delegateTarget: HTMLElement) => unknown, options?: boolean | AddEventListenerOptions): void;
+        onClickEvent(this: HTMLElement, listener: (this: HTMLElement, ev: MouseEvent) => unknown, options?: boolean | AddEventListenerOptions): void;
         /**
          * @param listener - the callback to call when this node is inserted into the DOM.
          * @param once - if true, this will only fire once and then unhook itself.
          * @returns destroy - a function to remove the event handler to avoid memory leaks.
          */
-        onNodeInserted(this: HTMLElement, listener: () => any, once?: boolean): () => void;
+        onNodeInserted(this: HTMLElement, listener: () => unknown, once?: boolean): () => void;
         /**
          * @param listener - the callback to call when this node has been migrated to another window.
          * @returns destroy - a function to remove the event handler to avoid memory leaks.
          */
-        onWindowMigrated(this: HTMLElement, listener: (win: Window) => any): () => void;
+        onWindowMigrated(this: HTMLElement, listener: (win: Window) => unknown): () => void;
         trigger(eventType: string): void;
     }
     interface Document {
         _EVENTS?: {
             [K in keyof DocumentEventMap]?: EventListenerInfo[];
         };
-        on<K extends keyof DocumentEventMap>(this: Document, type: K, selector: string, listener: (this: Document, ev: DocumentEventMap[K], delegateTarget: HTMLElement) => any, options?: boolean | AddEventListenerOptions): void;
-        off<K extends keyof DocumentEventMap>(this: Document, type: K, selector: string, listener: (this: Document, ev: DocumentEventMap[K], delegateTarget: HTMLElement) => any, options?: boolean | AddEventListenerOptions): void;
+        on<K extends keyof DocumentEventMap>(this: Document, type: K, selector: string, listener: (this: Document, ev: DocumentEventMap[K], delegateTarget: HTMLElement) => unknown, options?: boolean | AddEventListenerOptions): void;
+        off<K extends keyof DocumentEventMap>(this: Document, type: K, selector: string, listener: (this: Document, ev: DocumentEventMap[K], delegateTarget: HTMLElement) => unknown, options?: boolean | AddEventListenerOptions): void;
     }
     interface UIEvent extends Event {
         targetNode: Node | null;
@@ -237,22 +237,22 @@ declare global {
          * @param type
          */
         instanceOf<T>(type: {
-            new (...data: any[]): T;
+            new (...data: unknown[]): T;
         }): this is T;
     }
     interface AjaxOptions {
         method?: 'GET' | 'POST';
         url: string;
-        success?: (response: any, req: XMLHttpRequest) => any;
-        error?: (error: any, req: XMLHttpRequest) => any;
+        success?: (response: unknown, req: XMLHttpRequest) => unknown;
+        error?: (error: unknown, req: XMLHttpRequest) => unknown;
         data?: object | string | ArrayBuffer;
         headers?: Record<string, string>;
         withCredentials?: boolean;
         req?: XMLHttpRequest;
     }
     function ajax(options: AjaxOptions): void;
-    function ajaxPromise(options: AjaxOptions): Promise<any>;
-    function ready(fn: () => any): void;
+    function ajaxPromise(options: AjaxOptions): Promise<unknown>;
+    function ready(fn: () => unknown): void;
     function sleep(ms: number): Promise<void>;
     function nextFrame(): Promise<void>;
     /**
@@ -333,7 +333,7 @@ export abstract class AbstractInputSuggest<T> extends PopoverSuggest<T> {
      * @public
      * @since 1.4.10
      */
-    onSelect(callback: (value: T, evt: MouseEvent | KeyboardEvent) => any): this;
+    onSelect(callback: (value: T, evt: MouseEvent | KeyboardEvent) => unknown): this;
 
 }
 
@@ -381,7 +381,7 @@ export class AbstractTextComponent<T extends HTMLInputElement | HTMLTextAreaElem
      * @public
      * @since 0.9.7
      */
-    onChange(callback: (value: string) => any): this;
+    onChange(callback: (value: string) => unknown): this;
 }
 
 /**
@@ -469,7 +469,7 @@ export class App {
      * @public
      * @since 1.8.7
      */
-    loadLocalStorage(key: string): any | null;
+    loadLocalStorage(key: string): unknown;
     /**
      * Save vault-specific value to `localStorage`. If data is `null`, the entry will be cleared.
      * @param key
@@ -477,7 +477,7 @@ export class App {
      * @public
      * @since 1.8.7
      */
-    saveLocalStorage(key: string, data: unknown | null): void;
+    saveLocalStorage(key: string, data: unknown): void;
 
 }
 
@@ -505,7 +505,7 @@ export abstract class BaseComponent {
      * @public
      * @since 0.9.7
      */
-    then(cb: (component: this) => any): this;
+    then(cb: (component: this) => unknown): this;
     /**
      * @public
      * @since 1.2.3
@@ -644,7 +644,7 @@ export class ButtonComponent extends BaseComponent {
      * @public
      * @since 0.12.16
      */
-    onClick(callback: (evt: MouseEvent) => unknown | Promise<unknown>): this;
+    onClick(callback: (evt: MouseEvent) => unknown): this;
 }
 
 /**
@@ -850,7 +850,7 @@ export interface CliData {
      * @public
      * @since 1.12.2
      */
-    [key: string]: string | 'true';
+    [key: string]: string;
 }
 
 /**
@@ -951,7 +951,7 @@ export class ColorComponent extends ValueComponent<string> {
      * @public
      * @since 1.0.0
      */
-    onChange(callback: (value: string) => any): this;
+    onChange(callback: (value: string) => unknown): this;
 }
 
 /**
@@ -996,7 +996,7 @@ export interface Command {
      * ```
      * @public
      */
-    callback?: () => any;
+    callback?: () => unknown;
     /**
      * Complex callback, overrides the simple callback.
      * Used to 'check' whether your command can be performed in the current circumstances.
@@ -1051,7 +1051,7 @@ export interface Command {
      * @public
      * @since 0.12.2
      */
-    editorCallback?: (editor: Editor, ctx: MarkdownView | MarkdownFileInfo) => any;
+    editorCallback?: (editor: Editor, ctx: MarkdownView | MarkdownFileInfo) => unknown;
     /**
      * A command callback that is only triggered when the user is in an editor.
      * Overrides `editorCallback`, `callback` and `checkCallback`
@@ -1137,7 +1137,7 @@ export class Component {
      * @public
      * @since 0.9.7
      */
-    register(cb: () => any): void;
+    register(cb: () => unknown): void;
     /**
      * Registers an event to be detached when unloading
      * @public
@@ -1149,19 +1149,19 @@ export class Component {
      * @public
      * @since 0.14.8
      */
-    registerDomEvent<K extends keyof WindowEventMap>(el: Window, type: K, callback: (this: HTMLElement, ev: WindowEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+    registerDomEvent<K extends keyof WindowEventMap>(el: Window, type: K, callback: (this: HTMLElement, ev: WindowEventMap[K]) => unknown, options?: boolean | AddEventListenerOptions): void;
     /**
      * Registers a DOM event to be detached when unloading
      * @public
      * @since 0.14.8
      */
-    registerDomEvent<K extends keyof DocumentEventMap>(el: Document, type: K, callback: (this: HTMLElement, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+    registerDomEvent<K extends keyof DocumentEventMap>(el: Document, type: K, callback: (this: HTMLElement, ev: DocumentEventMap[K]) => unknown, options?: boolean | AddEventListenerOptions): void;
     /**
      * Registers a DOM event to be detached when unloading
      * @public
      * @since 0.14.8
      */
-    registerDomEvent<K extends keyof HTMLElementEventMap>(el: HTMLElement, type: K, callback: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+    registerDomEvent<K extends keyof HTMLElementEventMap>(el: HTMLElement, type: K, callback: (this: HTMLElement, ev: HTMLElementEventMap[K]) => unknown, options?: boolean | AddEventListenerOptions): void;
 
     /**
      * Registers an interval (from setInterval) to be cancelled when unloading
@@ -1185,7 +1185,7 @@ export class ConfirmationButton extends ButtonComponent {
      * @public
      * @since 1.13.0
      */
-    onClick(handler: (evt: MouseEvent) => unknown | Promise<unknown>): this;
+    onClick(handler: (evt: MouseEvent) => unknown): this;
     /**
      * Mark this button as the focus target when the modal opens. If multiple
      * buttons in the same modal have this set, the last-marked one wins.
@@ -1236,12 +1236,12 @@ export class ConfirmationModal extends Modal {
      * @public
      * @since 1.13.0
      */
-    addCheckbox(label: string, cb: (value: boolean) => any | Promise<any>): this;
+    addCheckbox(label: string, cb: (value: boolean) => unknown): this;
     /**
      * @public
      * @since 1.13.0
      */
-    addButton(cb: (btn: ConfirmationButton) => any): this;
+    addButton(cb: (btn: ConfirmationButton) => unknown): this;
     /**
      * @public
      * @since 1.13.0
@@ -1251,7 +1251,7 @@ export class ConfirmationModal extends Modal {
 }
 
 /** @public */
-export type Constructor<T> = abstract new (...args: any[]) => T;
+export type Constructor<T> = abstract new (...args: unknown[]) => T;
 
 /**
  * Work directly with files and folders inside a vault.
@@ -1509,7 +1509,7 @@ export class DropdownComponent extends ValueComponent<string> {
      * @public
      * @since 0.9.7
      */
-    onChange(callback: (value: string) => any): this;
+    onChange(callback: (value: string) => unknown): this;
 }
 
 
@@ -1917,15 +1917,12 @@ export const editorViewField: StateField<MarkdownFileInfo>;
  * @public
  * @since 0.9.7
  */
-export interface EmbedCache extends ReferenceCache {
-}
+export type EmbedCache = ReferenceCache;
 
 /**
  * @public
  */
-export interface EventRef {
-
-}
+export type EventRef = object;
 
 /**
  * @public
@@ -1937,7 +1934,7 @@ export class Events {
      * @public
      * @since 0.9.7
      */
-    on(name: string, callback: (...data: unknown[]) => unknown, ctx?: any): EventRef;
+    on(name: string, callback: (...data: unknown[]) => unknown, ctx?: unknown): EventRef;
     /**
      * @public
      * @since 0.9.7
@@ -1996,7 +1993,7 @@ export class ExtraButtonComponent extends BaseComponent {
      * @public
      * @since 0.9.7
      */
-    onClick(callback: () => any): this;
+    onClick(callback: () => unknown): this;
 }
 
 /**
@@ -2077,7 +2074,7 @@ export class FileManager {
      * @public
      * @since 1.4.4
      */
-    processFrontMatter(file: TFile, fn: (frontmatter: any) => void, options?: DataWriteOptions): Promise<void>;
+    processFrontMatter(file: TFile, fn: (frontmatter: unknown) => void, options?: DataWriteOptions): Promise<void>;
 
     /**
      * Resolves a unique path for the attachment file being saved.
@@ -2271,7 +2268,7 @@ export abstract class FileView extends ItemView {
      * @public
      * @since 0.9.7
      */
-    setState(state: any, result: ViewStateResult): Promise<void>;
+    setState(state: unknown, result: ViewStateResult): Promise<void>;
 
     /**
      * @public
@@ -2339,9 +2336,7 @@ export interface FootnoteSubpathResult extends SubpathResult {
  * @public
  * @since 1.10.0
  */
-export interface FormulaContext {
-
-}
+export type FormulaContext = object;
 
 /**
  * @public
@@ -2350,7 +2345,7 @@ export interface FrontMatterCache {
     /**
      * @public
      */
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /** @public */
@@ -2674,7 +2669,7 @@ export abstract class ItemView extends View {
      * @public
      * @since 1.1.0
      */
-    addAction(icon: IconName, title: string, callback: (evt: MouseEvent) => any): HTMLElement;
+    addAction(icon: IconName, title: string, callback: (evt: MouseEvent) => unknown): HTMLElement;
 
 }
 
@@ -2758,7 +2753,7 @@ export interface KeymapEventHandler extends KeymapInfo {
  * Return `false` to automatically preventDefault
  * @public
  */
-export type KeymapEventListener = (evt: KeyboardEvent, ctx: KeymapContext) => false | any;
+export type KeymapEventListener = (evt: KeyboardEvent, ctx: KeymapContext) => unknown;
 
 /**
  * @public
@@ -2781,8 +2776,7 @@ export interface KeymapInfo {
  * @public
  * @since 0.9.7
  */
-export interface LinkCache extends ReferenceCache {
-}
+export type LinkCache = ReferenceCache;
 
 
 /**
@@ -2856,7 +2850,7 @@ export function loadMathJax(): Promise<void>;
  * @see {@link https://mermaid.js.org/ Official Mermaid documentation}
  * @public
  */
-export function loadMermaid(): Promise<any>;
+export function loadMermaid(): Promise<unknown>;
 
 /**
  * Load PDF.js and return a promise to the global pdfjsLib object.
@@ -2864,7 +2858,7 @@ export function loadMermaid(): Promise<any>;
  * @see {@link https://mozilla.github.io/pdf.js/ Official PDF.js documentation}
  * @public
  */
-export function loadPdfJs(): Promise<any>;
+export function loadPdfJs(): Promise<unknown>;
 
 /**
  * Load Prism.js and return a promise to the global Prism object.
@@ -2872,7 +2866,7 @@ export function loadPdfJs(): Promise<any>;
  * @see {@link https://prismjs.com/ Official Prism documentation}
  * @public
  */
-export function loadPrism(): Promise<any>;
+export function loadPrism(): Promise<unknown>;
 
 /**
  * Location within a Markdown document
@@ -2979,7 +2973,7 @@ export interface MarkdownPostProcessor {
      * The processor function itself.
      * @public
      */
-    (el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<any> | void;
+    (el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<unknown> | void;
     /**
      * An optional integer sort order. Defaults to 0. Lower number runs before higher numbers.
      * @public
@@ -3001,7 +2995,7 @@ export interface MarkdownPostProcessorContext {
      */
     sourcePath: string;
     /** @public */
-    frontmatter: any | null | undefined;
+    frontmatter: unknown;
 
     /**
      * Adds a child component that will have its lifecycle managed by the renderer.
@@ -3022,9 +3016,7 @@ export interface MarkdownPostProcessorContext {
 }
 
 /** @public **/
-export interface MarkdownPreviewEvents extends Component {
-
-}
+export type MarkdownPreviewEvents = Component;
 
 /**
  * @public
@@ -3047,7 +3039,7 @@ export class MarkdownPreviewRenderer {
      * @public
      * @since 0.12.11
      */
-    static createCodeBlockPostProcessor(language: string, handler: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<any> | void): (el: HTMLElement, ctx: MarkdownPostProcessorContext) => void;
+    static createCodeBlockPostProcessor(language: string, handler: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<unknown> | void): (el: HTMLElement, ctx: MarkdownPostProcessorContext) => void;
 
 }
 
@@ -3263,7 +3255,7 @@ export class Menu extends Component implements CloseableComponent {
      * @public
      * @since 0.15.3
      */
-    addItem(cb: (item: MenuItem) => any): this;
+    addItem(cb: (item: MenuItem) => unknown): this;
     /**
      * Adds a separator. Only works when menu is not shown yet.
      * @public
@@ -3294,7 +3286,7 @@ export class Menu extends Component implements CloseableComponent {
     /**
      * @public
      */
-    onHide(callback: () => any): void;
+    onHide(callback: () => unknown): void;
 
     /**
      * @public
@@ -3351,7 +3343,7 @@ export class MenuItem {
     /**
      * @public
      */
-    onClick(callback: (evt: MouseEvent | KeyboardEvent) => any): this;
+    onClick(callback: (evt: MouseEvent | KeyboardEvent) => unknown): this;
 
     /**
      * Sets the section this menu item should belong in.
@@ -3446,25 +3438,25 @@ export class MetadataCache extends Events {
      * You must hook the vault rename event for those.
      * @public
      */
-    on(name: 'changed', callback: (file: TFile, data: string, cache: CachedMetadata) => any, ctx?: any): EventRef;
+    on(name: 'changed', callback: (file: TFile, data: string, cache: CachedMetadata) => unknown, ctx?: unknown): EventRef;
     /**
      * Called when a file has been deleted. A best-effort previous version of the cached metadata is presented,
      * but it could be null in case the file was not successfully cached previously.
      * @public
      */
-    on(name: 'deleted', callback: (file: TFile, prevCache: CachedMetadata | null) => any, ctx?: any): EventRef;
+    on(name: 'deleted', callback: (file: TFile, prevCache: CachedMetadata | null) => unknown, ctx?: unknown): EventRef;
 
     /**
      * Called when a file has been resolved for `resolvedLinks` and `unresolvedLinks`.
      * This happens sometimes after a file has been indexed.
      * @public
      */
-    on(name: 'resolve', callback: (file: TFile) => any, ctx?: any): EventRef;
+    on(name: 'resolve', callback: (file: TFile) => unknown, ctx?: unknown): EventRef;
     /**
      * Called when all files has been resolved. This will be fired each time files get modified after the initial load.
      * @public
      */
-    on(name: 'resolved', callback: () => any, ctx?: any): EventRef;
+    on(name: 'resolved', callback: () => unknown, ctx?: unknown): EventRef;
 }
 
 /**
@@ -3541,7 +3533,7 @@ export class Modal implements CloseableComponent {
      * @public
      * @since 1.10.0
      */
-    setCloseCallback(callback: () => any): this;
+    setCloseCallback(callback: () => unknown): this;
 
 }
 
@@ -3656,13 +3648,13 @@ export interface ObsidianProtocolData {
     /** @public */
     action: string;
     /** @public */
-    [key: string]: string | 'true';
+    [key: string]: string;
 }
 
 /**
  * @public
  */
-export type ObsidianProtocolHandler = (params: ObsidianProtocolData) => any;
+export type ObsidianProtocolHandler = (params: ObsidianProtocolData) => unknown;
 
 /**
  * @public
@@ -3686,22 +3678,22 @@ export type PaneType = 'tab' | 'split' | 'window';
 /**
  * @public
  */
-export function parseFrontMatterAliases(frontmatter: any | null): string[] | null;
+export function parseFrontMatterAliases(frontmatter: unknown): string[] | null;
 
 /**
  * @public
  */
-export function parseFrontMatterEntry(frontmatter: any | null, key: string | RegExp): any | null;
+export function parseFrontMatterEntry(frontmatter: unknown, key: string | RegExp): unknown;
 
 /**
  * @public
  */
-export function parseFrontMatterStringArray(frontmatter: any | null, key: string | RegExp): string[] | null;
+export function parseFrontMatterStringArray(frontmatter: unknown, key: string | RegExp): string[] | null;
 
 /**
  * @public
  */
-export function parseFrontMatterTags(frontmatter: any | null): string[] | null;
+export function parseFrontMatterTags(frontmatter: unknown): string[] | null;
 
 /**
  * Parses the linktext of a wikilink into its component parts.
@@ -3722,7 +3714,7 @@ export function parseLinktext(linktext: string): {
 
 
 /** @public */
-export function parseYaml(yaml: string): any;
+export function parseYaml(yaml: string): unknown;
 
 /**
  * @public
@@ -3843,7 +3835,7 @@ export abstract class Plugin extends Component {
      * @public
      * @since 0.9.7
      */
-    addRibbonIcon(icon: IconName, title: string, callback: (evt: MouseEvent) => any): HTMLElement;
+    addRibbonIcon(icon: IconName, title: string, callback: (evt: MouseEvent) => unknown): HTMLElement;
     /**
      * Adds a status bar item to the bottom of the app.
      * Not available on mobile.
@@ -3906,7 +3898,7 @@ export abstract class Plugin extends Component {
      * @public
      * @since 0.9.7
      */
-    registerMarkdownCodeBlockProcessor(language: string, handler: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<any> | void, sortOrder?: number): MarkdownPostProcessor;
+    registerMarkdownCodeBlockProcessor(language: string, handler: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<unknown> | void, sortOrder?: number): MarkdownPostProcessor;
 
     /**
      * Registers a CodeMirror 6 extension.
@@ -3931,7 +3923,7 @@ export abstract class Plugin extends Component {
      * @public
      * @since 0.12.7
      */
-    registerEditorSuggest(editorSuggest: EditorSuggest<any>): void;
+    registerEditorSuggest(editorSuggest: EditorSuggest<unknown>): void;
     /**
      * Register a CLI handler to handle a command from the CLI.
      * Command IDs must be globally unique. Attempting to register a command that is already registered will throw an Error.
@@ -3953,7 +3945,7 @@ export abstract class Plugin extends Component {
      * @public
      * @since 0.9.7
      */
-    loadData(): Promise<any>;
+    loadData(): Promise<unknown>;
     /**
      * Write settings data to disk.
      * Data is stored in `data.json` in the plugin folder.
@@ -3961,7 +3953,7 @@ export abstract class Plugin extends Component {
      * @public
      * @since 0.9.7
      */
-    saveData(data: any): Promise<void>;
+    saveData(data: unknown): Promise<void>;
 
     /**
      * Perform any initial setup code. The user has explicitly interacted with the plugin
@@ -3982,7 +3974,7 @@ export abstract class Plugin extends Component {
      * @public
      * @since 1.5.7
      */
-    onExternalSettingsChange?(): any;
+    onExternalSettingsChange?(): unknown;
 }
 
 
@@ -4208,8 +4200,7 @@ export interface Reference {
 /**
  * @public
  */
-export interface ReferenceCache extends Reference, CacheItem {
-}
+export type ReferenceCache = Reference & CacheItem;
 
 /**
  * @public
@@ -4310,7 +4301,7 @@ export interface RequestUrlResponse {
     /** @public */
     arrayBuffer: ArrayBuffer;
     /** @public */
-    json: any;
+    json: unknown;
     /** @public */
     text: string;
 }
@@ -4320,7 +4311,7 @@ export interface RequestUrlResponsePromise extends Promise<RequestUrlResponse> {
     /** @public */
     arrayBuffer: Promise<ArrayBuffer>;
     /** @public */
-    json: Promise<any>;
+    json: Promise<unknown>;
     /** @public */
     text: Promise<string>;
 }
@@ -4516,7 +4507,7 @@ export interface SectionCache extends CacheItem {
      * Typing is non-exhaustive, more types can be available than are documented here.
      * @public
      */
-    type: 'blockquote' | 'callout' | 'code' | 'element' | 'footnoteDefinition' | 'heading' | 'html' | 'list' | 'paragraph' | 'table' | 'text' | 'thematicBreak' | 'yaml' | string;
+    type: string;
 }
 
 /**
@@ -4623,22 +4614,22 @@ export class Setting {
      * @public
      * @since 0.9.7
      */
-    addButton(cb: (component: ButtonComponent) => any): this;
+    addButton(cb: (component: ButtonComponent) => unknown): this;
     /**
      * @public
      * @since 0.9.16
      */
-    addExtraButton(cb: (component: ExtraButtonComponent) => any): this;
+    addExtraButton(cb: (component: ExtraButtonComponent) => unknown): this;
     /**
      * @public
      * @since 0.9.7
      */
-    addToggle(cb: (component: ToggleComponent) => any): this;
+    addToggle(cb: (component: ToggleComponent) => unknown): this;
     /**
      * @public
      * @since 0.9.7
      */
-    addText(cb: (component: TextComponent) => any): this;
+    addText(cb: (component: TextComponent) => unknown): this;
     /**
      * @public
      * @since 1.11.0
@@ -4648,43 +4639,43 @@ export class Setting {
      * @public
      * @since 0.9.21
      */
-    addSearch(cb: (component: SearchComponent) => any): this;
+    addSearch(cb: (component: SearchComponent) => unknown): this;
     /**
      * @public
      * @since 0.9.7
      */
-    addTextArea(cb: (component: TextAreaComponent) => any): this;
+    addTextArea(cb: (component: TextAreaComponent) => unknown): this;
     /**
      * @public
      * @since 0.9.7
      */
-    addMomentFormat(cb: (component: MomentFormatComponent) => any): this;
+    addMomentFormat(cb: (component: MomentFormatComponent) => unknown): this;
     /**
      * @public
      * @ince 0.9.7
      */
-    addDropdown(cb: (component: DropdownComponent) => any): this;
+    addDropdown(cb: (component: DropdownComponent) => unknown): this;
     /**
      * @public
      * @ince 0.16.0
      */
-    addColorPicker(cb: (component: ColorComponent) => any): this;
+    addColorPicker(cb: (component: ColorComponent) => unknown): this;
     /**
      * @public
      * @ince 1.4.4
      */
-    addProgressBar(cb: (component: ProgressBarComponent) => any): this;
+    addProgressBar(cb: (component: ProgressBarComponent) => unknown): this;
     /**
      * @public
      * @since 0.9.7
      */
-    addSlider(cb: (component: SliderComponent) => any): this;
+    addSlider(cb: (component: SliderComponent) => unknown): this;
     /**
      * Facilitates chaining
      * @public
      * @since 0.9.20
      */
-    then(cb: (setting: this) => any): this;
+    then(cb: (setting: this) => unknown): this;
     /**
      * @public
      * @since 0.13.8
@@ -4932,13 +4923,13 @@ export interface SettingDefinitionGroup<K extends string = string> {
      * @public
      * @since 1.13.0
      */
-    search?: (component: SearchComponent) => any;
+    search?: (component: SearchComponent) => unknown;
     /**
      * Extra button configuration for the header.
      * @public
      * @since 1.13.0
      */
-    extraButtons?: ((component: ExtraButtonComponent) => any)[];
+    extraButtons?: ((component: ExtraButtonComponent) => unknown)[];
     /**
      * Settings within this group.
      * @public
@@ -5196,13 +5187,13 @@ export class SettingGroup {
      * @public
      * @since 1.11.0
      */
-    addSearch(cb: (component: SearchComponent) => any): this;
+    addSearch(cb: (component: SearchComponent) => unknown): this;
 
     /**
      * @public
      * @since 1.11.0
      */
-    addExtraButton(cb: (component: ExtraButtonComponent) => any): this;
+    addExtraButton(cb: (component: ExtraButtonComponent) => unknown): this;
 
 }
 
@@ -5244,7 +5235,7 @@ export interface SettingNumberControl<K extends string = string> extends Setting
      * @public
      * @since 1.13.0
      */
-    step?: number | 'any';
+    step?: number | 'unknown';
 }
 
 /**
@@ -5537,7 +5528,7 @@ export class SliderComponent extends ValueComponent<number> {
      * @public
      * @since 0.9.7
      */
-    setLimits(min: number | null, max: number | null, step: number | 'any'): this;
+    setLimits(min: number | null, max: number | null, step: number | 'unknown'): this;
     /**
      * @public
      * @since 0.9.7
@@ -5567,7 +5558,7 @@ export class SliderComponent extends ValueComponent<number> {
      * @public
      * @since 0.9.7
      */
-    onChange(callback: (value: number) => any): this;
+    onChange(callback: (value: number) => unknown): this;
 }
 
 /**
@@ -5602,7 +5593,7 @@ export interface Stat {
 }
 
 /** @public */
-export function stringifyYaml(obj: any): string;
+export function stringifyYaml(obj: unknown): string;
 
 
 /**
@@ -5757,12 +5748,12 @@ export class Tasks {
      * @public
      * @since 0.10.2
      */
-    add(callback: () => Promise<any>): void;
+    add(callback: () => Promise<unknown>): void;
     /**
      * @public
      * @since 0.10.2
      */
-    addPromise(promise: Promise<any>): void;
+    addPromise(promise: Promise<unknown>): void;
     /**
      * @public
      * @since 0.10.2
@@ -5772,7 +5763,7 @@ export class Tasks {
      * @public
      * @since 0.10.2
      */
-    promise(): Promise<any>;
+    promise(): Promise<unknown>;
 }
 
 /**
@@ -5957,7 +5948,7 @@ export class ToggleComponent extends ValueComponent<boolean> {
      * @public
      * @since 0.9.7
      */
-    onChange(callback: (value: boolean) => any): this;
+    onChange(callback: (value: boolean) => unknown): this;
 }
 
 /** @public */
@@ -6236,7 +6227,7 @@ export class Vault extends Events {
      * @public
      * @since 0.9.7
      */
-    static recurseChildren(root: TFolder, cb: (file: TAbstractFile) => any): void;
+    static recurseChildren(root: TFolder, cb: (file: TAbstractFile) => unknown): void;
     /**
      * Get all Markdown files in the vault.
      * @public
@@ -6257,25 +6248,25 @@ export class Vault extends Events {
      * @public
      * @since 0.9.7
      */
-    on(name: 'create', callback: (file: TAbstractFile) => any, ctx?: any): EventRef;
+    on(name: 'create', callback: (file: TAbstractFile) => unknown, ctx?: unknown): EventRef;
     /**
      * Called when a file is modified.
      * @public
      * @since 0.9.7
      */
-    on(name: 'modify', callback: (file: TAbstractFile) => any, ctx?: any): EventRef;
+    on(name: 'modify', callback: (file: TAbstractFile) => unknown, ctx?: unknown): EventRef;
     /**
      * Called when a file is deleted.
      * @public
      * @since 0.9.7
      */
-    on(name: 'delete', callback: (file: TAbstractFile) => any, ctx?: any): EventRef;
+    on(name: 'delete', callback: (file: TAbstractFile) => unknown, ctx?: unknown): EventRef;
     /**
      * Called when a file is renamed.
      * @public
      * @since 0.9.7
      */
-    on(name: 'rename', callback: (file: TAbstractFile, oldPath: string) => any, ctx?: any): EventRef;
+    on(name: 'rename', callback: (file: TAbstractFile, oldPath: string) => unknown, ctx?: unknown): EventRef;
 
 }
 
@@ -6392,7 +6383,7 @@ export abstract class View extends Component {
      * @public
      * @since 0.15.3
      */
-    onPaneMenu(menu: Menu, source: 'more-options' | 'tab-header' | string): void;
+    onPaneMenu(menu: Menu, source: string): void;
 
 }
 
@@ -6521,12 +6512,12 @@ export class Workspace extends Events {
      * @public
      * @since 0.11.0
      */
-    onLayoutReady(callback: () => any): void;
+    onLayoutReady(callback: () => unknown): void;
     /**
      * @public
      * @since 0.9.7
      */
-    changeLayout(workspace: any): Promise<void>;
+    changeLayout(workspace: unknown): Promise<void>;
 
     /**
      * @public
@@ -6680,7 +6671,7 @@ export class Workspace extends Events {
         /** @public */
         reveal?: boolean;
         /** @public */
-        state?: any;
+        state?: unknown;
     }): Promise<WorkspaceLeaf>;
 
     /**
@@ -6702,13 +6693,13 @@ export class Workspace extends Events {
      * @public
      * @since 0.9.7
      */
-    iterateRootLeaves(callback: (leaf: WorkspaceLeaf) => any): void;
+    iterateRootLeaves(callback: (leaf: WorkspaceLeaf) => unknown): void;
     /**
      * Iterate through all leaves, including main area leaves, floating leaves, and sidebar leaves.
      * @public
      * @since 0.9.7
      */
-    iterateAllLeaves(callback: (leaf: WorkspaceLeaf) => any): void;
+    iterateAllLeaves(callback: (leaf: WorkspaceLeaf) => unknown): void;
     /**
      * Get all leaves of a given type.
      * @public
@@ -6757,83 +6748,83 @@ export class Workspace extends Events {
      * @public
      * @since 0.9.7
      */
-    on(name: 'quick-preview', callback: (file: TFile, data: string) => any, ctx?: any): EventRef;
+    on(name: 'quick-preview', callback: (file: TFile, data: string) => unknown, ctx?: unknown): EventRef;
     /**
      * Triggered when a `WorkspaceItem` is resized or the workspace layout has changed.
      * @public
      * @since 0.9.7
      */
-    on(name: 'resize', callback: () => any, ctx?: any): EventRef;
+    on(name: 'resize', callback: () => unknown, ctx?: unknown): EventRef;
 
     /**
      * Triggered when the active leaf changes.
      * @public
      * @since 0.10.9
      */
-    on(name: 'active-leaf-change', callback: (leaf: WorkspaceLeaf | null) => any, ctx?: any): EventRef;
+    on(name: 'active-leaf-change', callback: (leaf: WorkspaceLeaf | null) => unknown, ctx?: unknown): EventRef;
     /**
      * Triggered when the active file changes. The file could be in a new leaf, an existing leaf,
      * or an embed.
      * @public
      * @since 0.10.9
      */
-    on(name: 'file-open', callback: (file: TFile | null) => any, ctx?: any): EventRef;
+    on(name: 'file-open', callback: (file: TFile | null) => unknown, ctx?: unknown): EventRef;
 
     /**
      * @public
      * @since 0.9.20
      */
-    on(name: 'layout-change', callback: () => any, ctx?: any): EventRef;
+    on(name: 'layout-change', callback: () => unknown, ctx?: unknown): EventRef;
     /**
      * Triggered when a new popout window is created.
      * @public
      * @since 0.15.3
      */
-    on(name: 'window-open', callback: (win: WorkspaceWindow, window: Window) => any, ctx?: any): EventRef;
+    on(name: 'window-open', callback: (win: WorkspaceWindow, window: Window) => unknown, ctx?: unknown): EventRef;
     /**
      * Triggered when a popout window is closed.
      * @public
      * @since 0.15.3
      */
-    on(name: 'window-close', callback: (win: WorkspaceWindow, window: Window) => any, ctx?: any): EventRef;
+    on(name: 'window-close', callback: (win: WorkspaceWindow, window: Window) => unknown, ctx?: unknown): EventRef;
     /**
      * Triggered when the CSS of the app has changed.
      * @public
      * @since 0.9.7
      */
-    on(name: 'css-change', callback: () => any, ctx?: any): EventRef;
+    on(name: 'css-change', callback: () => unknown, ctx?: unknown): EventRef;
 
     /**
      * Triggered when the user opens the context menu on a file.
      * @public
      * @since 0.9.12
      */
-    on(name: 'file-menu', callback: (menu: Menu, file: TAbstractFile, source: string, leaf?: WorkspaceLeaf) => any, ctx?: any): EventRef;
+    on(name: 'file-menu', callback: (menu: Menu, file: TAbstractFile, source: string, leaf?: WorkspaceLeaf) => unknown, ctx?: unknown): EventRef;
     /**
      * Triggered when the user opens the context menu with multiple files selected in the File Explorer.
      * @public
      * @since 1.4.10
      */
-    on(name: 'files-menu', callback: (menu: Menu, files: TAbstractFile[], source: string, leaf?: WorkspaceLeaf) => any, ctx?: any): EventRef;
+    on(name: 'files-menu', callback: (menu: Menu, files: TAbstractFile[], source: string, leaf?: WorkspaceLeaf) => unknown, ctx?: unknown): EventRef;
 
     /**
      * Triggered when the user opens the context menu on an external URL.
      * @public
      * @since 1.5.1
      */
-    on(name: 'url-menu', callback: (menu: Menu, url: string) => any, ctx?: any): EventRef;
+    on(name: 'url-menu', callback: (menu: Menu, url: string) => unknown, ctx?: unknown): EventRef;
     /**
      * Triggered when the user opens the context menu on an editor.
      * @public
      * @since 1.1.0
      */
-    on(name: 'editor-menu', callback: (menu: Menu, editor: Editor, info: MarkdownView | MarkdownFileInfo) => any, ctx?: any): EventRef;
+    on(name: 'editor-menu', callback: (menu: Menu, editor: Editor, info: MarkdownView | MarkdownFileInfo) => unknown, ctx?: unknown): EventRef;
     /**
      * Triggered when changes to an editor has been applied, either programmatically or from a user event.
      * @public
      * @since 1.1.1
      */
-    on(name: 'editor-change', callback: (editor: Editor, info: MarkdownView | MarkdownFileInfo) => any, ctx?: any): EventRef;
+    on(name: 'editor-change', callback: (editor: Editor, info: MarkdownView | MarkdownFileInfo) => unknown, ctx?: unknown): EventRef;
 
     /**
      * Triggered when the editor receives a paste event.
@@ -6842,7 +6833,7 @@ export class Workspace extends Events {
      * @public
      * @since 1.1.0
      */
-    on(name: 'editor-paste', callback: (evt: ClipboardEvent, editor: Editor, info: MarkdownView | MarkdownFileInfo) => any, ctx?: any): EventRef;
+    on(name: 'editor-paste', callback: (evt: ClipboardEvent, editor: Editor, info: MarkdownView | MarkdownFileInfo) => unknown, ctx?: unknown): EventRef;
     /**
      * Triggered when the editor receives a drop event.
      * Check for `evt.defaultPrevented` before attempting to handle this event, and return if it has been already handled.
@@ -6850,7 +6841,7 @@ export class Workspace extends Events {
      * @public
      * @since 1.1.0
      */
-    on(name: 'editor-drop', callback: (evt: DragEvent, editor: Editor, info: MarkdownView | MarkdownFileInfo) => any, ctx?: any): EventRef;
+    on(name: 'editor-drop', callback: (evt: DragEvent, editor: Editor, info: MarkdownView | MarkdownFileInfo) => unknown, ctx?: unknown): EventRef;
 
     /**
      * Triggered when the app is about to quit.
@@ -6859,7 +6850,7 @@ export class Workspace extends Events {
      * @public
      * @since 0.10.2
      */
-    on(name: 'quit', callback: (tasks: Tasks) => any, ctx?: any): EventRef;
+    on(name: 'quit', callback: (tasks: Tasks) => unknown, ctx?: unknown): EventRef;
 
 }
 
@@ -6970,7 +6961,7 @@ export class WorkspaceLeaf extends WorkspaceItem implements HoverParent {
     /**
      * @public
      */
-    setViewState(viewState: ViewState, eState?: any): Promise<void>;
+    setViewState(viewState: ViewState, eState?: unknown): Promise<void>;
     /**
      * Returns true if this leaf is currently deferred because it is in the background.
      * A deferred leaf will have a DeferredView as its view, instead of the View that
@@ -6989,11 +6980,11 @@ export class WorkspaceLeaf extends WorkspaceItem implements HoverParent {
     /**
      * @public
      */
-    getEphemeralState(): any;
+    getEphemeralState(): unknown;
     /**
      * @public
      */
-    setEphemeralState(state: any): void;
+    setEphemeralState(state: unknown): void;
     /**
      * @public
      */
@@ -7033,11 +7024,11 @@ export class WorkspaceLeaf extends WorkspaceItem implements HoverParent {
     /**
      * @public
      */
-    on(name: 'pinned-change', callback: (pinned: boolean) => any, ctx?: any): EventRef;
+    on(name: 'pinned-change', callback: (pinned: boolean) => unknown, ctx?: unknown): EventRef;
     /**
      * @public
      */
-    on(name: 'group-change', callback: (group: string) => any, ctx?: any): EventRef;
+    on(name: 'group-change', callback: (group: string) => unknown, ctx?: unknown): EventRef;
 
 }
 

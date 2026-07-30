@@ -181,7 +181,9 @@ export default class VisualNotesPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as VisualNotesSettings;
+    // No assertion needed: loadData() is typed `unknown`, and intersecting
+    // that with DEFAULT_SETTINGS' type already yields VisualNotesSettings.
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
 
   async saveSettings(): Promise<void> {

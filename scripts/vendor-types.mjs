@@ -8,21 +8,36 @@
 // plugin risky. tsconfig `paths` resolves these modules from the copies here
 // instead, so resolution never depends on node_modules existing.
 //
-// Two things that are easy to get wrong:
+// The copies are NOT verbatim. Three transforms are applied, in this order,
+// and `applyTransforms` is the single definition of the pipeline — the drift
+// test runs it over upstream before comparing, so a real declaration change
+// still surfaces:
 //
-//  1. The copies get linted themselves, and CANNOT be silenced. 1.1.6 tried a
-//     described `/* eslint-disable -- … */` header and the check rejected it
-//     three ways at once, as hard errors that failed the update outright:
-//     unlimited disables are forbidden, a block disable needs a matching
-//     `eslint-enable`, and — decisively — a list of rules may never be
-//     disabled at all, including @typescript-eslint/no-explicit-any, which is
-//     what most of these warnings are. Copies are therefore written verbatim,
-//     with no directives of ours. See test/lint-directives.test.ts.
+//   stripLintDirectives  upstream's own directives, which the check rejects
+//   pruneDeclarations    API we don't import
+//   cleanDeclarations    patterns the check warns about
+//
+// Three things that are easy to get wrong:
+//
+//  1. Nothing about the copies can be silenced with a lint directive. 1.1.6
+//     tried a described `/* eslint-disable -- … */` header and the check
+//     rejected it three ways at once, as hard errors that failed the update
+//     outright: unlimited disables are forbidden, a block disable needs a
+//     matching `eslint-enable`, and — decisively — a list of rules may never be
+//     disabled at all, including @typescript-eslint/no-explicit-any, which was
+//     most of what needed silencing. That is why the warnings are normalised
+//     away instead of suppressed. See test/lint-directives.test.ts.
 //
 //  2. esbuild honours `paths` too, and would resolve the three bundled modules
 //     to .d.ts files, producing a main.js with them missing.
 //     tsconfig.build.json drops `paths` and the build reads that instead — see
 //     esbuild.config.mjs. Verified in test/vendored-types.test.ts.
+//
+//  3. Because the copies are transformed, `tsc -p tsconfig.json` alone no
+//     longer proves our code is right about the real API — it only proves it
+//     agrees with these copies. `npm run typecheck:upstream` compiles against
+//     the installed packages and is what closes that gap. It runs in `build`
+//     and in CI, where dependencies exist. Don't remove it.
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -38,14 +53,12 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
  * publish.d.ts, which nothing here imports and which contributed 37 warnings
  * of their own when copied for no reason.
  *
- * The copies report warnings of their own — upstream's `any`s, empty
- * interfaces and overlapping unions, ~204 of them, dominated by
- * no-explicit-any. Those are accepted: they cannot be suppressed (see above),
- * and they are the price of the src/ warnings going from 9,510 to zero.
  * Vendoring less is not an improvement — dropping a copy puts the far larger
- * flood back into our own code.
+ * flood back into our own code (9,510 warnings and a *risky* rating).
  *
- * After bumping any of these dependencies, run this script and re-measure.
+ * After bumping any of these dependencies, run this script, then run the tests:
+ * the guards in test/vendored-types.test.ts fail if a new upstream declaration
+ * reintroduces a pattern the check warns about.
  */
 export const PACKAGES = [
   {
@@ -215,13 +228,95 @@ export function pruneDeclarations(text, pkg) {
   return kept.join(NL);
 }
 
+// ── Declaration cleaning ──────────────────────────────────────
+//
+// What's left after pruning is API we do use, and the check reports upstream's
+// own style choices in it: 196 warnings at 1.1.8, 150 of them no-explicit-any.
+// None can be suppressed (no-explicit-any is on the never-disable list) and
+// they're what keeps the rating at "caution".
+//
+// So the copies are normalised instead. Every transform below is
+// type-identical or strictly STRICTER than what upstream wrote, and that
+// direction is the whole safety argument: if our code compiles against the
+// cleaned copy it necessarily compiles against upstream's looser original.
+// `npm run typecheck:upstream` proves the other direction by compiling against
+// the real installed packages, so a transform that changed meaning could not
+// pass both.
+//
+// These are declarations, not code. Nothing here reaches main.js — the build
+// resolves the real modules via tsconfig.build.json.
+
+const ATOM = "(?:[A-Za-z0-9_$.]+(?:<[^<>]*>)?(?:\\[\\])?|'[^']*'|\"[^\"]*\")";
+const UNION = new RegExp(ATOM + '(?:\\s*\\|\\s*' + ATOM + ')+', 'g');
+const STRING_LITERAL = /^['"]/;
+
+/**
+ * `unknown | T` is just `unknown`, and `string | 'literal'` is just `string` —
+ * TypeScript widens both, which is exactly what the check complains about
+ * ("'x' is overridden by string in this union type"). Collapsing them changes
+ * no type, only the redundancy.
+ */
+function collapseUnions(line) {
+  return line.replace(UNION, (match) => {
+    const atoms = match.split('|').map(s => s.trim());
+    if (atoms.includes('unknown')) return 'unknown';
+    if (atoms.includes('string')) {
+      const kept = atoms.filter(a => !STRING_LITERAL.test(a));
+      return kept.length === atoms.length ? match : kept.join(' | ');
+    }
+    return match;
+  });
+}
+
+export function cleanDeclarations(text) {
+  let lines = text.split(NL).map((line) => {
+    if (isComment(line)) return line;
+    // `any` -> `unknown`: identical in parameter positions (both accept
+    // anything), stricter in return positions. Measured: zero new tsc errors,
+    // i.e. nothing here was relying on `any` to opt out of checking.
+    let out = line.replace(/\bany\b/g, 'unknown');
+    out = collapseUnions(out);
+    // Bare `Function` accepts any callable and gives no signature.
+    out = out.replace(/\bFunction\b(?=\s*[;,)\]}]|$)/g, '((...args: unknown[]) => unknown)');
+    // obsidian.d.ts imports moment for its types only, and the check's own
+    // message says type-only imports of it are allowed.
+    out = out.replace(/^import \* as (\w+) from '([^']+)';$/, "import type * as $1 from '$2';");
+    // @types/sortablejs uses the CommonJS `import x = require(...)` form.
+    out = out.replace(/^import (\w+) = require\("([^"]+)"\);$/, 'import type $1 from "$2";');
+    return out;
+  });
+
+  // An interface with no members of its own is equivalent to its supertype, and
+  // one with no supertype either accepts any non-nullish value. Both become
+  // type aliases. Nothing declaration-merges these, so it's a rename of form.
+  for (let i = 0; i < lines.length; i++) {
+    const m = /^export interface ([A-Za-z0-9_]+)(?:<([^>]*)>)?(?: extends ([^{]+?))? \{$/.exec(lines[i]);
+    if (!m) continue;
+    let j = i + 1;
+    let empty = true;
+    for (; j < lines.length; j++) {
+      const t = lines[j].trim();
+      if (t === '}') break;
+      if (t !== '' && !isComment(lines[j])) { empty = false; break; }
+    }
+    if (!empty || j >= lines.length) continue;
+    const [, name, generics, bases] = m;
+    // `extends A, B` is an intersection, not a comma list.
+    const rhs = bases ? bases.split(',').map(s => s.trim()).filter(Boolean).join(' & ') : 'object';
+    lines[i] = `export type ${name}${generics ? `<${generics}>` : ''} = ${rhs};`;
+    for (let k = i + 1; k <= j; k++) lines[k] = null;
+  }
+
+  return lines.filter(l => l !== null).join(NL);
+}
+
 /**
  * The full source -> copy transform. Both the sync and the drift comparison in
  * test/vendored-types.test.ts call this, so the copy can only differ from
  * upstream by a real declaration change.
  */
 export function applyTransforms(text, pkg) {
-  return pruneDeclarations(stripLintDirectives(text), pkg);
+  return cleanDeclarations(pruneDeclarations(stripLintDirectives(text), pkg));
 }
 
 /** Declarations a package contributes: its explicit list, or every .d.ts. */

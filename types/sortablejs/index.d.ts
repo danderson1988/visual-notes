@@ -223,7 +223,7 @@ declare namespace Sortable {
                 activeSortable: Sortable,
                 dragEl: HTMLElement,
                 event: SortableEvent,
-            ) => boolean | string | "clone" | string[])
+            ) => boolean | string | string[])
             | undefined;
         /**
          * revert cloned element to initial position after moving to a another list.

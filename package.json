@@ -1,6 +1,6 @@
 {
   "name": "visual-notes",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "description": "Visual Notes — a visual workspace for Obsidian",
   "main": "main.js",
   "scripts": {
@@ -15,7 +15,8 @@
     "prelint": "npm run generate-templates",
     "lint": "eslint src",
     "sync-types": "node scripts/vendor-types.mjs",
-    "build": "npm run typecheck && npm run lint && node esbuild.config.mjs production"
+    "build": "npm run typecheck && npm run typecheck:upstream && npm run lint && node esbuild.config.mjs production",
+    "typecheck:upstream": "tsc --noEmit -p tsconfig.build.json"
   },
   "keywords": [],
   "author": "Daniel Anderson",

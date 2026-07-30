@@ -2,7 +2,7 @@ import type { Options } from './types';
 export declare function resolveUrl(url: string, baseUrl: string | null): string;
 export declare const uuid: () => string;
 export declare function delay<T>(ms: number): (args: T) => Promise<T>;
-export declare function toArray<T>(arrayLike: any): T[];
+export declare function toArray<T>(arrayLike: unknown): T[];
 export declare function getStyleProperties(options?: Options): string[];
 export declare function getImageSize(targetNode: HTMLElement, options?: Options): {
     width: number;
