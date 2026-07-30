@@ -165,6 +165,64 @@ describe('vendored third-party type definitions', () => {
       }
       expect(hits, `remaining warning triggers: ${hits.join(', ')}`).toEqual([]);
     });
+
+    it('has no method overriding a void base method with Promise<T> | void', () => {
+      // Independent of widenVoidBasesForPromiseOverrides() in vendor-types.mjs — this
+      // re-derives the same class/override relationship from the shipped text
+      // rather than trusting that function's own bookkeeping, so a case its
+      // narrower parsing (direct extends, single-line signatures) can't reach
+      // still fails here instead of shipping silently. Caught 1.1.9's own gap:
+      // Plugin.onload(): Promise<void> | void overriding Component.onload():
+      // void, reported by the check as "Promise-returning method provided
+      // where a void return was expected by extended/implemented type".
+      for (const [name, text] of files) {
+        const lines = text.split('\n');
+        const classes: { cls: string; base: string | null; start: number; end: number }[] = [];
+        lines.forEach((line, i) => {
+          const m = /^export (?:declare )?(?:abstract )?class\s+([A-Za-z0-9_]+)(?:<[^{]*>)?(?:\s+extends\s+([A-Za-z0-9_]+)(?:<[^{]*>)?)?[^{]*\{$/.exec(line);
+          if (!m) return;
+          let depth = 0, j = i;
+          for (; j < lines.length; j++) {
+            if (isComment(lines[j])) continue;
+            depth += (lines[j].match(/\{/g) ?? []).length - (lines[j].match(/\}/g) ?? []).length;
+            if (depth <= 0 && j > i) break;
+          }
+          classes.push({ cls: m[1], base: m[2] ?? null, start: i, end: j });
+        });
+
+        const memberReturn = (start: number, end: number, methodName: string) => {
+          for (let i = start; i <= end && i < lines.length; i++) {
+            const t = lines[i].trim();
+            if (!t.endsWith(';')) continue;
+            const idx = t.slice(0, -1).lastIndexOf('): ');
+            if (idx === -1) continue;
+            const nm = /^([A-Za-z0-9_]+)\(/.exec(t)?.[1];
+            if (nm === methodName) return t.slice(0, -1).slice(idx + 3).trim();
+          }
+          return null;
+        };
+
+        const byName = new Map(classes.map(c => [c.cls, c]));
+        for (const c of classes) {
+          const base = c.base ? byName.get(c.base) : undefined;
+          if (!base) continue;
+          for (let i = c.start; i <= c.end && i < lines.length; i++) {
+            const t = lines[i].trim();
+            if (!t.endsWith(';')) continue;
+            const idx = t.slice(0, -1).lastIndexOf('): ');
+            if (idx === -1) continue;
+            const methodName = /^([A-Za-z0-9_]+)\(/.exec(t)?.[1];
+            const ret = t.slice(0, -1).slice(idx + 3).trim();
+            if (!methodName || !/^Promise<.*>\s*\|\s*void$/.test(ret)) continue;
+            const baseRet = memberReturn(base.start, base.end, methodName);
+            expect(
+              baseRet,
+              `${name}:${i + 1} ${c.cls}.${methodName}() returns ${ret}, overriding ${c.base}.${methodName}(): void — a hard-error-adjacent "Promise-returning method" warning`,
+            ).not.toBe('void');
+          }
+        }
+      }
+    });
   });
 
   describe.each(PACKAGES)('$module', (pkg: typeof PACKAGES[number]) => {

@@ -2,6 +2,14 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.10
+
+### Changed
+- **Clears the one warning left after 1.1.9.** The check reported "Promise-returning method provided where a void return was expected" against the bundled copy of Obsidian's type definitions — their `Plugin` class declares `onload()` as possibly returning a Promise, while the `Component` class it builds on declares it plain `void`. That mismatch is in Obsidian's own published definitions, and it's harmless in practice: every plugin with an `async onload()` — which is most of them, this one included — relies on it compiling, and it does.
+  - The normalisation now aligns the two: the base method's written type is widened to match what the override already declares. Widening the base changes nothing for any code built on these classes — anything that compiled before still compiles, with the same meaning — whereas the first attempt at this fix went the other way (narrowing the override) and immediately recreated the same warning inside this plugin's own code, where its build caught it before anything shipped. The build also still compiles against Obsidian's real, unmodified definitions as a separate step, so the two can't drift apart unnoticed.
+  - A check that runs with the tests re-derives the class relationships from the shipped files independently and fails the build if this pattern ever reappears — including via a future Obsidian release. Verified to catch exactly the reported case when the fix is undone.
+  - `main.js` remains byte-for-byte identical to 1.1.7 through 1.1.9. Type definitions are used for checking only; nothing about behaviour changes. Minimum supported Obsidian version remains 1.7.2. **With this, the check reports zero errors and zero warnings.**
+
 ## 1.1.9
 
 ### Changed

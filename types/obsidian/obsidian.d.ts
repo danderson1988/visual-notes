@@ -1106,7 +1106,7 @@ export class Component {
      * @virtual
      * @since 0.9.7
      */
-    onload(): void;
+    onload(): Promise<void> | void;
     /**
      * Unload this component and its children
      * @public

@@ -13,9 +13,10 @@
 // test runs it over upstream before comparing, so a real declaration change
 // still surfaces:
 //
-//   stripLintDirectives  upstream's own directives, which the check rejects
-//   pruneDeclarations    API we don't import
-//   cleanDeclarations    patterns the check warns about
+//   stripLintDirectives       upstream's own directives, which the check rejects
+//   pruneDeclarations         API we don't import
+//   widenVoidBasesForPromiseOverrides  align void base methods with Promise-returning overrides
+//   cleanDeclarations         remaining patterns the check warns about
 //
 // Three things that are easy to get wrong:
 //
@@ -268,6 +269,85 @@ function collapseUnions(line) {
   });
 }
 
+/**
+ * Splits a single-line class member `name(params): ReturnType;` into its
+ * parts. Splits on the LAST `): ` before the trailing `;` rather than
+ * matching the parameter list with a regex, so a param whose own type
+ * contains parens (a callback type, say) doesn't break parsing — only a
+ * return type containing its own `): ` could, and none here do.
+ */
+function parseMember(line) {
+  const t = line.trim();
+  if (!t.endsWith(';')) return null;
+  const body = t.slice(0, -1);
+  const idx = body.lastIndexOf('): ');
+  if (idx === -1) return null;
+  const name = /^([A-Za-z0-9_]+)\(/.exec(body)?.[1];
+  if (!name) return null;
+  return { name, returnType: body.slice(idx + 3).trim() };
+}
+
+/**
+ * Widens a base-class method's declared return type to match a subclass
+ * override declared `Promise<T> | void`, when the base currently says plain
+ * `void` — e.g. `Component.onload(): void` next to
+ * `Plugin.onload(): Promise<void> | void`.
+ *
+ * The direction matters and got tried backwards once: narrowing the
+ * OVERRIDE (Plugin) to `void` instead does silence the warning at that one
+ * site, but Plugin's declared contract is what every actual plugin class —
+ * including this one's `class VisualNotesPlugin extends Plugin` with its
+ * real `async onload()` — compiles against. Narrow Plugin and the same
+ * "Promise-returning method" conflict reappears one level down, this time
+ * between Plugin and OUR code, which `eslint src` catches immediately since
+ * it runs the identical rule. That would trade one harmless warning in a
+ * vendored file for a real one in src/.
+ *
+ * Widening the BASE instead leaves every subclass's contract untouched, so
+ * nothing downstream can newly mismatch. It changes no code path either:
+ * TypeScript's `void` return position already accepts a Promise-returning
+ * override structurally (that's the entire reason the real, unmodified
+ * upstream declarations compile against a real `async onload()` everywhere
+ * in the Obsidian plugin ecosystem today) — this only makes the written
+ * type honest about what was already true.
+ *
+ * Direct, single-line, single-`extends` class members only — every override
+ * this file currently has takes that shape. Anything else silently keeps
+ * warning rather than being mishandled; the guard test below is what would
+ * catch that, not this function.
+ */
+export function widenVoidBasesForPromiseOverrides(text) {
+  const lines = text.split(NL);
+  const classes = [];
+  for (let i = 0; i < lines.length; i++) {
+    const m = /^export (?:declare )?(?:abstract )?class\s+([A-Za-z0-9_]+)(?:<[^{]*>)?(?:\s+extends\s+([A-Za-z0-9_]+)(?:<[^{]*>)?)?[^{]*\{$/.exec(lines[i]);
+    if (m) classes.push({ name: m[1], base: m[2] ?? null, start: i, end: declEnd(lines, i) });
+  }
+  const byName = new Map(classes.map(c => [c.name, c]));
+
+  const findMethodLine = (cls, name) => {
+    for (let i = cls.start; i < cls.end; i++) {
+      if (parseMember(lines[i])?.name === name) return i;
+    }
+    return null;
+  };
+
+  let widened = 0;
+  for (const cls of classes) {
+    const base = cls.base ? byName.get(cls.base) : null;
+    if (!base) continue;
+    for (let i = cls.start; i < cls.end; i++) {
+      const mem = parseMember(lines[i]);
+      if (!mem || !/^Promise<.*>\s*\|\s*void$/.test(mem.returnType)) continue;
+      const baseLine = findMethodLine(base, mem.name);
+      if (baseLine === null || parseMember(lines[baseLine])?.returnType !== 'void') continue;
+      lines[baseLine] = lines[baseLine].replace(/\):\s*void;\s*$/, `): ${mem.returnType};`);
+      widened++;
+    }
+  }
+  return widened > 0 ? lines.join(NL) : text;
+}
+
 export function cleanDeclarations(text) {
   let lines = text.split(NL).map((line) => {
     if (isComment(line)) return line;
@@ -316,7 +396,7 @@ export function cleanDeclarations(text) {
  * upstream by a real declaration change.
  */
 export function applyTransforms(text, pkg) {
-  return cleanDeclarations(pruneDeclarations(stripLintDirectives(text), pkg));
+  return cleanDeclarations(widenVoidBasesForPromiseOverrides(pruneDeclarations(stripLintDirectives(text), pkg)));
 }
 
 /** Declarations a package contributes: its explicit list, or every .d.ts. */
