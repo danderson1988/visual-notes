@@ -1,7 +1,3 @@
-/* eslint-disable -- Vendored third-party type definitions, copied verbatim from the
-   package of the same name. Not this project's code: linting them reports on upstream
-   style choices that cannot be changed without diverging from the file being mirrored.
-   Managed by scripts/vendor-types.mjs; refresh with `npm run sync-types`. */
 export interface Options {
     /**
      * Width in pixels to be applied to node before rendering.

@@ -10,8 +10,14 @@
 //
 // Two things that are easy to get wrong:
 //
-//  1. The copies get linted themselves, so a copy can trade one set of
-//     warnings for another. See `header` below.
+//  1. The copies get linted themselves, and CANNOT be silenced. 1.1.6 tried a
+//     described `/* eslint-disable -- … */` header and the check rejected it
+//     three ways at once, as hard errors that failed the update outright:
+//     unlimited disables are forbidden, a block disable needs a matching
+//     `eslint-enable`, and — decisively — a list of rules may never be
+//     disabled at all, including @typescript-eslint/no-explicit-any, which is
+//     what most of these warnings are. Copies are therefore written verbatim,
+//     with no directives of ours. See test/lint-directives.test.ts.
 //
 //  2. esbuild honours `paths` too, and would resolve the three bundled modules
 //     to .d.ts files, producing a main.js with them missing.
@@ -23,12 +29,6 @@ import { fileURLToPath } from 'node:url';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-export const VENDOR_HEADER =
-  '/* eslint-disable -- Vendored third-party type definitions, copied verbatim from the\n' +
-  '   package of the same name. Not this project\'s code: linting them reports on upstream\n' +
-  '   style choices that cannot be changed without diverging from the file being mirrored.\n' +
-  '   Managed by scripts/vendor-types.mjs; refresh with `npm run sync-types`. */\n';
-
 /**
  * `module` is the bare specifier tsconfig maps to `dest/entry`.
  *
@@ -38,47 +38,63 @@ export const VENDOR_HEADER =
  * publish.d.ts, which nothing here imports and which contributed 37 warnings
  * of their own when copied for no reason.
  *
- * `header` — which copies get the lint-suppression comment. Deliberately
- * per-file, not per-package: ESLint reports a directive that suppresses
- * nothing as a warning in its own right, so headering a clean file just trades
- * one warning for another (measured: 18 new "unused eslint-disable directive"
- * warnings when every copy carried one). Counts measured with nothing
- * installed, headers off:
+ * The copies report warnings of their own — upstream's `any`s, empty
+ * interfaces and overlapping unions, ~204 of them, dominated by
+ * no-explicit-any. Those are accepted: they cannot be suppressed (see above),
+ * and they are the price of the src/ warnings going from 9,510 to zero.
+ * Vendoring less is not an improvement — dropping a copy puts the far larger
+ * flood back into our own code.
  *
- *   obsidian/obsidian.d.ts        193  upstream `any`s, empty interfaces,
- *                                      overlapping unions, restricted `moment`
- *   html-to-image/types.d.ts        6  overlapping unions in a font-format type
- *   html-to-image/util.d.ts         1  an `any`
- *   sortablejs/index.d.ts           2  an overlapping union, + see below
- *   sortablejs/plugins.d.ts         2  a require()-style import, + see below
- *   (18 other copies)               0  no header
- *
- * Two warnings survive regardless: @types/sortablejs ships its own
- * eslint-disable comments for a rule this config doesn't enable, and ESLint
- * reports those as unused. A file-level disable doesn't suppress unused-
- * directive reporting, and stripping upstream's comments would mean the copies
- * no longer match what they mirror — not worth it for two warnings.
- *
- * After bumping any of these dependencies, re-measure and update the counts.
+ * After bumping any of these dependencies, run this script and re-measure.
  */
 export const PACKAGES = [
   {
     module: 'obsidian', src: 'node_modules/obsidian', dest: 'types/obsidian',
-    entry: 'obsidian.d.ts', files: ['obsidian.d.ts'], header: ['obsidian.d.ts'],
+    entry: 'obsidian.d.ts', files: ['obsidian.d.ts'],
   },
   {
     module: 'sortablejs', src: 'node_modules/@types/sortablejs', dest: 'types/sortablejs',
-    entry: 'index.d.ts', header: ['index.d.ts', 'plugins.d.ts'],
+    entry: 'index.d.ts',
   },
   {
     module: 'perfect-freehand', src: 'node_modules/perfect-freehand/dist/types', dest: 'types/perfect-freehand',
-    entry: 'index.d.ts', header: [],
+    entry: 'index.d.ts',
   },
   {
     module: 'html-to-image', src: 'node_modules/html-to-image/lib', dest: 'types/html-to-image',
-    entry: 'index.d.ts', header: ['types.d.ts', 'util.d.ts'],
+    entry: 'index.d.ts',
   },
 ];
+
+/**
+ * Removes ESLint directive comments from a vendored copy.
+ *
+ * These files exist only to carry type information, so a lint directive in one
+ * is noise — and actively dangerous noise: @types/sortablejs ships two
+ * undescribed `eslint-disable-next-line` comments, and an undescribed
+ * directive is a hard error for Obsidian's check (it failed 1.1.3 over exactly
+ * that). 1.1.6 masked them by accident with a file-level disable of its own;
+ * removing that would have exposed them.
+ *
+ * Stripping them cannot change a declaration — they are comments. The drift
+ * comparison in test/vendored-types.test.ts applies this same transform to
+ * upstream before comparing, so real changes are still caught.
+ */
+// Plain string checks rather than a regex: this needs to match both comment
+// styles, and getting the escaping wrong in a regex is exactly how an earlier
+// attempt silently matched nothing at all.
+const DIRECTIVE_STARTS = [
+  '// eslint-disable', '//eslint-disable', '/* eslint-disable', '/*eslint-disable',
+  '// eslint-enable',  '//eslint-enable',  '/* eslint-enable',  '/*eslint-enable',
+];
+
+export function stripLintDirectives(text) {
+  const NL = String.fromCharCode(10);
+  return text
+    .split(NL)
+    .filter(line => !DIRECTIVE_STARTS.some(p => line.trim().startsWith(p)))
+    .join(NL);
+}
 
 /** Declarations a package contributes: its explicit list, or every .d.ts. */
 export function declarationFiles(pkg) {
@@ -95,10 +111,10 @@ export function syncTypes() {
     if (existsSync(destAbs)) rmSync(destAbs, { recursive: true });
     mkdirSync(destAbs, { recursive: true });
     for (const f of files) {
-      const body = readFileSync(join(ROOT, pkg.src, f), 'utf8');
-      writeFileSync(join(destAbs, f), pkg.header.includes(f) ? VENDOR_HEADER + body : body);
+      // No directives of ours added, and upstream's stripped — see above.
+      writeFileSync(join(destAbs, f), stripLintDirectives(readFileSync(join(ROOT, pkg.src, f), 'utf8')));
     }
-    summary.push(`${pkg.module}: ${files.length} file(s), ${pkg.header.length} headered -> ${pkg.dest}`);
+    summary.push(`${pkg.module}: ${files.length} file(s) -> ${pkg.dest}`);
   }
   return summary;
 }

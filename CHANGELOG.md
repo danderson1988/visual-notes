@@ -2,6 +2,17 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.7
+
+### Fixed
+- **1.1.6 failed Obsidian's plugin check and would not install. This release fixes that** — please update if you're on 1.1.6.
+  - 1.1.6 marked the bundled type definitions as third-party so the check would skip them, using a standard comment for the purpose. The check rejects that comment three separate ways, all as hard errors: it doesn't allow one that covers every rule rather than a named list, it requires such a comment to be explicitly closed again, and — the part that makes this unfixable — it keeps a list of rules that may never be silenced under any circumstances. Most of what needed silencing is on that list. No behaviour changed in 1.1.6 and none changes here; the plugin simply couldn't be installed.
+  - The markers are gone, and the bundled definitions are now copied exactly as their authors wrote them. A check that runs with the tests now fails the build for any suppression comment that would trip the same wires, with the never-silence list written down so it can't be rediscovered the hard way.
+  - One subtlety worth recording: `@types/sortablejs` ships two suppression comments of its own that would have tripped the same error once 1.1.6's markers were removed. Comments can't affect type information, so they're now stripped from the copies, and the check that compares each copy against its original ignores them on both sides.
+
+### Known issue
+- The plugin will likely still show a **caution** rating. Around 200 warnings remain, and every one of them is in the bundled third-party definitions rather than in this plugin's own code — which is now clean. They are the definitions' authors' own style choices, and they cannot be silenced (see above) or edited without the copies no longer matching what they mirror. Removing the copies isn't an option either: that's what put roughly 9,500 warnings into this plugin's own code and earned a *risky* rating in the first place. Nothing here affects how the plugin behaves or how safe it is.
+
 ## 1.1.6
 
 ### Changed

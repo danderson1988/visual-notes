@@ -13,13 +13,12 @@
 //     against — hiding real API changes at exactly the moment they matter, an
 //     upstream upgrade. Every copy is compared against its installed source.
 //
-//  2. The copies get linted themselves. Upstream's own `any`s, empty
-//     interfaces and overlapping unions were 193 warnings on obsidian.d.ts
-//     alone, so that copy carries a described `eslint-disable` header —
-//     described because a bare directive is a hard error that fails the check
-//     outright (1.1.3's regression; see lint-directives.test.ts). The header
-//     is NOT applied to copies that lint clean: a directive suppressing
-//     nothing is a warning in its own right. PACKAGES records which is which.
+//  2. The copies are written VERBATIM, with no directives of ours. They report
+//     upstream's own `any`s and empty interfaces (~204 warnings) and that is
+//     accepted, because it cannot be fixed: 1.1.6 added a described
+//     `eslint-disable` header and the check rejected it as three separate hard
+//     errors, failing the update. Chief among them, a list of rules may never
+//     be disabled at all — including no-explicit-any, which is most of these.
 //
 //  3. esbuild honours `paths` too and would bundle declarations instead of the
 //     real modules, so the build reads tsconfig.build.json, which drops them.
@@ -32,7 +31,7 @@ import { join } from 'node:path';
 // Imported rather than restated: the script writes these copies and this file
 // checks them, so a second copy of the header or the package list could drift
 // and let real drift slip through.
-import { PACKAGES, VENDOR_HEADER, ROOT, declarationFiles } from '../scripts/vendor-types.mjs';
+import { PACKAGES, ROOT, declarationFiles, stripLintDirectives } from '../scripts/vendor-types.mjs';
 
 const norm = (s: string) => s.replace(/\r\n/g, '\n');
 const read = (p: string) => norm(readFileSync(p, 'utf8'));
@@ -75,27 +74,26 @@ describe('vendored third-party type definitions', () => {
       expect(existsSync(join(destDir, pkg.entry))).toBe(true);
     });
 
-    it('carries the lint-suppression header on exactly the declared files', () => {
-      // Not blanket-applied: a directive that suppresses nothing is itself a
-      // warning, so headering a clean copy trades one for another.
+    it('adds no lint directives of our own', () => {
+      // Anything we add here is a hard error for the health check: unlimited
+      // disables are forbidden, block disables need a matching enable, and the
+      // rules these files would need silenced are on a never-disable list.
+      // Upstream's own targeted next-line directives are fine and preserved —
+      // the byte comparison below is what keeps them honest.
       for (const f of dts(destDir)) {
-        const wanted = pkg.header.includes(f);
         expect(
-          read(join(destDir, f)).startsWith(norm(VENDOR_HEADER)),
-          wanted ? `${pkg.dest}/${f} is missing the header` : `${pkg.dest}/${f} has a header it does not need`,
-        ).toBe(wanted);
+          read(join(destDir, f)).startsWith('/* eslint-disable'),
+          `${pkg.dest}/${f} starts with a file-level eslint-disable; that fails Obsidian's check`,
+        ).toBe(false);
       }
-      // The "--" separator is what makes the directive acceptable to the
-      // health check; a bare one is a hard error that fails it outright.
-      expect(VENDOR_HEADER).toContain('eslint-disable --');
     });
 
-    it('matches the installed copy below the header', () => {
+    it('matches the installed copy, once upstream lint directives are stripped', () => {
       for (const f of declarationFiles(pkg)) {
-        const raw = read(join(destDir, f));
-        const vendored = pkg.header.includes(f) ? raw.slice(norm(VENDOR_HEADER).length) : raw;
+        // Same transform the sync applies: comments only, so a difference
+        // here is always a real declaration change.
         expect(
-          vendored === read(join(srcDir, f)),
+          read(join(destDir, f)) === stripLintDirectives(read(join(srcDir, f))),
           `types/${pkg.dest.replace('types/', '')}/${f} has drifted from ${pkg.src}/${f}. ` +
           'Because tsconfig `paths` resolves this module from the committed copy, the build is ' +
           'compiling against the stale one. Run: npm run sync-types',

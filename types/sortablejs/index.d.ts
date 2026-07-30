@@ -1,7 +1,3 @@
-/* eslint-disable -- Vendored third-party type definitions, copied verbatim from the
-   package of the same name. Not this project's code: linting them reports on upstream
-   style choices that cannot be changed without diverging from the file being mirrored.
-   Managed by scripts/vendor-types.mjs; refresh with `npm run sync-types`. */
 import {
     AutoScrollOptions,
     AutoScrollPlugin,
@@ -425,7 +421,6 @@ declare namespace Sortable {
         /**
          * Event when you move an item in the list or between lists
          */
-        // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
         onMove?: ((evt: MoveEvent, originalEvent: Event) => boolean | -1 | 1 | void) | undefined;
         /**
          * Called when dragging element changes position
