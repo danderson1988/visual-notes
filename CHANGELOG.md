@@ -2,6 +2,19 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.8
+
+### Fixed
+- **1.1.7 reported 19 errors in Obsidian's plugin check. This release clears them.** The errors were "uses Obsidian APIs newer than the declared minimum app version", and every one of them was in the bundled copy of Obsidian's type definitions rather than in this plugin's code.
+  - The cause: 1.1.5 began bundling the whole of Obsidian's type definitions so the check could see them, and that copy describes the entire Obsidian API — including Bases, which this plugin doesn't use. Bases' definitions are built on a class introduced in Obsidian 1.10, and each of the 19 classes built on it counts as a use of it. So the copy reported itself as using an API newer than the minimum supported version, for a feature the plugin never touches.
+  - The fix: the bundled copy now describes only the part of the API the plugin actually uses. The 48 Bases-related definitions are left out, along with the one method that returns them. Nothing the plugin uses was removed, which the build proves by compiling against the trimmed copy.
+  - **The minimum supported Obsidian version is unchanged at 1.7.2.** Raising it would also have silenced these errors, and it was the wrong trade — it would buy a clean report by cutting off everyone on an older version, for an API this plugin doesn't call. Obsidian 1.13 in particular is still early access, so requiring it would have made the plugin uninstallable for everyone on the stable release.
+  - `main.js` is byte-for-byte identical to 1.1.7's, verified as part of the build. Type definitions are used for checking only and are deliberately kept out of the bundle, so nothing about behaviour can change.
+  - A check that runs with the tests now fails the build if the bundled definitions contain any class built on an API newer than the declared minimum version — the exact condition behind these 19 errors. Run against 1.1.7's copy it reproduces all 19, so this can't ship unnoticed again.
+
+### Known issue
+- The **caution** rating is expected to remain, and it now looks like it can't be resolved from this end. Around 195 warnings are left, all of them in the bundled third-party definitions and none in this plugin's own code. They're measured, not guessed at: trimming the definitions further to only what the plugin can reach would remove about 20 more, because the rest are in the parts of the Obsidian API the plugin genuinely uses. They can't be silenced — the check keeps a list of rules that may never be silenced, and most of these are on it — and they can't be edited without the copies no longer matching what they mirror. Removing the copies would put roughly 9,500 warnings back into this plugin's own code. None of this affects how the plugin behaves, how safe it is, or whether it installs.
+
 ## 1.1.7
 
 ### Fixed

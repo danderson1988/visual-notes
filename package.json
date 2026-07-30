@@ -1,6 +1,6 @@
 {
   "name": "visual-notes",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "Visual Notes — a visual workspace for Obsidian",
   "main": "main.js",
   "scripts": {

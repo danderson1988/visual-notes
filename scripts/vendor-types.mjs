@@ -51,6 +51,22 @@ export const PACKAGES = [
   {
     module: 'obsidian', src: 'node_modules/obsidian', dest: 'types/obsidian',
     entry: 'obsidian.d.ts', files: ['obsidian.d.ts'],
+    // The Bases API — 48 declarations (`Bases*`, `QueryController`, and the
+    // `Value` class family), none of which this plugin imports. They are
+    // dropped because the check's obsidianmd/no-unsupported-api reports them
+    // as hard **Errors**: each `Value` subclass declares `extends` a base
+    // whose `@since` is 1.10.0, and an `extends` clause is a reference, so
+    // the declaration flags itself against a 1.7.2 floor. 19 errors, purely
+    // from mirroring declarations nothing here uses. Same reasoning as
+    // `files` above, just at declaration rather than file granularity.
+    //
+    // Raising minAppVersion would also clear them, and that is the wrong
+    // trade: it buys a clean report by dropping users, for an API this
+    // plugin never calls.
+    dropDeclarations: /^(?:Bases|QueryController|parsePropertyId)|Value$/,
+    // `parsePropertyId` goes too (its signature is Bases-only), and one
+    // method on an otherwise-needed class:
+    dropMembers: ['registerBasesView('],
   },
   {
     module: 'sortablejs', src: 'node_modules/@types/sortablejs', dest: 'types/sortablejs',
@@ -96,6 +112,118 @@ export function stripLintDirectives(text) {
     .join(NL);
 }
 
+// ── Declaration pruning ───────────────────────────────────────
+//
+// Mirroring a whole .d.ts means every rule in the check runs against
+// upstream's declarations, including ones for APIs this plugin never touches.
+// `dropDeclarations` removes those, so what ships is the part we actually
+// compile against. See the obsidian entry above for the 19 errors that made
+// this necessary.
+//
+// Brace-matched rather than regex-sliced: a declaration ends where its body
+// closes, and getting that wrong would silently truncate the file into
+// something that still parses.
+
+const NL = String.fromCharCode(10);
+const DECL = /^export (?:declare )?(?:abstract )?(?:class|interface|type|function|const|enum|namespace)\s+([A-Za-z0-9_]+)/;
+
+// Comment lines are skipped when counting braces and when looking for leftover
+// references: `{@link Value}` in a doc block is neither a brace to balance nor
+// a use of the symbol.
+const isComment = (line) => {
+  const t = line.trim();
+  return t.startsWith('*') || t.startsWith('//') || t.startsWith('/*');
+};
+
+const braceDelta = (line) => {
+  let d = 0;
+  for (const ch of line) {
+    if (ch === '{') d++;
+    else if (ch === '}') d--;
+  }
+  return d;
+};
+
+/** First line of the doc block attached to `start`, or `start` if there is none. */
+function docStart(lines, start) {
+  let i = start - 1;
+  if (i < 0 || !lines[i].trim().endsWith('*/')) return start;
+  if (lines[i].trim().startsWith('/*')) return i;            // single-line /** @public */
+  while (i >= 0 && !lines[i].trim().startsWith('/*')) i--;
+  return i < 0 ? start : i;
+}
+
+/** One past the last line of the declaration starting at `start`. */
+function declEnd(lines, start) {
+  let depth = 0;
+  let sawBrace = false;
+  for (let i = start; i < lines.length; i++) {
+    if (!isComment(lines[i])) {
+      if (lines[i].includes('{')) sawBrace = true;
+      depth += braceDelta(lines[i]);
+    }
+    // A braced declaration ends when its body closes; an unbraced one
+    // (`export type X = 'a' | 'b';`) at the semicolon.
+    if (depth <= 0 && (sawBrace || lines[i].trim().endsWith(';'))) return i + 1;
+  }
+  return lines.length;
+}
+
+/**
+ * Removes the declarations `pkg.dropDeclarations` matches, with their doc
+ * blocks, plus any line containing one of `pkg.dropMembers`.
+ *
+ * Throws if a kept declaration still refers to something dropped. That is the
+ * guard that makes this safe to carry across upstream upgrades: if a future
+ * release wires the pruned API into one we do use, this fails loudly at sync
+ * time instead of producing declarations that no longer compile.
+ */
+export function pruneDeclarations(text, pkg) {
+  const members = pkg.dropMembers ?? [];
+  if (!pkg.dropDeclarations && members.length === 0) return text;
+
+  const lines = text.split(NL);
+  const cut = new Array(lines.length).fill(false);
+  const dropped = new Set();
+
+  for (let i = 0; i < lines.length; i++) {
+    const m = DECL.exec(lines[i]);
+    if (m && pkg.dropDeclarations?.test(m[1])) {
+      dropped.add(m[1]);
+      const end = declEnd(lines, i);
+      for (let k = docStart(lines, i); k < end; k++) cut[k] = true;
+      i = end - 1;
+    } else if (members.some(sig => lines[i].includes(sig))) {
+      for (let k = docStart(lines, i); k <= i; k++) cut[k] = true;
+    }
+  }
+
+  const kept = lines.filter((_, i) => !cut[i]);
+  const dangling = [];
+  for (const name of dropped) {
+    const ref = new RegExp('\\b' + name + '\\b');
+    kept.forEach((line, i) => {
+      if (!isComment(line) && ref.test(line)) dangling.push(`${name} at line ${i + 1}: ${line.trim()}`);
+    });
+  }
+  if (dangling.length > 0) {
+    throw new Error(
+      `${pkg.module}: pruning left references to dropped declarations. Widen dropDeclarations ` +
+      `or dropMembers to cover them:${NL}  ${dangling.join(NL + '  ')}`,
+    );
+  }
+  return kept.join(NL);
+}
+
+/**
+ * The full source -> copy transform. Both the sync and the drift comparison in
+ * test/vendored-types.test.ts call this, so the copy can only differ from
+ * upstream by a real declaration change.
+ */
+export function applyTransforms(text, pkg) {
+  return pruneDeclarations(stripLintDirectives(text), pkg);
+}
+
 /** Declarations a package contributes: its explicit list, or every .d.ts. */
 export function declarationFiles(pkg) {
   return pkg.files ?? readdirSync(join(ROOT, pkg.src)).filter(f => f.endsWith('.d.ts')).sort();
@@ -110,11 +238,17 @@ export function syncTypes() {
     // being what we compile against.
     if (existsSync(destAbs)) rmSync(destAbs, { recursive: true });
     mkdirSync(destAbs, { recursive: true });
+    let cutLines = 0;
     for (const f of files) {
-      // No directives of ours added, and upstream's stripped — see above.
-      writeFileSync(join(destAbs, f), stripLintDirectives(readFileSync(join(ROOT, pkg.src, f), 'utf8')));
+      // No directives of ours added, upstream's stripped, and declarations for
+      // APIs we don't import pruned — see above.
+      const source = readFileSync(join(ROOT, pkg.src, f), 'utf8');
+      const copy = applyTransforms(source, pkg);
+      writeFileSync(join(destAbs, f), copy);
+      cutLines += source.split(NL).length - copy.split(NL).length;
     }
-    summary.push(`${pkg.module}: ${files.length} file(s) -> ${pkg.dest}`);
+    const pruned = cutLines > 0 ? ` (${cutLines} lines pruned)` : '';
+    summary.push(`${pkg.module}: ${files.length} file(s) -> ${pkg.dest}${pruned}`);
   }
   return summary;
 }

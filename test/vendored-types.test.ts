@@ -31,7 +31,7 @@ import { join } from 'node:path';
 // Imported rather than restated: the script writes these copies and this file
 // checks them, so a second copy of the header or the package list could drift
 // and let real drift slip through.
-import { PACKAGES, ROOT, declarationFiles, stripLintDirectives } from '../scripts/vendor-types.mjs';
+import { PACKAGES, ROOT, declarationFiles, applyTransforms } from '../scripts/vendor-types.mjs';
 
 const norm = (s: string) => s.replace(/\r\n/g, '\n');
 const read = (p: string) => norm(readFileSync(p, 'utf8'));
@@ -53,6 +53,58 @@ describe('vendored third-party type definitions', () => {
     const build = readFileSync(join(ROOT, 'tsconfig.build.json'), 'utf8');
     expect(build).toContain('"paths": {}');
     expect(readFileSync(join(ROOT, 'esbuild.config.mjs'), 'utf8')).toContain('tsconfig: "tsconfig.build.json"');
+  });
+
+  describe.each(PACKAGES.filter(p => p.dropDeclarations))('$module pruning', (pkg: typeof PACKAGES[number]) => {
+    // Pruning is only sound while nothing here imports the pruned API. If a
+    // future feature does, this fails and the entry in PACKAGES must narrow —
+    // which will reintroduce the no-unsupported-api errors and force a real
+    // decision about minAppVersion rather than a silent broken build.
+    const copy = read(join(ROOT, pkg.dest, pkg.entry));
+    const declared = (text: string) =>
+      [...text.matchAll(/^export (?:declare )?(?:abstract )?(?:class|interface|type|function|const|enum|namespace)\s+([A-Za-z0-9_]+)/gm)]
+        .map(m => m[1]);
+
+    it('drops every declaration the manifest matches', () => {
+      const leftover = declared(copy).filter(n => pkg.dropDeclarations?.test(n));
+      expect(leftover, `still present in ${pkg.dest}/${pkg.entry}`).toEqual([]);
+    });
+
+    it('drops the listed members', () => {
+      for (const sig of pkg.dropMembers ?? []) expect(copy).not.toContain(sig);
+    });
+
+    it('leaves no extends clause pointing at an API newer than minAppVersion', () => {
+      // This is the condition that produced the 19 errors: an `extends` clause
+      // is a reference, so a subclass of a newer-API base flags itself.
+      const since = new Map<string, string>();
+      const lines = copy.split('\n');
+      lines.forEach((line, i) => {
+        const decl = /^export (?:declare )?(?:abstract )?(?:class|interface|type|function|const|enum|namespace)\s+([A-Za-z0-9_]+)/.exec(line);
+        if (!decl) return;
+        for (let k = i - 1; k >= Math.max(0, i - 12); k--) {
+          const tag = /@since ([0-9.]+)/.exec(lines[k]);
+          if (tag) { since.set(decl[1], tag[1]); return; }
+          if (lines[k].trim().startsWith('/**')) return;
+        }
+      });
+
+      const floor = (JSON.parse(readFileSync(join(ROOT, 'manifest.json'), 'utf8')) as { minAppVersion: string }).minAppVersion;
+      const parts = (v: string) => v.split('.').map(Number);
+      const newer = (v: string) => {
+        const [a, b, c] = parts(v), [x, y, z] = parts(floor);
+        return a !== x ? a > x : b !== y ? b > y : (c || 0) > (z || 0);
+      };
+
+      const offenders: string[] = [];
+      lines.forEach((line, i) => {
+        const ext = /^export (?:declare )?(?:abstract )?class\s+[^{]*?\bextends\s+([A-Za-z0-9_]+)/.exec(line);
+        const base = ext?.[1];
+        const s = base ? since.get(base) : undefined;
+        if (s && newer(s)) offenders.push(`${pkg.entry}:${i + 1} extends ${base ?? '?'} (@since ${s} > minAppVersion ${floor})`);
+      });
+      expect(offenders, `obsidianmd/no-unsupported-api reports these as errors: ${offenders.join(', ')}`).toEqual([]);
+    });
   });
 
   describe.each(PACKAGES)('$module', (pkg: typeof PACKAGES[number]) => {
@@ -88,12 +140,15 @@ describe('vendored third-party type definitions', () => {
       }
     });
 
-    it('matches the installed copy, once upstream lint directives are stripped', () => {
+    it('matches the installed copy, once the sync transform is applied', () => {
       for (const f of declarationFiles(pkg)) {
-        // Same transform the sync applies: comments only, so a difference
-        // here is always a real declaration change.
+        // The same transform the sync applies — stripping upstream's lint
+        // directives and pruning declarations we don't import — so a
+        // difference here is always a real declaration change. applyTransforms
+        // also throws if a prune left a dangling reference, which is how an
+        // upstream release that wires a pruned API into a kept one surfaces.
         expect(
-          read(join(destDir, f)) === stripLintDirectives(read(join(srcDir, f))),
+          read(join(destDir, f)) === applyTransforms(read(join(srcDir, f)), pkg),
           `types/${pkg.dest.replace('types/', '')}/${f} has drifted from ${pkg.src}/${f}. ` +
           'Because tsconfig `paths` resolves this module from the committed copy, the build is ' +
           'compiling against the stale one. Run: npm run sync-types',

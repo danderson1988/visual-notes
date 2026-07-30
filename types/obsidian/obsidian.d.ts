@@ -513,768 +513,32 @@ export abstract class BaseComponent {
     setDisabled(disabled: boolean): this;
 }
 
-/**
- * BasesOptions and the associated sub-types are configuration-driven settings controls
- * which can be provided by a {@link BasesViewRegistration} to expose configuration options
- * to users in the view config menu of the Bases toolbar.
- * @public
- * @since 1.10.0
- */
-export type BasesAllOptions = BasesOptions | BasesOptionGroup<BasesOptions>;
 
-/**
- * Represents the serialized format of a Bases query as stored in a `.base` file.
- *
- * @public
- * @since 1.10.0
- */
-export interface BasesConfigFile {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    filters?: BasesConfigFileFilter;
 
-    /**
-     * Configuration for properties in this Base.
-     *
-     * Valid keys for this object currently include:
-     *
-     *   - displayName: string
-     *
-     * @public
-     * @since 1.10.0
-     */
-    properties?: Record<string, Record<string, any>>;
-    /**
-     * Configuration for formulas used in this Base.
-     *
-     * Key: Formula property name.
-     * Value: Formula string.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    formulas?: Record<string, string>;
-    /**
-     * Configuration for summary formulas used in this Base.
-     *
-     * Key: Summary formula name.
-     * Value: Formula string.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    summaries?: Record<string, string>;
-    /**
-     * Configuration for views used in this Base.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    views?: BasesConfigFileView[];
 
-}
 
-/**
- * @public
- * @since 1.10.0
- */
-export type BasesConfigFileFilter = string | {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    and: BasesConfigFileFilter[];
-} | {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    or: BasesConfigFileFilter[];
-} | {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    not: BasesConfigFileFilter[];
-};
 
-/**
- * @public
- * @since 1.10.0
- */
-export interface BasesConfigFileView {
-    /**
-     * Unique identifier for the view type. Used to select the correct view renderer.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    type: string;
-    /**
-     * Friendly name for this view, displayed in the UI to select between views.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    name: string;
-    /**
-     * Additional filters, applied only to this view.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    filters?: BasesConfigFileFilter;
-    /**
-     * Configuration for grouping the results of this view.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    groupBy?: {
 
-    };
-    /**
-     * An ordered list of the properties to display in this view.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    order?: string[];
-    /**
-     * Configuration of summaries to display for each property in this view.
-     *
-     * Key: Property name.
-     * Value: Summary formula name.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    summaries?: Record<string, string>;
 
-}
 
-/**
- * @public
- * @since 1.10.0
- */
-export interface BasesDropdownOption extends BasesOption {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    type: 'dropdown';
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    default?: string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    options: Record<string, string>;
-}
 
-/**
- * Represent a single "row" or file in a base.
- * @public
- * @since 1.10.0
- */
-export class BasesEntry implements FormulaContext {
 
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    file: TFile;
 
-    /**
-     * Get the value of the property.
-     * Note: Errors are returned as {@link ErrorValue}
-     * @public
-     * @since 1.10.0
-     */
-    getValue(propertyId: BasesPropertyId): Value | null;
 
-}
 
-/**
- * A group of BasesEntry objects for a given value of the groupBy key.
- * If there are entries in the results which do not have a value for the
- * groupBy key, the key will be the {@link NullValue}.
- * @public
- * @since 1.10.0
- */
-export class BasesEntryGroup {
-    /**
-     * The value of the groupBy key for this entry group.
-     * @public
-     * @since 1.10.0
-     */
-    key?: Value;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    entries: BasesEntry[];
 
-    /**
-     * @returns true iff this entry group has a non-null key.
-     * @public
-     * @since 1.10.0
-     */
-    hasKey(): boolean;
-}
 
-/**
- * A text input allowing selection of a file from in the vault.
- * @public
- * @since 1.10.2
- */
-export interface BasesFileOption extends BasesOption {
-    /**
-     * @public
-     * @since 1.10.2
-     */
-    type: 'file';
-    /**
-     * @public
-     * @since 1.10.2
-     */
-    default?: string;
-    /**
-     * @public
-     * @since 1.10.2
-     */
-    placeholder?: string;
-    /**
-     * @public
-     * @since 1.10.2
-     */
-    filter?: (file: TFile) => boolean;
-}
 
-/**
- * A text input allowing selection of a folder from in the vault.
- * @public
- * @since 1.10.2
- */
-export interface BasesFolderOption extends BasesOption {
-    /**
-     * @public
-     * @since 1.10.2
-     */
-    type: 'folder';
-    /**
-     * @public
-     * @since 1.10.2
-     */
-    default?: string;
-    /**
-     * @public
-     * @since 1.10.2
-     */
-    placeholder?: string;
-    /**
-     * @public
-     * @since 1.10.2
-     */
-    filter?: (folder: TFolder) => boolean;
-}
 
-/**
- * A text input supporting formula evaluation.
- * @public
- * @since 1.10.2
- */
-export interface BasesFormulaOption extends BasesOption {
-    /**
-     * @public
-     * @since 1.10.2
-     */
-    type: 'formula';
-    /**
-     * @public
-     * @since 1.10.2
-     */
-    default?: string;
-    /**
-     * @public
-     * @since 1.10.2
-     */
-    placeholder?: string;
-}
 
-/**
- * @public
- * @since 1.10.0
- */
-export interface BasesMultitextOption extends BasesOption {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    type: 'multitext';
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    default?: string[];
-}
 
-/**
- * @public
- * @since 1.10.0
- */
-export interface BasesOption {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    key: string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    type: string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    displayName: string;
-    /**
-     * If provided, the option will be hidden if the function returns true.
-     *
-     * @public
-     * @since 1.10.2
-     */
-    shouldHide?: () => boolean;
-}
 
-/**
- * Collapsible container for other ViewOptions.
- * @public
- * @since 1.10.0
- */
-export interface BasesOptionGroup<T extends BasesOption> {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    type: 'group';
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    displayName: string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    items: T[];
-    /**
-     * If provided, the group will be hidden if the function returns true.
-     *
-     * @public
-     * @since 1.10.2
-     * @param config - Read-only copy of the current view configuration.
-     */
-    shouldHide?: () => boolean;
-}
 
-/**
- * @public
- * @since 1.10.0
- */
-export type BasesOptions = BasesDropdownOption | BasesFileOption | BasesFolderOption | BasesFormulaOption | BasesMultitextOption | BasesPropertyOption | BasesSliderOption | BasesTextOption | BasesToggleOption;
 
-/**
- * A parsed version of the {@link BasesPropertyId}.
- *
- * @public
- * @since 1.10.0
- */
-export interface BasesProperty {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    type: BasesPropertyType;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    name: string;
-}
 
-/**
- * The full ID of a property, used in the bases config file. The prefixed
- * {@link BasesPropertyType} disambiguates properties of the same name but from different sources.
- *
- * @public
- * @since 1.10.0
- */
-export type BasesPropertyId = `${BasesPropertyType}.${string}`;
 
-/**
- * A dropdown menu allowing selection of a property.
- * @public
- * @since 1.10.0
- */
-export interface BasesPropertyOption extends BasesOption {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    type: 'property';
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    default?: string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    placeholder?: string;
-    /**
-     * If provided, only properties which pass the filter will be included for selection in the property dropdown.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    filter?: (prop: BasesPropertyId) => boolean;
-}
 
-/**
- * The three valid "sources" of a property in a Base.
- *
- * - `note`: Properties from the frontmatter of markdown files in the vault.
- * - `formula`: Properties calculated by evaluating a formula from the base config file.
- * - `file`: Properties inherent to a file, such as the name, extension, size, etc.
- *
- * @public
- * @since 1.10.0
- */
-export type BasesPropertyType = 'note' | 'formula' | 'file';
 
-/**
- * The BasesQueryResult contains all of the available information from executing the
- * bases query, applying filters, and evaluating formulas. The `data` or `groupedData`
- * should be displayed by your view.
- *
- * @public
- * @since 1.10.0
- */
-export class BasesQueryResult {
-
-    /**
-     * An ungrouped version of the data, with user-configured sort and limit applied.
-     * Where appropriate, views should support groupBy by using `groupedData` instead of this value.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    data: BasesEntry[];
-
-    /**
-     * The data to be rendered, grouped according to the groupBy config.
-     * If there is no groupBy configured, returns a single group with an empty key.
-     * @public
-     * @since 1.10.0
-     */
-    get groupedData(): BasesEntryGroup[];
-    /**
-     * Visible properties defined by the user.
-     * @public
-     * @since 1.10.0
-     */
-    get properties(): BasesPropertyId[];
-
-    /**
-     * Applies a summary function to a single property over a set of entries.
-     * @public
-     * @since 1.10.0
-     */
-    getSummaryValue(queryController: QueryController, entries: BasesEntry[], prop: BasesPropertyId, summaryKey: string): Value;
-}
-
-/**
- * @public
- * @since 1.10.0
- */
-export interface BasesSliderOption extends BasesOption {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    type: 'slider';
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    default?: number;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    min?: number;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    max?: number;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    step?: number;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    instant?: boolean;
-}
-
-/**
- * @public
- * @since 1.10.0
- */
-export type BasesSortConfig = {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    property: BasesPropertyId;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    direction: 'ASC' | 'DESC';
-};
-
-/**
- * @public
- * @since 1.10.0
- */
-export interface BasesTextOption extends BasesOption {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    type: 'text';
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    default?: string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    placeholder?: string;
-}
-
-/**
- * @public
- * @since 1.10.0
- */
-export interface BasesToggleOption extends BasesOption {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    type: 'toggle';
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    default?: boolean;
-}
-
-/**
- * Plugins can create a class which extends this in order to render a Base.
- * Plugins should create a {@link BaseViewHandlerFactory} function, then call
- * `plugin.registerView` to register the view factory.
- *
- * @public
- * @since 1.10.0
- */
-export abstract class BasesView extends Component {
-    /**
-     * The type ID of this view
-     * @public
-     * @since 1.10.0
-     */
-    abstract type: string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    app: App;
-
-    /**
-     * The config object for this view.
-     * @public
-     * @since 1.10.0
-     */
-    config: BasesViewConfig;
-    /**
-     * All available properties from the dataset.
-     * @public
-     * @since 1.10.0
-     */
-    allProperties: BasesPropertyId[];
-    /**
-     * The most recent output from executing the bases query, applying filters, and evaluating formulas.
-     * This object will be replaced with a new result set when changes to the vault or Bases config occur,
-     * so views should not keep a reference to it. Also note the contained BasesEntry objects will be recreated.
-     * @public
-     * @since 1.10.0
-     */
-    data: BasesQueryResult;
-
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    protected constructor(controller: QueryController);
-    /**
-     * Called when there is new data for the query. This view should rerender with the updated data.
-     * @public
-     * @since 1.10.0
-     */
-    abstract onDataUpdated(): void;
-
-    /**
-     * Display the new note menu for a file with the provided filename and optionally a function to modify the frontmatter.
-     * @public
-     * @since 1.10.2
-     */
-    createFileForView(baseFileName?: string, frontmatterProcessor?: (frontmatter: any) => void): Promise<void>;
-
-}
-
-/**
- * The in-memory representation of a single entry in the "views" section of a Bases file.
- * Contains settings and configuration options set by the user from the toolbar menus and view options.
- * @public
- * @since 1.10.0
- */
-export class BasesViewConfig {
-
-    /**
-     * User-friendly name for this view.
-     * @public
-     * @since 1.10.0
-     */
-    name: string;
-
-    /**
-     * Retrieve the user-configured value of options exposed in `BasesViewRegistration.options`.
-     * @public
-     * @since 1.10.0
-     */
-    get(key: string): unknown;
-    /**
-     * Retrieve a user-configured value from the config, converting it to a BasesPropertyId.
-     * Returns null if the requested key is not present in the config, or if the value is invalid.
-     * @public
-     * @since 1.10.0
-     */
-    getAsPropertyId(key: string): BasesPropertyId | null;
-    /**
-     * Retrieve a user-configured value from the config, evaluating it as a
-     * formula in the context of the current Base. For embedded bases, or bases
-     * in the sidebar, this means evaluating the formula against the currently
-     * active file.
-     *
-     * @public
-     * @returns the Value result from evaluating the formula, or NullValue if the formula is invalid, or the key is not present.
-     * @since 1.10.2
-     */
-    getEvaluatedFormula(view: BasesView, key: string): Value;
-    /**
-     * Store configuration data for the view. Views should prefer `BasesViewRegistration.options`
-     * to allow users to configure options where appropriate.
-     * @public
-     * @since 1.10.0
-     */
-    set(key: string, value: any | null): void;
-    /**
-     * Ordered list of properties to display in this view.
-     * In a table, these can be interpreted as the list of visible columns.
-     * Order is configured by the user through the properties toolbar menu.
-     * @public
-     * @since 1.10.0
-     */
-    getOrder(): BasesPropertyId[];
-
-    /**
-     * Retrieve the sorting config for this view. Sort is configured by the user through the sort toolbar menu.
-     * Removes invalid sort configs. If no (valid) sort config, returns an empty array.
-     * Does not validate that the properties exists.
-     *
-     * Note that data from BasesQueryResult will be presorted.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    getSort(): BasesSortConfig[];
-
-    /**
-     * Retrieve a friendly name for the provided property.
-     * If the property has been renamed by the user in the Base config, that value is returned.
-     * File properties may have a default name that is returned, otherwise the name with the property
-     * type prefix removed is returned.
-     *
-     * @public
-     * @since 1.10.0
-     */
-    getDisplayName(propertyId: BasesPropertyId): string;
-
-}
-
-/**
- * Implement this factory function in a {@link BasesViewRegistration} to create a
- * new instance of a custom Bases view.
- * @param containerEl - The container below the Bases toolbar where the view will be displayed.
- * @public
- * @since 1.10.0
- */
-export type BasesViewFactory = (controller: QueryController, containerEl: HTMLElement) => BasesView;
-
-/**
- * Container for options when registering a new Bases view type.
- * @public
- * @since 1.10.0
- */
-export interface BasesViewRegistration {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    name: string;
-    /**
-     * Icon ID to be used in the Bases view selector.
-     * See {@link https://docs.obsidian.md/Plugins/User+interface/Icons} for available icons and how to add your own.
-     * @public
-     * @since 1.10.0
-     */
-    icon: IconName;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    factory: BasesViewFactory;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    options?: (config: BasesViewConfig) => BasesAllOptions[];
-}
 
 /**
  * @public
@@ -1304,19 +568,6 @@ export interface BlockSubpathResult extends SubpathResult {
     list?: ListItemCache;
 }
 
-/**
- * {@link Value} wrapping a boolean.
- * @public
- * @since 1.10.0
- */
-export class BooleanValue extends PrimitiveValue<boolean> {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    static type: string;
-
-}
 
 /**
  * @public
@@ -2165,54 +1416,6 @@ export interface DataWriteOptions {
 
 }
 
-/**
- * {@link Value} wrapping a Date.
- * @public
- * @since 1.10.0
- */
-export class DateValue extends NotNullValue {
-
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    toString(): string;
-
-    /**
-     * @returns a new DateValue with any time portion in this DateValue removed.
-     * @public
-     * @since 1.10.0
-     */
-    dateOnly(): DateValue;
-
-    /**
-     * @returns a new {@link RelativeDateValue} based on this DateValue.
-     * @public
-     * @since 1.10.0
-     */
-    relative(): string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    isTruthy(): boolean;
-
-    /**
-     * Create new DateValue from an input string.
-     *
-     * @example
-     * parseFromString("2025-12-31")
-     * parseFromString("2025-12-31T23:59")
-     * parseFromString("2025-12-31T23:59:59")
-     * parseFromString("2025-12-31T23:59:59Z-07")
-     *
-     * @param input - An ISO 8601 date or datetime string.
-     * @public
-     * @since 1.10.0
-     */
-    static parseFromString(input: string): DateValue | null;
-
-}
 
 /**
  * A standard debounce function.
@@ -2309,52 +1512,6 @@ export class DropdownComponent extends ValueComponent<string> {
     onChange(callback: (value: string) => any): this;
 }
 
-/**
- * {@link Value} wrapping a duration. Durations can be used to modify a {@link DateValue} or can
- * result from subtracting a DateValue from another.
- * @public
- * @since 1.10.0
- */
-export class DurationValue extends NotNullValue {
-
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    toString(): string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    isTruthy(): boolean;
-
-    /**
-     * Modifies the provided {@DateValue} by this duration.
-     * @public
-     * @since 1.10.0
-     */
-    addToDate(value: DateValue, subtract?: boolean): DateValue;
-    /**
-     * Convert this duration into milliseconds.
-     * @public
-     * @since 1.10.0
-     */
-    getMilliseconds(): number;
-
-    /**
-     * Create a new DurationValue using an ISO 8601 duration.
-     * See {@link https://en.wikipedia.org/wiki/ISO_8601#Durations} for duration format details.
-     * @public
-     * @since 1.10.0
-     */
-    static parseFromString(input: string): DurationValue | null;
-    /**
-     * Create a new DurationValue from milliseconds.
-     * @public
-     * @since 1.10.0
-     */
-    static fromMilliseconds(milliseconds: number): DurationValue;
-}
 
 /**
  * @public
@@ -3073,25 +2230,6 @@ export class FileSystemAdapter implements DataAdapter {
     static mkdir(path: string): Promise<void>;
 }
 
-/**
- * {@link Value} wrapping a file in Obsidian.
- * @public
- * @since 1.10.0
- */
-export class FileValue extends NotNullValue {
-
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    toString(): string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    isTruthy(): boolean;
-
-}
 
 /**
  * @public
@@ -3481,32 +2619,8 @@ export interface HSL {
  */
 export function htmlToMarkdown(html: string | HTMLElement | Document | DocumentFragment): string;
 
-/**
- * {@link Value} wrapping raw HTML.
- * @public
- * @since 1.10.0
- */
-export class HTMLValue extends StringValue {
 
-}
 
-/**
- * {@link Value} wrapping a renderable icon.
- * @public
- * @since 1.10.0
- */
-export class IconValue extends StringValue {
-
-}
-
-/**
- * {@link Value} wrapping a path to an image resource in the vault.
- * @public
- * @since 1.10.0
- */
-export class ImageValue extends StringValue {
-
-}
 
 /**
  * @public
@@ -3670,24 +2784,6 @@ export interface KeymapInfo {
 export interface LinkCache extends ReferenceCache {
 }
 
-/**
- * {@link Value} wrapping an internal wikilink.
- * @public
- * @since 1.10.0
- */
-export class LinkValue extends StringValue {
-
-    /**
-     * Create a new LinkValue from wikilink syntax.
-     * @example
-     * parseFromString("[[Welcome|Example Link]]")
-     *
-     * @public
-     * @since 1.10.0
-     */
-    static parseFromString(app: App, input: string, sourcePath: string): LinkValue | null;
-
-}
 
 /**
  * @public
@@ -3728,64 +2824,6 @@ export interface ListItemCache extends CacheItem {
     parent: number;
 }
 
-/**
- * {@link Value} wrapping an array of Values. Values do not all need to be of the same type.
- * @public
- * @since 1.10.0
- */
-export class ListValue extends NotNullValue {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    static type: string;
-
-    /**
-     * The array passed in will be modified!
-     * @param value - Contents of the list.
-     * @public
-     * @since 1.10.0
-     */
-    constructor(value: (unknown | Value)[]);
-
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    toString(): string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    isTruthy(): boolean;
-    /**
-     * @returns true if any elements in this list loosely equal the provided value.
-     * @public
-     * @since 1.10.0
-     */
-    includes(value: Value): boolean;
-
-    /**
-     * @returns the number of elements in this list.
-     * @public
-     * @since 1.10.0
-     */
-    length(): number;
-    /**
-     * @returns the value at the provided index, or {@link NullValue}.
-     * @public
-     * @since 1.10.0
-     */
-    get(index: number): Value;
-
-    /**
-     * @returns a new {@link ListValue} containing the elements from this ListValue and the provided ListValue.
-     * @public
-     * @since 1.10.0
-     */
-    concat(other: ListValue): ListValue;
-
-}
 
 /**
  * @public
@@ -4607,91 +3645,9 @@ export class Notice {
     hide(): void;
 }
 
-/**
- * Base type for all non-null {@link Values}.
- * @public
- * @since 1.10.0
- */
-export abstract class NotNullValue extends Value {
-}
 
-/**
- * {@link Value} which represents null.
- * NullValue is a singleton and `NullValue.value` should be used instead of calling the constructor.
- * @public
- * @since 1.10.0
- */
-export class NullValue extends Value {
 
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    toString(): string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    isTruthy(): boolean;
 
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    static value: NullValue;
-}
-
-/**
- * {@link Value} wrapping a number.
- * @public
- * @since 1.10.0
- */
-export class NumberValue extends PrimitiveValue<number> {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    static type: string;
-
-}
-
-/**
- * {@link Value} wrapping an object.
- * @public
- * @since 1.10.0
- */
-export class ObjectValue extends NotNullValue {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    static type: string;
-
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    toString(): string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    isTruthy(): boolean;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    isEmpty(): boolean;
-
-    /**
-     * @returns the {@link Value} associated with the provided key, or {@link NullValue}.
-     * If the referenced property in the object is not a Value, it will be wrapped before returning.
-     * @public
-     * @since 1.10.0
-     */
-    get(key: string): Value | null;
-
-}
 
 /**
  * @public
@@ -4764,12 +3720,6 @@ export function parseLinktext(linktext: string): {
     subpath: string;
 };
 
-/**
- * Split a Bases property ID into constituent parts.
- * @public
- * @since 1.10.0
- */
-export function parsePropertyId(propertyId: BasesPropertyId): BasesProperty;
 
 /** @public */
 export function parseYaml(yaml: string): any;
@@ -4957,14 +3907,6 @@ export abstract class Plugin extends Component {
      * @since 0.9.7
      */
     registerMarkdownCodeBlockProcessor(language: string, handler: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<any> | void, sortOrder?: number): MarkdownPostProcessor;
-    /**
-     * Register a Base view handler that can be used to render data from property queries.
-     *
-     * @returns false if bases are not enabled in this vault.
-     * @public
-     * @since 1.10.0
-     */
-    registerBasesView(viewId: string, registration: BasesViewRegistration): boolean;
 
     /**
      * Registers a CodeMirror 6 extension.
@@ -5217,30 +4159,6 @@ export function prepareFuzzySearch(query: string): (text: string) => SearchResul
  */
 export function prepareSimpleSearch(query: string): (text: string) => SearchResult | null;
 
-/**
- * Base type for {@link Values} which wrap a single primitive.
- * @public
- * @since 1.10.0
- */
-export abstract class PrimitiveValue<T> extends NotNullValue {
-
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    constructor(value: T);
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    toString(): string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    isTruthy(): boolean;
-
-}
 
 /**
  * @public
@@ -5264,15 +4182,6 @@ export class ProgressBarComponent extends ValueComponent<number> {
 
 }
 
-/**
- * Responsible for executing the Bases query and evaluating filters and formulas.
- * Notifies views of updated results.
- * @public
- * @since 1.10.0
- */
-export class QueryController extends Component {
-
-}
 
 /**
  * Base interface for items that point to a different location.
@@ -5317,34 +4226,7 @@ export interface ReferenceLinkCache extends CacheItem {
     link: string;
 }
 
-/**
- * {@link Value} wrapping a RegExp pattern.
- * @public
- * @since 1.10.0
- */
-export class RegExpValue extends NotNullValue {
 
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    toString(): string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    isTruthy(): boolean;
-}
-
-/**
- * {@link Value} wrapping a Date.
- * RelativeDateValue behaves the same as a {@link DateValue} however it renders as a time relative to now.
- * @public
- * @since 1.10.0
- */
-export class RelativeDateValue extends DateValue {
-
-}
 
 /**
  * Remove a custom icon from the library.
@@ -6722,19 +5604,6 @@ export interface Stat {
 /** @public */
 export function stringifyYaml(obj: any): string;
 
-/**
- * {@link Value} wrapping a string.
- * @public
- * @since 1.10.0
- */
-export class StringValue extends PrimitiveValue<string> {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    static type: string;
-
-}
 
 /**
  * Normalizes headings for link matching by stripping out special characters and shrinking consecutive spaces.
@@ -6877,20 +5746,6 @@ export interface TagCache extends CacheItem {
     tag: string;
 }
 
-/**
- * {@link Value} wrapping an Obsidian tag.
- * @public
- * @since 1.10.0
- */
-export class TagValue extends StringValue {
-
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    constructor(value: string);
-
-}
 
 /**
  * @public
@@ -7130,73 +5985,12 @@ export interface TooltipOptions {
 /** @public */
 export type TooltipPlacement = 'bottom' | 'right' | 'left' | 'top';
 
-/**
- * {@link Value} wrapping an external link.
- * @public
- * @since 1.10.0
- */
-export class UrlValue extends StringValue {
-
-}
 
 /**
  * @public
  */
 export type UserEvent = MouseEvent | KeyboardEvent | TouchEvent | PointerEvent;
 
-/**
- * Container type for data which can expose functions for retrieving, comparing, and rendering the data.
- * Most commonly used in conjunction with formulas for Bases. Values can be used as formula parameters,
- * intermediate values, and the result of evaluation.
- * @public
- * @since 1.10.0
- */
-export abstract class Value {
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    static type: string;
-
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    static equals(a: Value | null, b: Value | null): boolean;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    static looseEquals(a: Value | null, b: Value | null): boolean;
-
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    abstract toString(): string;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    abstract isTruthy(): boolean;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    equals(other: this): boolean;
-    /**
-     * @public
-     * @since 1.10.0
-     */
-    looseEquals(other: Value): boolean;
-    /**
-     * Render this value into the provided HTMLElement.
-     * @public
-     * @since 1.10.0
-     */
-    renderTo(el: HTMLElement, ctx: RenderContext): void;
-
-}
 
 /**
  * @public
