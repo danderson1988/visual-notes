@@ -166,6 +166,48 @@ describe('vendored third-party type definitions', () => {
       expect(hits, `remaining warning triggers: ${hits.join(', ')}`).toEqual([]);
     });
 
+    it('imports no package that is not a declared dependency', () => {
+      // import/no-extraneous-dependencies. Upstream's obsidian.d.ts imports
+      // @codemirror/state and @codemirror/view for the editor-extension API;
+      // both are Obsidian's own transitive dependencies, present at runtime
+      // and listed as esbuild externals, but not ours to declare. Adding them
+      // to package.json to quiet a linter would assert a dependency this
+      // plugin doesn't have, so the API is pruned and the imports go with it.
+      const pkgJson = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
+        dependencies?: Record<string, string>;
+        devDependencies?: Record<string, string>;
+      };
+      const declared = new Set([
+        ...Object.keys(pkgJson.dependencies ?? {}),
+        ...Object.keys(pkgJson.devDependencies ?? {}),
+      ]);
+
+      const offenders: string[] = [];
+      for (const [name, text] of files) {
+        text.split('\n').forEach((line, i) => {
+          if (isComment(line)) return;
+          // Type-only imports are exempt: the rule's `includeTypes` option
+          // defaults to false, and the check's own no-restricted-imports
+          // message spells out that "type-only imports from 'moment' are
+          // allowed". That exemption is why the `import type * as Moment` line
+          // upstream ships is fine while its value imports were not.
+          if (/^import type\s/.test(line.trim())) return;
+          const spec = /^import\s[^']*'([^']+)';$/.exec(line.trim())?.[1];
+          if (!spec || spec.startsWith('.')) return;          // relative: same package
+          // Scoped and plain packages alike: take the package name, not the
+          // subpath (`@scope/pkg/sub` -> `@scope/pkg`).
+          const parts = spec.split('/');
+          const root = spec.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0];
+          if (!declared.has(root)) offenders.push(`${name}:${i + 1} imports "${root}"`);
+        });
+      }
+      expect(
+        offenders,
+        `Not in package.json, so the check reports each one. Prune whatever needs ` +
+        `them rather than declaring a dependency this plugin doesn't have: ${offenders.join(', ')}`,
+      ).toEqual([]);
+    });
+
     it('has no method overriding a void base method with Promise<T> | void', () => {
       // Independent of widenVoidBasesForPromiseOverrides() in vendor-types.mjs — this
       // re-derives the same class/override relationship from the shipped text

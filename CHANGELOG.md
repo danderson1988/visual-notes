@@ -2,6 +2,13 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.13
+
+### Changed
+- **Back to a clean health report.** Two new warnings appeared, both about the bundled copy of Obsidian's type definitions importing two CodeMirror packages that aren't listed as this plugin's dependencies. They're Obsidian's own — supplied by the app at runtime, and already excluded from the build — so adding them to this plugin's dependency list to satisfy the checker would have claimed a dependency it doesn't have.
+  - They're only needed by Obsidian's editor-extension API, which this plugin doesn't use at all. Those definitions are now left out of the bundled copy, and the imports go with them. No dependency was added and nothing this plugin uses was removed, which the build confirms by compiling against both the trimmed copy and Obsidian's real one.
+  - A test now fails the build if the bundled copies ever import a package that isn't a declared dependency, so this can't return quietly — including from a future Obsidian release. Verified by reintroducing exactly the reported import and confirming it's caught.
+
 ## 1.1.12
 
 ### Fixed

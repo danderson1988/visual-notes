@@ -3,8 +3,6 @@
  * Please do not modify or send pull requests for it.
  */
 
-import { Extension, StateField } from '@codemirror/state';
-import { EditorView, ViewPlugin } from '@codemirror/view';
 import type * as Moment from 'moment';
 
 declare global {
@@ -1716,23 +1714,8 @@ export interface EditorChange extends EditorRangeOrCaret {
 /** @public */
 export type EditorCommandName = 'goUp' | 'goDown' | 'goLeft' | 'goRight' | 'goStart' | 'goEnd' | 'goWordLeft' | 'goWordRight' | 'indentMore' | 'indentLess' | 'newlineAndIndent' | 'swapLineUp' | 'swapLineDown' | 'deleteLine' | 'toggleFold' | 'foldAll' | 'unfoldAll';
 
-/**
- * Use this StateField to get a reference to the EditorView
- * @public
- */
-export const editorEditorField: StateField<EditorView>;
 
-/**
- * Use this StateField to get information about this Markdown editor, such as the associated file, or the Editor.
- * @public
- */
-export const editorInfoField: StateField<MarkdownFileInfo>;
 
-/**
- * Use this StateField to check whether Live Preview is active
- * @public
- */
-export const editorLivePreviewField: StateField<boolean>;
 
 /**
  * @public
@@ -1906,12 +1889,6 @@ export interface EditorTransaction {
     selection?: EditorRangeOrCaret;
 }
 
-/**
- * This is now deprecated - it is now mapped directly to `editorInfoField`, which return a MarkdownFileInfo, which may be a MarkdownView but not necessarily.
- * @public
- * @deprecated use {@link editorInfoField} instead.
- */
-export const editorViewField: StateField<MarkdownFileInfo>;
 
 /**
  * @public
@@ -2819,23 +2796,7 @@ export interface ListItemCache extends CacheItem {
 }
 
 
-/**
- * @public
- */
-export const livePreviewState: ViewPlugin<LivePreviewStateType, undefined>;
 
-/**
- * The object stored in the view plugin {@link livePreviewState}
- * @public
- */
-export interface LivePreviewStateType {
-    /**
-     * True if the left mouse is currently held down in the editor
-     * (for example, when drag-to-select text).
-     * @public
-     */
-    mousedown: boolean;
-}
 
 /**
  * Load MathJax.
@@ -3900,15 +3861,6 @@ export abstract class Plugin extends Component {
      */
     registerMarkdownCodeBlockProcessor(language: string, handler: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<unknown> | void, sortOrder?: number): MarkdownPostProcessor;
 
-    /**
-     * Registers a CodeMirror 6 extension.
-     * To reconfigure cm6 extensions for a plugin on the fly, an array should be passed in, and modified dynamically.
-     * Once this array is modified, calling {@link Workspace.updateOptions} will apply the changes.
-     * @param extension - must be a CodeMirror 6 `Extension`, or an array of Extensions.
-     * @public
-     * @since 0.12.8
-     */
-    registerEditorExtension(extension: Extension): void;
     /**
      * Register a handler for obsidian:// URLs.
      * @param action - the action string. For example, 'open' corresponds to `obsidian://open`.

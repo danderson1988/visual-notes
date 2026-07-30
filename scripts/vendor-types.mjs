@@ -8,15 +8,16 @@
 // plugin risky. tsconfig `paths` resolves these modules from the copies here
 // instead, so resolution never depends on node_modules existing.
 //
-// The copies are NOT verbatim. Three transforms are applied, in this order,
-// and `applyTransforms` is the single definition of the pipeline — the drift
-// test runs it over upstream before comparing, so a real declaration change
-// still surfaces:
+// The copies are NOT verbatim. Five transforms are applied, in this order, and
+// `applyTransforms` is the single definition of the pipeline — the drift test
+// runs it over upstream before comparing, so a real declaration change still
+// surfaces:
 //
-//   stripLintDirectives       upstream's own directives, which the check rejects
-//   pruneDeclarations         API we don't import
+//   stripLintDirectives                upstream's own directives, which the check rejects
+//   pruneDeclarations                  API we don't import
 //   widenVoidBasesForPromiseOverrides  align void base methods with Promise-returning overrides
-//   cleanDeclarations         remaining patterns the check warns about
+//   cleanDeclarations                  remaining patterns the check warns about
+//   dropUnusedImports                  imports the pruning stranded
 //
 // Three things that are easy to get wrong:
 //
@@ -77,10 +78,20 @@ export const PACKAGES = [
     // Raising minAppVersion would also clear them, and that is the wrong
     // trade: it buys a clean report by dropping users, for an API this
     // plugin never calls.
-    dropDeclarations: /^(?:Bases|QueryController|parsePropertyId)|Value$/,
-    // `parsePropertyId` goes too (its signature is Bases-only), and one
-    // method on an otherwise-needed class:
-    dropMembers: ['registerBasesView('],
+    //
+    // The CodeMirror-backed editor API goes for a second reason: upstream
+    // imports @codemirror/state and @codemirror/view at the top of this file,
+    // and the check's import/no-extraneous-dependencies reports both because
+    // they aren't in our package.json. They're Obsidian's own transitive
+    // dependencies, provided by the app at runtime and listed as esbuild
+    // externals — adding them to package.json to satisfy a linter would be
+    // claiming a dependency this plugin doesn't have. Nothing here uses any
+    // of it, so the declarations go and dropUnusedImports() then removes the
+    // now-dead import lines.
+    dropDeclarations: /^(?:Bases|QueryController|parsePropertyId|editor(?:Editor|Info|LivePreview|View)Field|livePreviewState|LivePreviewStateType)|Value$/,
+    // `parsePropertyId` goes too (its signature is Bases-only), and two
+    // methods on otherwise-needed classes:
+    dropMembers: ['registerBasesView(', 'registerEditorExtension('],
   },
   {
     module: 'sortablejs', src: 'node_modules/@types/sortablejs', dest: 'types/sortablejs',
@@ -391,12 +402,51 @@ export function cleanDeclarations(text) {
 }
 
 /**
+ * Removes imported names nothing references any more, and any import line left
+ * with no names at all.
+ *
+ * Runs last, because pruning declarations is what strands them. Upstream's
+ * obsidian.d.ts imports from @codemirror/state and @codemirror/view purely for
+ * the editor-extension API; with that pruned the imports are dead, and a dead
+ * import of a package we don't depend on is a warning
+ * (import/no-extraneous-dependencies) for a dependency we genuinely don't have.
+ *
+ * Only side-effect-free `import { … } from '…'` / `import type * as X from '…'`
+ * lines are considered — a bare `import '…'` is kept regardless, since its
+ * whole purpose is the side effect.
+ */
+export function dropUnusedImports(text) {
+  const lines = text.split(NL);
+  // A name is "used" if it appears outside comments and outside import lines.
+  const isImport = (line) => /^import\s/.test(line.trim());
+  const body = lines.filter(l => !isComment(l) && !isImport(l)).join(NL);
+  const used = (name) => new RegExp('\\b' + name + '\\b').test(body);
+
+  const out = [];
+  for (const line of lines) {
+    const named = /^import (?:type )?\{([^}]*)\} from '([^']+)';$/.exec(line);
+    if (named) {
+      const kept = named[1].split(',').map(s => s.trim()).filter(Boolean).filter(n => used(n.split(/\s+as\s+/).pop()));
+      if (kept.length === 0) continue;                       // whole line is dead
+      if (kept.length !== named[1].split(',').filter(s => s.trim()).length) {
+        out.push(line.replace(/\{[^}]*\}/, `{ ${kept.join(', ')} }`));
+        continue;
+      }
+    }
+    const namespaced = /^import (?:type )?\* as (\w+) from '/.exec(line);
+    if (namespaced && !used(namespaced[1])) continue;
+    out.push(line);
+  }
+  return out.join(NL);
+}
+
+/**
  * The full source -> copy transform. Both the sync and the drift comparison in
  * test/vendored-types.test.ts call this, so the copy can only differ from
  * upstream by a real declaration change.
  */
 export function applyTransforms(text, pkg) {
-  return cleanDeclarations(widenVoidBasesForPromiseOverrides(pruneDeclarations(stripLintDirectives(text), pkg)));
+  return dropUnusedImports(cleanDeclarations(widenVoidBasesForPromiseOverrides(pruneDeclarations(stripLintDirectives(text), pkg))));
 }
 
 /** Declarations a package contributes: its explicit list, or every .d.ts. */
