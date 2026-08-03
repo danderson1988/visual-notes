@@ -308,7 +308,9 @@ export class TextFormatToolbar {
       if (!lists.length) continue;
       for (const ul of lists) {
         for (const li of Array.from(ul.children)) {
-          if (li instanceof HTMLElement && !li.style.fontSize) li.style.fontSize = size;
+          // instanceOf, not instanceof: a board open in a popout window has
+          // its own HTMLElement global, which a plain instanceof would miss.
+          if (li.instanceOf(HTMLElement) && !li.style.fontSize) li.style.fontSize = size;
         }
       }
       span.style.removeProperty('font-size');

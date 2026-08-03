@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.15
+
+### Fixed
+- Bullet list markers could fail to pick up the text size of their own item on a board opened in a separate popout window, which has its own copy of the browser's element types. The two type checks behind this now use Obsidian's cross-window-safe equivalent.
+
 ## 1.1.14
 
 ### Added
