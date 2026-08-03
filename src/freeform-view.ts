@@ -55,6 +55,7 @@ export class FreeformRenderer extends Component {
   marqueeEl!: HTMLElement;
   zoomPill!: HTMLElement;
   snapToggleBtn: HTMLElement | null = null;
+  themeToggleBtn: HTMLElement | null = null;
   toolbarEl!: HTMLElement;
   fabEl: HTMLElement | null = null;
   // Bottom-left drop target — anything draggable (cards, kanban items,
@@ -325,6 +326,7 @@ export class FreeformRenderer extends Component {
     // custom properties on document.body (see main.ts's applyCanvasAppearanceSettings)
     // so every open board updates live and in one place — not threaded
     // through here per-instance.
+    this.applyBoardAppearance();
     this.inner = this.outer.createDiv('visual-notes-canvas-inner');
     this.marqueeEl = this.outer.createDiv('visual-notes-marquee');
     this.marqueeEl.hide();

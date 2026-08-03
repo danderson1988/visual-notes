@@ -647,13 +647,13 @@ export const cardsKanbanMethods = {
       new KanbanItemColorModal(this.app, column.color, (hex) => {
         this.pushUndo(); column.color = hex ?? '#6b7280';
         this.rebuildKanbanCard(board); this.scheduleSave();
-      }).open();
+      }, this.boardIsDark()).open();
     }));
     menu.addItem(i => i.setTitle('Set background…').setIcon('palette').onClick(() => {
       new KanbanItemColorModal(this.app, column.bgColor, (hex) => {
         this.pushUndo(); column.bgColor = hex;
         this.rebuildKanbanCard(board); this.scheduleSave();
-      }).open();
+      }, this.boardIsDark()).open();
     }));
     menu.addItem(i => i.setTitle('Set WIP limit…').setIcon('gauge').onClick(() => {
       new WipLimitModal(this.app, column.wipLimit, (limit) => {
@@ -727,7 +727,7 @@ export const cardsKanbanMethods = {
     // it creates for a colorless item, so seeing it here means the color
     // was never deliberately set — reset it back to unset rather than
     // force a color onto an item that didn't have one.
-    const fallbackColor = resolveDefaultStickyColor(this.defaultStickyColor);
+    const fallbackColor = resolveDefaultStickyColor(this.defaultStickyColor, this.boardIsDark());
     const item: KanbanItem = { id: crypto.randomUUID(), text: '', color: card.color === fallbackColor ? undefined : card.color };
     const textParts: string[] = [];
     const tags: string[] = [];
@@ -777,7 +777,7 @@ export const cardsKanbanMethods = {
       id: crypto.randomUUID(), kind: 'sticky',
       x: this.applySnap(cp.x), y: this.applySnap(cp.y), w: STICKY_DEFAULT_W, z: this.nextZ(),
       text: this.kanbanItemToStickyText(item),
-      color: item.color ?? resolveDefaultStickyColor(this.defaultStickyColor),
+      color: item.color ?? resolveDefaultStickyColor(this.defaultStickyColor, this.boardIsDark()),
     };
     this.board.cards.push(card);
     this.createCardEl(card);
@@ -1130,7 +1130,7 @@ export const cardsKanbanMethods = {
         new KanbanItemColorModal(this.app, item.color, (hex) => {
           this.pushUndo(); item.color = hex;
           owner.rebuild(); this.scheduleSave();
-        }).open();
+        }, this.boardIsDark()).open();
       }));
       if (item.color) {
         menu.addItem(i => i.setTitle('Reset color').setIcon('x').onClick(() => {

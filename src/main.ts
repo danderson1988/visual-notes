@@ -211,6 +211,11 @@ export default class VisualNotesPlugin extends Plugin {
     else document.body.style.removeProperty('--visual-notes-canvas-bg');
 
     document.body.style.setProperty('--visual-notes-trash-zone-size', `${this.settings.trashZoneSize ?? 56}px`);
+
+    // Unitless multiplier every card-content font-size is written against —
+    // see the "Text scale" block in styles.css. Deliberately does not reach
+    // the plugin's own UI chrome, which stays at its authored px sizes.
+    document.body.style.setProperty('--visual-notes-text-scale', String(this.settings.textScale ?? 1));
   }
 
   // ── Canvas leaf takeover ─────────────────────────────────────

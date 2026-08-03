@@ -10,7 +10,7 @@ import {
   isGoogleMapsUrl,
 } from './thumbnail-utils';
 import { nearestColorName, randomNamedColor, COLOR_PALETTES } from './named-colors';
-import { contrastColor, isHexColor } from './color-utils';
+import { contrastColor, isHexColor, isDarkTheme } from './color-utils';
 import { TileModal } from './tile-modal';
 import { LabelPromptModal, ReactionPickerModal } from './card-badges';
 import {
@@ -20,6 +20,7 @@ import { ContextBar, CtxEvent } from './context-bar';
 import { sortAssetFile, saveNewAsset } from './asset-manager';
 import { promptSaveBoardAsTemplate } from './file-io';
 import { CropImageModal } from './crop-modal';
+import { toggleBulletList } from './bullet-list';
 import { toPng } from 'html-to-image';
 import { buildSingleImagePdf, dataUrlToBytes } from './pdf-export';
 import {
@@ -27,6 +28,7 @@ import {
   BOOKMARK_DEFAULT_W,
   SWATCH_DEFAULT_W,
   KANBAN_COLORS,
+  applyStickyTextScale,
   SupportedCard,
   NoteLinkPickerModal, VaultImagePickerModal, VaultAudioPickerModal, VaultAnyFilePickerModal,
   CalloutIconPickerModal, QuickAddEntry,
@@ -48,6 +50,10 @@ declare module './freeform-view' {
     closeFab(): void;
     showAccentColorPopover(cardEl: HTMLElement, card: ChecklistCard): void;
     renderZoomPill(): void;
+    refreshThemeToggleIcon(): void;
+    boardIsDark(): boolean;
+    applyBoardAppearance(): void;
+    toggleBoardAppearance(): void;
     renderMinimap(): void;
     computeBoardBBox(): { minX: number; minY: number; maxX: number; maxY: number } | null;
     computeExportBBox(): { minX: number; minY: number; maxX: number; maxY: number } | null;
@@ -440,26 +446,26 @@ export const overlaysMethods = {
           new KanbanItemColorModal(this.app, card.color, (hex) => {
             this.pushUndo(); card.color = hex;
             this.rebuildKanbanCard(card); this.scheduleSave();
-          }).open();
+          }, this.boardIsDark()).open();
         }));
       }
       menu.addItem(i => i.setTitle('Set background color…').setIcon('palette').onClick(() => {
         new KanbanItemColorModal(this.app, card.bgColor, (hex) => {
           this.pushUndo(); card.bgColor = hex;
           this.rebuildKanbanCard(card); this.scheduleSave();
-        }).open();
+        }, this.boardIsDark()).open();
       }));
       menu.addItem(i => i.setTitle('Set drop area color…').setIcon('palette').onClick(() => {
         new KanbanItemColorModal(this.app, card.trayColor, (hex) => {
           this.pushUndo(); card.trayColor = hex;
           this.rebuildKanbanCard(card); this.scheduleSave();
-        }).open();
+        }, this.boardIsDark()).open();
       }));
       menu.addItem(i => i.setTitle('Set border color…').setIcon('palette').onClick(() => {
         new KanbanItemColorModal(this.app, card.borderColor, (hex) => {
           this.pushUndo(); card.borderColor = hex;
           this.rebuildKanbanCard(card); this.scheduleSave();
-        }).open();
+        }, this.boardIsDark()).open();
       }));
       menu.addSeparator();
     }
@@ -652,7 +658,34 @@ export const overlaysMethods = {
     });
 
     // ── Context bar (occupies the same slot, shown when a card is selected) ──
-    this.contextBar = new ContextBar(tb, this.container, () => this.trashZoneEl, e => this.handleCtxEvent(e));
+    this.contextBar = new ContextBar(tb, this.container, () => this.trashZoneEl, () => this.boardIsDark(), e => this.handleCtxEvent(e));
+  },
+
+  // ── Board appearance (own light/dark, independent of Obsidian's theme) ──
+
+  // An unset `appearance` means "follow Obsidian", which is how every board
+  // behaved before this existed — so untouched boards keep tracking the theme
+  // and only an explicit toggle pins them.
+  boardIsDark(this: FreeformRenderer): boolean {
+    return this.board.appearance ? this.board.appearance === 'dark' : isDarkTheme();
+  },
+
+  // The class goes on `outer` (the canvas viewport), not `container`: the
+  // toolbars, context bar, pen panel and minimap are siblings of outer inside
+  // container, and they deliberately keep following Obsidian's theme so the
+  // pane's chrome stays consistent with the rest of the app.
+  applyBoardAppearance(this: FreeformRenderer): void {
+    const dark = this.boardIsDark();
+    this.outer.toggleClass('visual-notes-appearance-dark', dark);
+    this.outer.toggleClass('visual-notes-appearance-light', !dark);
+  },
+
+  toggleBoardAppearance(this: FreeformRenderer): void {
+    this.pushUndo();
+    this.board.appearance = this.boardIsDark() ? 'light' : 'dark';
+    this.applyBoardAppearance();
+    this.refreshThemeToggleIcon();
+    this.scheduleSave();
   },
 
   renderTrashZone(this: FreeformRenderer): void {
@@ -833,6 +866,26 @@ export const overlaysMethods = {
     setIcon(this.snapToggleBtn, 'magnet');
     this.snapToggleBtn.toggleClass('is-active', this.snapToGridEnabled);
     this.snapToggleBtn.addEventListener('click', () => this.toggleSnapToGrid());
+
+    // Flips this board's own surface (canvas + cards) between light and dark,
+    // independent of Obsidian's theme — so a dark moodboard can live in a
+    // light vault. Saved per-board, so it travels with the file.
+    this.themeToggleBtn = this.container.createDiv('visual-notes-theme-toggle-btn');
+    this.refreshThemeToggleIcon();
+    this.themeToggleBtn.addEventListener('click', () => this.toggleBoardAppearance());
+  },
+
+  // Shows what a click will do: a sun while the board is dark (click for
+  // light), a moon while it's light.
+  refreshThemeToggleIcon(this: FreeformRenderer): void {
+    const btn = this.themeToggleBtn;
+    if (!btn) return;
+    const dark = this.boardIsDark();
+    btn.empty();
+    setIcon(btn, dark ? 'sun' : 'moon');
+    const label = dark ? 'Board appearance: dark — switch to light' : 'Board appearance: light — switch to dark';
+    btn.setAttribute('title', label);
+    btn.setAttribute('aria-label', label);
   },
 
   renderMinimap(this: FreeformRenderer): void {
@@ -1481,6 +1534,42 @@ export const overlaysMethods = {
         } else {
           strip?.remove();
         }
+        this.scheduleSave();
+        break;
+      }
+      case 'sticky-bullet': {
+        if (card?.kind !== 'sticky' || !el) return;
+        // Unlike the selection-popover buttons this one is reachable with a
+        // caret and no selection at all, and even with the card merely
+        // selected — in which case drop into edit mode first (caret lands at
+        // the end) rather than sitting there doing nothing, the exact
+        // failure that got the old format buttons removed.
+        let editor = el.querySelector<HTMLElement>('.visual-notes-sticky-editor');
+        if (!editor) {
+          this.editStickyInline(el, card);
+          editor = el.querySelector<HTMLElement>('.visual-notes-sticky-editor');
+        }
+        if (!editor) return;
+        editor.focus();
+        this.pushUndo();
+        if (toggleBulletList(editor)) {
+          // The editor only writes back to card.text on blur, so sync it
+          // here — otherwise this save would persist the pre-bullet text and
+          // the change would exist only in the DOM until the user clicked
+          // away. Committing on blur later just writes the same thing again.
+          card.text = editor.innerHTML;
+          this.scheduleSave();
+        }
+        break;
+      }
+      case 'sticky-text-scale': {
+        if (card?.kind !== 'sticky' || !el) return;
+        this.pushUndo();
+        card.textScale = e.scale;
+        // Set the CSS var in place rather than re-rendering: a re-render
+        // would tear down the card element the context bar is positioned
+        // against, and the inner text/editor inherit the var anyway.
+        applyStickyTextScale(el, card.textScale);
         this.scheduleSave();
         break;
       }

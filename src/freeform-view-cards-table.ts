@@ -237,7 +237,7 @@ export const cardsTableMethods = {
           this.pushUndo(); col.color = hex;
           this.renderCardContent(cardEl, card);
           this.scheduleSave();
-        }).open();
+        }, this.boardIsDark()).open();
       }));
       if (col.color) {
         menu.addItem(i => i.setTitle('Reset column color').setIcon('x').onClick(() => {
@@ -343,7 +343,7 @@ export const cardsTableMethods = {
           });
           this.renderCardContent(cardEl, card);
           this.scheduleSave();
-        }).open();
+        }, this.boardIsDark()).open();
       }));
 
     let anyColored = false;
@@ -525,7 +525,7 @@ export const cardsTableMethods = {
           this.pushUndo(); row.color = hex;
           rowEl.style.backgroundColor = hex ?? '';
           this.scheduleSave();
-        }).open();
+        }, this.boardIsDark()).open();
       }));
       if (row.color) {
         menu.addItem(i => i.setTitle('Reset row color').setIcon('x').onClick(() => {

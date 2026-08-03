@@ -97,6 +97,8 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
           render: (s) => this.buildGridSize(s) },
         { name: 'Trash zone size', desc: 'Diameter in pixels of the delete-by-drag circle in the bottom-left corner of the freeform canvas. Updates any open board live. Default: 56.',
           render: (s) => this.buildTrashZoneSize(s) },
+        { name: 'Card text size', desc: 'Scales the text on every card. Does not resize the plugin\'s own toolbars and panels. Individual Notes can override this from their Aa button. Updates any open board live. Default: 100%.',
+          render: (s) => this.buildTextScale(s) },
         { name: 'Larger kanban cards', desc: 'Bigger text, padding, and icon badges on kanban items. Takes effect the next time you open a board.',
           render: (s) => this.buildLargeKanbanItems(s) },
         { name: 'Bookmark cache duration', desc: 'Days before bookmark previews are automatically re-fetched. Default: 30.',
@@ -165,6 +167,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
     this.buildSnapToGrid(new Setting(containerEl));
     this.buildGridSize(new Setting(containerEl));
     this.buildTrashZoneSize(new Setting(containerEl));
+    this.buildTextScale(new Setting(containerEl));
     this.buildLargeKanbanItems(new Setting(containerEl));
     this.buildBookmarkCacheDuration(new Setting(containerEl));
     this.buildDefaultStickyColor(new Setting(containerEl));
@@ -454,6 +457,33 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
       .addButton(btn =>
         btn.setButtonText('Default').onClick(async () => {
           this.plugin.settings.snapGridSize = undefined;
+          await this.plugin.saveSettings();
+          this.refresh();
+        })
+      );
+  }
+
+  // Stored as a unitless multiplier, shown as a percentage — the slider
+  // steps in whole 10% increments so the label stays free of float noise.
+  private buildTextScale(setting: Setting): void {
+    setting
+      .setName('Card text size')
+      .setDesc('Scales the text on every card. Does not resize the plugin\'s own toolbars and panels. Individual Notes can override this from their Aa button. Updates any open board live. Default: 100%.')
+      .addSlider(s =>
+        s
+          .setLimits(100, 250, 10)
+          .setValue(Math.round((this.plugin.settings.textScale ?? 1) * 100))
+          .setDynamicTooltip()
+          .onChange(async (value) => {
+            this.plugin.settings.textScale = value / 100;
+            this.plugin.applyCanvasAppearanceSettings();
+            await this.plugin.saveSettings();
+          })
+      )
+      .addButton(btn =>
+        btn.setButtonText('Default').onClick(async () => {
+          this.plugin.settings.textScale = undefined;
+          this.plugin.applyCanvasAppearanceSettings();
           await this.plugin.saveSettings();
           this.refresh();
         })

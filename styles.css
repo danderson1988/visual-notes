@@ -44,6 +44,75 @@ body.theme-dark {
   --visual-notes-shadow-high: 0 8px 28px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.30);
 }
 
+/* ── Board appearance (per-board light/dark) ───────────────────────
+   A board can pin its own surface light or dark regardless of Obsidian's
+   theme — a dark moodboard in a light vault. `board.appearance` drives the
+   class; unset means "follow Obsidian" and neither class is present, which
+   is how every board behaved before this existed.
+
+   These are the one deliberate exception to the rule stated above, that the
+   plugin never hardcodes light/dark pairs and instead derives everything from
+   Obsidian's own variables. Pinning a surface against the active theme is
+   precisely a request for fixed values, so the tier the canvas and cards
+   derive from is redeclared here.
+
+   Scoped to .visual-notes-canvas-outer, NOT the whole container: the
+   toolbars, context bar, pen panel and minimap are siblings of it inside
+   .visual-notes-container, and they keep following Obsidian's theme so the
+   pane's chrome stays consistent with the rest of the app. */
+.visual-notes-canvas-outer.visual-notes-appearance-light {
+  --background-primary: #ffffff;
+  --background-primary-alt: #f8f8f8;
+  --background-secondary: #f2f3f5;
+  --background-secondary-alt: #e8eaed;
+  --background-modifier-border: #dcddde;
+  --background-modifier-hover: rgba(0, 0, 0, 0.05);
+  --background-modifier-active-hover: rgba(0, 0, 0, 0.08);
+  --text-normal: #2e3338;
+  --text-muted: #6e7681;
+  --text-faint: #999da3;
+  --text-on-accent: #ffffff;
+}
+
+.visual-notes-canvas-outer.visual-notes-appearance-dark {
+  --background-primary: #1e1e1e;
+  --background-primary-alt: #1a1a1a;
+  --background-secondary: #161616;
+  --background-secondary-alt: #111111;
+  --background-modifier-border: #333333;
+  --background-modifier-hover: rgba(255, 255, 255, 0.075);
+  --background-modifier-active-hover: rgba(255, 255, 255, 0.12);
+  --text-normal: #dadada;
+  --text-muted: #999999;
+  --text-faint: #6e6e6e;
+  --text-on-accent: #ffffff;
+  /* Shadows are near-invisible over a dark surface at the light-theme
+     opacities, so the canvas takes the dark set even in a light vault. */
+  --visual-notes-shadow-low:  0 1px 3px rgba(0,0,0,0.28), 0 1px 6px rgba(0,0,0,0.18);
+  --visual-notes-shadow-mid:  0 3px 10px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.22);
+  --visual-notes-shadow-high: 0 8px 28px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.30);
+}
+
+/* Re-derive the plugin's own surface vars on the same element. Overriding the
+   base tier above is not enough on its own: these were already computed up on
+   `body`, and a custom property inherits its *computed* value — so without
+   redeclaring them here the canvas backdrop and card fills would keep whatever
+   they resolved to under Obsidian's theme, and only the odd detail that reads a
+   theme var directly would actually flip.
+
+   This also means a pinned appearance takes precedence over the global "Canvas
+   background colour" setting (applied inline on body). That's the intended
+   order: a board-specific choice should beat a global default, the same way a
+   per-card text size beats the global scale. */
+.visual-notes-canvas-outer.visual-notes-appearance-light,
+.visual-notes-canvas-outer.visual-notes-appearance-dark {
+  --visual-notes-card-bg: var(--background-primary);
+  --visual-notes-card-text: var(--text-normal);
+  --visual-notes-column-bg: var(--background-primary);
+  --visual-notes-canvas-bg: var(--background-secondary);
+  --visual-notes-dot-color: var(--background-modifier-border);
+}
+
 /* Container */
 .visual-notes-container {
   display: flex;
@@ -294,7 +363,7 @@ body.theme-dark {
 
 /* Emoji variant */
 .visual-notes-tile-emoji {
-  font-size: 38px;
+  font-size: calc(38px * var(--vn-text-mult, 1));
   line-height: 1;
   width: auto;
   height: auto;
@@ -311,7 +380,7 @@ body.theme-dark {
 
 /* ── Tile label ─────────────────────────────────────────────── */
 .visual-notes-tile-label {
-  font-size: 14px;
+  font-size: calc(14px * var(--vn-text-mult, 1));
   font-weight: 600;
   color: var(--text-normal);
   text-align: center;
@@ -326,7 +395,7 @@ body.theme-dark {
 
 /* ── Tile subtitle ──────────────────────────────────────────── */
 .visual-notes-tile-subtitle {
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   color: var(--text-muted);
   text-align: center;
   max-width: 128px;
@@ -453,7 +522,7 @@ body.theme-dark {
   pointer-events: auto;
   cursor: pointer;
   border-radius: 10px;
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   line-height: 1.6;
   padding: 0 7px;
   box-shadow: var(--visual-notes-shadow-low);
@@ -466,7 +535,7 @@ body.theme-dark {
 .visual-notes-card-reaction-pill {
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
-  font-size: 13px;
+  font-size: calc(13px * var(--vn-text-mult, 1));
   padding: 0 6px;
 }
 
@@ -486,7 +555,7 @@ body.theme-dark {
   align-items: center;
   gap: 4px;
   border-radius: 10px;
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   line-height: 1.6;
   padding: 0 8px 0 5px;
   box-shadow: var(--visual-notes-shadow-low);
@@ -976,6 +1045,11 @@ path.is-marquee-selected {
   .visual-notes-content.mobile-fab-top-left .visual-notes-zoom-pill ~ .visual-notes-snap-toggle-btn {
     left: 88px;
   }
+  .visual-notes-content.mobile-fab-bottom-right .visual-notes-theme-toggle-btn,
+  .visual-notes-content.mobile-fab-top-right .visual-notes-theme-toggle-btn,
+  .visual-notes-content.mobile-fab-top-left .visual-notes-theme-toggle-btn {
+    right: auto; left: 124px;
+  }
   .visual-notes-content.mobile-fab-bottom-right .visual-notes-minimap,
   .visual-notes-content.mobile-fab-top-right .visual-notes-minimap,
   .visual-notes-content.mobile-fab-top-left .visual-notes-minimap {
@@ -985,6 +1059,7 @@ path.is-marquee-selected {
 
   .visual-notes-zoom-pill.is-hidden-for-ctx-bar,
   .visual-notes-snap-toggle-btn.is-hidden-for-ctx-bar,
+  .visual-notes-theme-toggle-btn.is-hidden-for-ctx-bar,
   .visual-notes-minimap.is-hidden-for-ctx-bar {
     display: none;
   }
@@ -1385,6 +1460,44 @@ path.is-marquee-selected {
   flex-direction: row;
 }
 
+/* Text size sub-panel (Note/Card) — S/M/L/XL/XXL steps. Plain px, like the
+   rest of the context bar: this is chrome, and must not scale with the very
+   setting it edits. */
+.visual-notes-ctx-size-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 2px;
+}
+
+.visual-notes-ctx-size-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 5px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: background 80ms ease, color 80ms ease;
+}
+
+.visual-notes-ctx-size-btn:hover,
+.visual-notes-ctx-size-btn:focus-visible {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  outline: none;
+}
+
+.visual-notes-ctx-size-btn.is-active {
+  background: var(--interactive-accent);
+  color: #ffffff;
+}
+
 /* Custom color wheel input — invisible, triggered by its sibling button */
 .visual-notes-ctx-color-wheel-input {
   position: absolute;
@@ -1585,6 +1698,37 @@ path.is-marquee-selected {
 .visual-notes-zoom-pill:hover {
   color: var(--interactive-accent);
   border-color: var(--interactive-accent);
+}
+
+/* Third in the bottom-right row, continuing from the zoom pill (right: 16)
+   and the snap toggle (right: 80). */
+.visual-notes-theme-toggle-btn {
+  position: absolute;
+  bottom: 16px;
+  right: 116px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 2px;
+  color: var(--text-muted);
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: var(--visual-notes-shadow-low);
+  transition: color 80ms ease, border-color 80ms ease, background 80ms ease;
+}
+
+.visual-notes-theme-toggle-btn:hover {
+  color: var(--text-normal);
+  border-color: var(--interactive-accent);
+}
+
+.visual-notes-theme-toggle-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .visual-notes-snap-toggle-btn {
@@ -2035,7 +2179,7 @@ input.visual-notes-table-date-input {
   box-shadow: none;
   outline: none;
   padding: 0;
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   font-family: var(--visual-notes-font-body);
   color: var(--visual-notes-card-text);
   cursor: pointer;
@@ -2046,7 +2190,7 @@ input.visual-notes-table-date-input {
   max-width: 100%;
   padding: 2px 9px;
   border-radius: 10px;
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--vn-text-mult, 1));
   font-weight: 600;
   cursor: pointer;
   overflow: hidden;
@@ -2090,7 +2234,7 @@ input.visual-notes-table-date-input {
   padding: 3px 11px;
   border-radius: 6px;
   font-family: var(--visual-notes-font-display);
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -2162,7 +2306,7 @@ input.visual-notes-table-date-input {
 .visual-notes-file-header-icon svg { width: 13px; height: 13px; }
 
 .visual-notes-file-header-title {
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   font-weight: 600;
   color: var(--visual-notes-card-text);
   overflow: hidden;
@@ -2206,7 +2350,7 @@ input.visual-notes-table-date-input {
 .visual-notes-file-tile-icon svg { width: 40px; height: 40px; }
 
 .visual-notes-file-tile-name {
-  font-size: 13px;
+  font-size: calc(13px * var(--vn-text-mult, 1));
   font-weight: 600;
   color: var(--visual-notes-card-text);
   word-break: break-word;
@@ -2221,7 +2365,7 @@ input.visual-notes-table-date-input {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   color: var(--text-faint);
 }
 
@@ -2230,7 +2374,7 @@ input.visual-notes-table-date-input {
   border-radius: 4px;
   background: var(--background-modifier-hover);
   font-weight: 700;
-  font-size: 10px;
+  font-size: calc(10px * var(--vn-text-mult, 1));
   letter-spacing: 0.04em;
   color: var(--text-muted);
 }
@@ -2250,7 +2394,7 @@ input.visual-notes-table-date-input {
 }
 
 .visual-notes-callout-icon {
-  font-size: 20px;
+  font-size: calc(20px * var(--vn-text-mult, 1));
   line-height: 1.3;
   flex-shrink: 0;
   user-select: none;
@@ -2261,7 +2405,7 @@ input.visual-notes-table-date-input {
   min-width: 0;
   outline: none;
   font-family: var(--visual-notes-font-body);
-  font-size: 14px;
+  font-size: calc(14px * var(--vn-text-mult, 1));
   line-height: 1.5;
   color: var(--text-normal);
   word-break: break-word;
@@ -2287,7 +2431,7 @@ input.visual-notes-table-date-input {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: calc(11.5px * var(--vn-text-mult, 1));
   line-height: 1.35;
   color: var(--visual-notes-card-text);
 }
@@ -2362,7 +2506,7 @@ input.visual-notes-table-date-input {
   gap: 4px;
   padding: 2px 7px;
   border-radius: 10px;
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--vn-text-mult, 1));
   font-weight: 600;
   background: var(--background-modifier-hover);
   color: var(--text-muted);
@@ -2584,7 +2728,7 @@ input.visual-notes-table-date-input {
 .visual-notes-checklist-title,
 .visual-notes-column-title {
   font-family: var(--visual-notes-font-display);
-  font-size: 16px;
+  font-size: calc(16px * var(--vn-text-mult, 1));
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -2611,7 +2755,7 @@ input.visual-notes-table-date-input {
 
 .visual-notes-kanban-col-count {
   font-family: var(--visual-notes-font-body);
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   font-weight: 400;
   color: var(--text-muted);
   text-align: center;
@@ -2692,7 +2836,7 @@ input.visual-notes-table-date-input {
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
   padding: 10px 12px;
-  font-size: 13px;
+  font-size: calc(13px * var(--vn-text-mult, 1));
   font-family: var(--visual-notes-font-body);
   color: var(--visual-notes-card-text);
   line-height: 1.5;
@@ -2716,7 +2860,7 @@ input.visual-notes-table-date-input {
    keeps the same sizing once detached from its original parent. */
 .visual-notes-kanban-item.is-large {
   padding: 13px 15px;
-  font-size: 15px;
+  font-size: calc(15px * var(--vn-text-mult, 1));
   gap: 10px;
 }
 
@@ -2732,7 +2876,7 @@ input.visual-notes-table-date-input {
 
 .visual-notes-kanban-item.is-large .visual-notes-kanban-item-note-pill,
 .visual-notes-kanban-item.is-large .visual-notes-kanban-item-tag {
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--vn-text-mult, 1));
 }
 
 .visual-notes-kanban-item.is-done {
@@ -2806,7 +2950,7 @@ input.visual-notes-table-date-input {
   background: var(--background-modifier-hover);
   border-radius: 3px;
   padding: 1px 7px 1px 5px;
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   color: var(--text-muted);
   cursor: pointer;
   max-width: 140px;
@@ -2851,7 +2995,7 @@ input.visual-notes-table-date-input {
   color: var(--interactive-accent);
   border-radius: 3px;
   padding: 1px 7px;
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
 }
 
 .visual-notes-kanban-item.has-image {
@@ -2906,7 +3050,7 @@ input.visual-notes-table-date-input {
 }
 
 .visual-notes-kanban-audio-title {
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   font-weight: 500;
   color: var(--text-muted);
   margin-bottom: 3px;
@@ -3029,7 +3173,7 @@ input.visual-notes-table-date-input {
   padding: 8px 16px 12px;
   color: var(--text-faint);
   font-family: var(--visual-notes-font-body);
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   cursor: pointer;
   flex-shrink: 0;
   user-select: none;
@@ -3209,7 +3353,7 @@ input.visual-notes-table-date-input {
 }
 
 .visual-notes-sticky-text {
-  font-size: 14px;
+  font-size: calc(14px * var(--vn-text-mult, 1));
   line-height: 1.5;
   color: var(--visual-notes-card-text);
   word-break: break-word;
@@ -3223,13 +3367,47 @@ input.visual-notes-table-date-input {
 .visual-notes-sticky-text em { font-style: italic; }
 .visual-notes-sticky-text del { text-decoration: line-through; }
 
+/* Bullet lists — styled for both the rendered note and the live editor so
+   toggling one on doesn't visibly shift the text. Obsidian's own list
+   styling assumes far more horizontal room than a sticky has, hence the
+   tighter indent. */
+.visual-notes-sticky-text ul,
+.visual-notes-sticky-editor ul {
+  margin: 0 0 4px;
+  /* Custom marker rather than list-style, because neither built-in option
+     lets the bullet-to-text distance be set: `outside` positions the marker
+     off the content edge (indent has to be guessed in advance, and at a
+     large item size it strands the bullet far from its own text), while
+     `inside` leaves the gap entirely to the browser. A ::before marker
+     below makes that distance an explicit, tunable em — so it stays tight
+     at every text size. */
+  padding-left: 0;
+  list-style: none;
+}
+.visual-notes-sticky-text ul:last-child,
+.visual-notes-sticky-editor ul:last-child { margin-bottom: 0; }
+.visual-notes-sticky-text li,
+.visual-notes-sticky-editor li { margin: 0 0 2px; padding-left: 0; }
+/* No font-size here on purpose: inheriting the <li> is what makes the bullet
+   grow with a resized item (see hoistListItemSizes, which puts whole-item
+   sizes on the <li> rather than a nested span). Tune the gap with
+   margin-right alone. */
+.visual-notes-sticky-text li::before,
+.visual-notes-sticky-editor li::before {
+  content: '•';
+  margin-right: 0.3em;
+  line-height: inherit;
+}
+.visual-notes-sticky-editor p { margin: 0 0 4px; }
+.visual-notes-sticky-editor p:last-child { margin-bottom: 0; }
+
 .visual-notes-sticky-editor {
   width: 100%;
   min-height: 20px;
   background: transparent;
   border: none;
   outline: none;
-  font-size: 14px;
+  font-size: calc(14px * var(--vn-text-mult, 1));
   line-height: 1.5;
   font-family: var(--font-text);
   color: var(--visual-notes-card-text);
@@ -3305,6 +3483,50 @@ input.visual-notes-table-date-input {
   background: var(--background-modifier-hover);
   transition: background 80ms, color 80ms;
   user-select: none;
+}
+
+/* Bullet toggle carries an icon rather than a letter like its B/I/S/U
+   siblings, so it needs the glyph sized explicitly. */
+.visual-notes-text-fmt-inline-btn.visual-notes-fmt-bullet svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Per-selection size steps. Nine of them, so they wrap rather than forcing
+   the popover wide enough to sit off-screen beside a card near the edge. */
+.visual-notes-text-fmt-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.visual-notes-text-fmt-size-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 4px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-text);
+  color: var(--text-muted);
+  background: var(--background-modifier-hover);
+  transition: background 80ms, color 80ms;
+  user-select: none;
+}
+
+.visual-notes-text-fmt-size-btn:hover {
+  background: var(--interactive-accent);
+  color: #ffffff;
+}
+
+/* The reset step reads as "back to normal", not as another size. */
+.visual-notes-text-fmt-size-btn.is-reset {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border);
 }
 
 .visual-notes-text-fmt-inline-btn:hover {
@@ -3391,15 +3613,42 @@ input.visual-notes-table-date-input {
   pointer-events: none;
 }
 
-/* ── Text scale utilities ────────────────────────────────────── */
+/* ── Text scale ───────────────────────────────────────────────────
+   Every card-CONTENT font size is written as
+     font-size: calc(<px> * var(--vn-text-mult, 1));
+   so it scales from one multiplier. Add new content rules the same way.
+   UI chrome (toolbar, context bar, panels, modals, minimap, search/filter,
+   pen UI, settings, touch sheet) is deliberately left as plain px — scaling
+   the interface along with the content makes it unusable at 200%.
 
-.visual-notes-container .text-scale-sm { font-size: 11px; }
-.visual-notes-container .text-scale-sm p, .visual-notes-container .text-scale-sm li { font-size: 11px; }
+   --vn-text-mult composes two independent inputs:
+     --visual-notes-text-scale  global preference, set on document.body by
+                                applyCanvasAppearanceSettings() (main.ts)
+     --vn-card-text-scale       per-card design choice, set inline on the
+                                card element from card.textScale
 
-.visual-notes-container .text-scale-md { font-size: 14px; }
+   It is re-declared on the card element (not only the container) so that a
+   card's own inline --vn-card-text-scale actually re-enters the calc:
+   custom properties inherit their *computed* value, so a container-level
+   --vn-text-mult would have already collapsed to a number before any card
+   override could be seen. */
+.visual-notes-container,
+.visual-notes-freeform-card {
+  --vn-text-mult: calc(var(--visual-notes-text-scale, 1) * var(--vn-card-text-scale, 1));
+}
 
-.visual-notes-container .text-scale-lg { font-size: 18px; }
-.visual-notes-container .text-scale-lg p, .visual-notes-container .text-scale-lg li { font-size: 18px; }
+/* Image-caption sizes (captionScale) keep their own sm/md/lg classes — a
+   separate, already-shipped control from the per-card Note scale — but run
+   through the same multiplier so the global setting still reaches them.
+   `p`/`li` are targeted explicitly because MarkdownRenderer's output carries
+   Obsidian's own paragraph styling, which would otherwise beat inheritance. */
+.visual-notes-container .text-scale-sm { font-size: calc(11px * var(--vn-text-mult, 1)); }
+.visual-notes-container .text-scale-sm p, .visual-notes-container .text-scale-sm li { font-size: calc(11px * var(--vn-text-mult, 1)); }
+
+.visual-notes-container .text-scale-md { font-size: calc(14px * var(--vn-text-mult, 1)); }
+
+.visual-notes-container .text-scale-lg { font-size: calc(18px * var(--vn-text-mult, 1)); }
+.visual-notes-container .text-scale-lg p, .visual-notes-container .text-scale-lg li { font-size: calc(18px * var(--vn-text-mult, 1)); }
 
 /* ── Checklist card ─────────────────────────────────────────── */
 
@@ -3437,7 +3686,7 @@ input.visual-notes-checklist-title {
   box-sizing: border-box;
   /* Input elements ignore inherited font rules — force them explicitly */
   font-family: var(--visual-notes-font-display);
-  font-size: 16px;
+  font-size: calc(16px * var(--vn-text-mult, 1));
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -3574,7 +3823,7 @@ input.visual-notes-checklist-cb {
 .visual-notes-checklist-item-input {
   flex: 1;
   outline: none;
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   color: var(--visual-notes-card-text);
   min-width: 0;
   word-break: break-word;
@@ -3588,7 +3837,7 @@ input.visual-notes-checklist-cb {
 }
 
 .visual-notes-checklist-item.is-header .visual-notes-checklist-item-input {
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   font-weight: 700;
 }
 
@@ -3599,7 +3848,7 @@ input.visual-notes-checklist-cb {
 
 .visual-notes-checklist-add {
   margin: 4px 0 8px;
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   color: var(--text-faint);
   cursor: pointer;
   padding: 3px 0;
@@ -3659,7 +3908,7 @@ input.visual-notes-checklist-cb {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: calc(9px * var(--vn-text-mult, 1));
   font-weight: 700;
 }
 
@@ -3673,7 +3922,7 @@ input.visual-notes-checklist-cb {
 }
 
 .visual-notes-comment-author {
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   font-weight: 600;
   color: var(--visual-notes-card-text);
   overflow: hidden;
@@ -3683,13 +3932,13 @@ input.visual-notes-checklist-cb {
 }
 
 .visual-notes-comment-time-sep {
-  font-size: 10px;
+  font-size: calc(10px * var(--vn-text-mult, 1));
   color: var(--text-faint);
   flex-shrink: 0;
 }
 
 .visual-notes-comment-time {
-  font-size: 10px;
+  font-size: calc(10px * var(--vn-text-mult, 1));
   color: var(--text-faint);
   flex-shrink: 0;
   white-space: nowrap;
@@ -3699,7 +3948,7 @@ input.visual-notes-checklist-cb {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 10px;
+  font-size: calc(10px * var(--vn-text-mult, 1));
   font-weight: 600;
   color: var(--text-success, #22c55e);
   flex-shrink: 0;
@@ -3714,7 +3963,7 @@ input.visual-notes-checklist-cb {
 
 .visual-notes-comment-text {
   outline: none;
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   line-height: 1.4;
   color: var(--visual-notes-card-text);
   word-break: break-word;
@@ -3754,13 +4003,13 @@ input.visual-notes-checklist-cb {
 }
 
 .visual-notes-comment-reply-author {
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   font-weight: 700;
   color: var(--visual-notes-card-text);
 }
 
 .visual-notes-comment-reply-time {
-  font-size: 9px;
+  font-size: calc(9px * var(--vn-text-mult, 1));
   color: var(--text-faint);
   flex: 1;
 }
@@ -3784,7 +4033,7 @@ input.visual-notes-checklist-cb {
 
 .visual-notes-comment-reply-text {
   outline: none;
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   line-height: 1.4;
   color: var(--visual-notes-card-text);
   word-break: break-word;
@@ -3797,7 +4046,7 @@ input.visual-notes-comment-reply-ghost-input {
   box-shadow: none;
   outline: none;
   padding: 3px 0;
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   color: var(--visual-notes-card-text);
 }
 
@@ -3832,7 +4081,7 @@ input.visual-notes-table-title {
   padding: 10px 12px 6px;
   box-sizing: border-box;
   font-family: var(--visual-notes-font-display);
-  font-size: 16px;
+  font-size: calc(16px * var(--vn-text-mult, 1));
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -3918,7 +4167,7 @@ input.visual-notes-table-title {
 .visual-notes-table-header-label,
 .visual-notes-table-cell-text {
   outline: none;
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   line-height: 1.4;
   color: var(--visual-notes-card-text);
   word-break: break-word;
@@ -4062,7 +4311,7 @@ input.visual-notes-table-zoom-slider {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   color: var(--text-faint);
   cursor: pointer;
   padding: 3px 8px;
@@ -4163,7 +4412,7 @@ input.visual-notes-accent-pop-hex {
 
 .visual-notes-notelink-title {
   flex: 1;
-  font-size: 13px;
+  font-size: calc(13px * var(--vn-text-mult, 1));
   font-weight: 700;
   color: var(--visual-notes-card-text);
   white-space: nowrap;
@@ -4200,7 +4449,7 @@ input.visual-notes-accent-pop-hex {
   flex: 1;
   overflow-y: auto;
   padding: 10px 12px;
-  font-size: 13px;
+  font-size: calc(13px * var(--vn-text-mult, 1));
   line-height: 1.5;
   min-height: 0;
   background: var(--visual-notes-card-bg);
@@ -4254,7 +4503,7 @@ input.visual-notes-accent-pop-hex {
   justify-content: center;
   gap: 8px;
   color: var(--text-faint);
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   padding: 16px;
   text-align: center;
 }
@@ -4281,7 +4530,7 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-image-caption-wrap.is-hidden { display: none; }
 
 .visual-notes-image-caption-view {
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   color: var(--text-muted);
   padding: 5px 8px;
   line-height: 1.4;
@@ -4303,7 +4552,7 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-image-caption-editor {
   width: 100%;
   outline: none;
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   color: var(--text-muted);
   padding: 5px 8px;
   box-sizing: border-box;
@@ -4352,7 +4601,7 @@ input.visual-notes-accent-pop-hex {
 }
 
 .visual-notes-audio-title {
-  font-size: 13px;
+  font-size: calc(13px * var(--vn-text-mult, 1));
   font-weight: 700;
   color: var(--visual-notes-card-text);
   overflow: hidden;
@@ -4368,7 +4617,7 @@ input.visual-notes-accent-pop-hex {
 
 .visual-notes-audio-missing {
   padding: 8px 12px;
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   color: var(--text-faint);
   font-style: italic;
 }
@@ -4414,7 +4663,7 @@ input.visual-notes-accent-pop-hex {
 }
 
 .visual-notes-bookmark-title {
-  font-size: 13px;
+  font-size: calc(13px * var(--vn-text-mult, 1));
   font-weight: 700;
   color: var(--visual-notes-card-text);
   display: -webkit-box;
@@ -4426,7 +4675,7 @@ input.visual-notes-accent-pop-hex {
 }
 
 .visual-notes-bookmark-desc {
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   color: var(--text-muted);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -4456,7 +4705,7 @@ input.visual-notes-accent-pop-hex {
 }
 
 .visual-notes-bookmark-domain {
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   color: var(--text-faint);
   white-space: nowrap;
   overflow: hidden;
@@ -4472,7 +4721,7 @@ input.visual-notes-accent-pop-hex {
   justify-content: center;
   gap: 8px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   padding: 16px;
 }
 
@@ -4487,14 +4736,14 @@ input.visual-notes-accent-pop-hex {
 }
 
 .visual-notes-bookmark-fail-url {
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   color: var(--text-muted);
   word-break: break-all;
   line-height: 1.4;
 }
 
 .visual-notes-bookmark-retry {
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   padding: 3px 10px;
   border-radius: 2px;
   border: 1px solid var(--background-modifier-border);
@@ -4944,12 +5193,12 @@ input.visual-notes-accent-pop-hex {
 }
 
 .visual-notes-freeform-stub-icon {
-  font-size: 48px;
+  font-size: calc(48px * var(--vn-text-mult, 1));
   line-height: 1;
 }
 
 .visual-notes-freeform-stub-path {
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   font-family: var(--font-monospace);
   color: var(--text-faint);
 }
@@ -5023,7 +5272,7 @@ input.visual-notes-accent-pop-hex {
   }
 
   .visual-notes-tile-emoji {
-    font-size: 30px;
+    font-size: calc(30px * var(--vn-text-mult, 1));
   }
 
   .visual-notes-grid {
@@ -5272,7 +5521,7 @@ input.visual-notes-accent-pop-hex {
 
 .visual-notes-kanban-board-title {
   font-family: var(--visual-notes-font-display);
-  font-size: 14px;
+  font-size: calc(14px * var(--vn-text-mult, 1));
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -5352,7 +5601,7 @@ input.visual-notes-accent-pop-hex {
   min-height: 44px;
 }
 .visual-notes-kanban-board-column .visual-notes-kanban-header:active { cursor: default; }
-.visual-notes-kanban-board-column .visual-notes-kanban-title { text-align: left; font-size: 13px; }
+.visual-notes-kanban-board-column .visual-notes-kanban-title { text-align: left; font-size: calc(13px * var(--vn-text-mult, 1)); }
 .visual-notes-kanban-board-column .visual-notes-kanban-count-row { justify-content: flex-start; }
 
 /* Collapse + "..." menu buttons sit side by side, not stacked */
@@ -5466,7 +5715,7 @@ input.visual-notes-accent-pop-hex {
 }
 
 .visual-notes-bookmark-youtube-title {
-  font-size: 13px;
+  font-size: calc(13px * var(--vn-text-mult, 1));
   font-weight: 700;
   color: var(--visual-notes-card-text);
   overflow: hidden;
@@ -5604,7 +5853,7 @@ input.visual-notes-accent-pop-hex {
 .visual-notes-map-header-icon svg { width: 12px; height: 12px; }
 
 .visual-notes-map-header-title {
-  font-size: 13px;
+  font-size: calc(13px * var(--vn-text-mult, 1));
   font-weight: 700;
   color: var(--visual-notes-card-text);
   overflow: hidden;
@@ -5673,7 +5922,7 @@ input.visual-notes-accent-pop-hex {
   left: 12px;
   right: 12px;
   font-family: var(--visual-notes-font-display);
-  font-size: 15px;
+  font-size: calc(15px * var(--vn-text-mult, 1));
   font-weight: 700;
   letter-spacing: 0.02em;
   pointer-events: none;
@@ -5736,7 +5985,7 @@ input.visual-notes-accent-pop-hex {
   flex: 1;
   min-width: 0;
   font-family: var(--visual-notes-font-body);
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   font-weight: 500;
   color: var(--visual-notes-card-text);
   overflow: hidden;
@@ -5796,7 +6045,7 @@ input.visual-notes-accent-pop-hex {
 
 .visual-notes-checkers-status {
   font-family: var(--visual-notes-font-display);
-  font-size: 13px;
+  font-size: calc(13px * var(--vn-text-mult, 1));
   font-weight: 700;
 }
 .visual-notes-checkers-status.is-red   { color: #dc2626; }
@@ -5931,7 +6180,7 @@ input.visual-notes-accent-pop-hex {
 
 .visual-notes-column-count {
   font-family: var(--visual-notes-font-body);
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   color: var(--text-muted);
   flex-shrink: 0;
 }
@@ -6015,7 +6264,7 @@ input.visual-notes-accent-pop-hex {
   grid-row: 1;
   text-align: center;
   max-width: none;
-  font-size: 26px;
+  font-size: calc(26px * var(--vn-text-mult, 1));
   -webkit-line-clamp: 1;
   line-clamp: 2;
   /* The line-clamp box's leading sits slightly high — nudge down to sit
@@ -6030,7 +6279,7 @@ input.visual-notes-accent-pop-hex {
   grid-row: 2;
   text-align: center;
   max-width: none;
-  font-size: 13px;
+  font-size: calc(13px * var(--vn-text-mult, 1));
   position: relative;
   top: 6px;
 }
@@ -6528,7 +6777,7 @@ path.visual-notes-highlight-stroke {
 .visual-notes-dataview-btn-text {
   width: auto;
   padding: 0 7px;
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   font-weight: 600;
 }
 
@@ -6541,7 +6790,7 @@ path.visual-notes-highlight-stroke {
 
 .visual-notes-dataview-title {
   font-family: var(--visual-notes-font-display);
-  font-size: 14px;
+  font-size: calc(14px * var(--vn-text-mult, 1));
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -6555,7 +6804,7 @@ path.visual-notes-highlight-stroke {
 .visual-notes-dataview-title.is-untitled { opacity: 0.4; }
 
 input.visual-notes-dataview-title-input {
-  font-size: 13px;
+  font-size: calc(13px * var(--vn-text-mult, 1));
   padding: 2px 6px;
   border: 1px solid var(--interactive-accent);
   border-radius: 4px;
@@ -6568,7 +6817,7 @@ input.visual-notes-dataview-title-input {
 
 .visual-notes-dataview-empty {
   padding: 18px 16px;
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   color: var(--text-faint);
   text-align: center;
   line-height: 1.5;
@@ -6602,7 +6851,7 @@ input.visual-notes-dataview-title-input {
 .visual-notes-calendar-header:active { cursor: grabbing; }
 
 .visual-notes-calendar-month-label {
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   font-weight: 600;
   color: var(--text-normal);
   white-space: nowrap;
@@ -6626,7 +6875,7 @@ input.visual-notes-dataview-title-input {
 }
 
 input.visual-notes-calendar-month-input {
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   font-weight: 600;
   padding: 2px 6px;
   border: 1px solid var(--interactive-accent);
@@ -6662,7 +6911,7 @@ input.visual-notes-calendar-month-input {
 
 .visual-notes-cal-weekday {
   text-align: center;
-  font-size: 9px;
+  font-size: calc(9px * var(--vn-text-mult, 1));
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-faint);
@@ -6807,7 +7056,7 @@ input.visual-notes-calendar-month-input {
 }
 
 .visual-notes-cal-daynum {
-  font-size: 9px;
+  font-size: calc(9px * var(--vn-text-mult, 1));
   color: var(--text-faint);
   line-height: 1.2;
   flex-shrink: 0;
@@ -6822,7 +7071,7 @@ input.visual-notes-calendar-month-input {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 10px;
+  font-size: calc(10px * var(--vn-text-mult, 1));
   line-height: 1.3;
   padding: 1px 4px;
   border-radius: 3px;
@@ -6884,7 +7133,7 @@ input.visual-notes-calendar-month-input {
 }
 
 .visual-notes-cal-more {
-  font-size: 9px;
+  font-size: calc(9px * var(--vn-text-mult, 1));
   color: var(--text-faint);
   padding-left: 4px;
 }
@@ -6962,7 +7211,7 @@ input.visual-notes-calendar-month-input {
 }
 
 .visual-notes-table-alt-date {
-  font-size: 10px;
+  font-size: calc(10px * var(--vn-text-mult, 1));
   padding: 1px 6px;
   border-radius: 8px;
   background: var(--background-modifier-hover);
@@ -6971,7 +7220,7 @@ input.visual-notes-calendar-month-input {
 }
 
 .visual-notes-table-alt-select {
-  font-size: 10px;
+  font-size: calc(10px * var(--vn-text-mult, 1));
   padding: 1px 7px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--vn-chip-color, var(--text-faint)) 25%, var(--visual-notes-card-bg));
@@ -6980,7 +7229,7 @@ input.visual-notes-calendar-month-input {
 }
 
 .visual-notes-table-alt-text {
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -7004,7 +7253,7 @@ input.visual-notes-calendar-month-input {
 .visual-notes-table-list-row:last-child { border-bottom: none; }
 
 .visual-notes-table-list-label {
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   color: var(--visual-notes-card-text);
   flex-shrink: 0;
 }
@@ -7049,7 +7298,7 @@ input.visual-notes-calendar-month-input {
 }
 
 .visual-notes-table-gallery-title {
-  font-size: 12px;
+  font-size: calc(12px * var(--vn-text-mult, 1));
   font-weight: 600;
   color: var(--visual-notes-card-text);
   overflow: hidden;
@@ -7066,7 +7315,7 @@ input.visual-notes-calendar-month-input {
 }
 
 .visual-notes-table-gallery-collabel {
-  font-size: 9px;
+  font-size: calc(9px * var(--vn-text-mult, 1));
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-faint);
@@ -7116,7 +7365,7 @@ input.visual-notes-calendar-month-input {
 }
 
 .visual-notes-table-board-lane-title {
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   font-weight: 600;
   color: var(--text-muted);
   overflow: hidden;
@@ -7125,7 +7374,7 @@ input.visual-notes-calendar-month-input {
 }
 
 .visual-notes-table-board-lane-count {
-  font-size: 10px;
+  font-size: calc(10px * var(--vn-text-mult, 1));
   color: var(--text-faint);
   margin-left: auto;
 }
@@ -7154,7 +7403,7 @@ input.visual-notes-calendar-month-input {
 .visual-notes-table-board-rowcard.is-drag-source { opacity: 0.35; }
 
 .visual-notes-table-board-rowlabel {
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   color: var(--visual-notes-card-text);
 }
 
@@ -7179,7 +7428,7 @@ input.visual-notes-calendar-month-input {
   border-radius: 6px;
   background: var(--visual-notes-card-bg);
   padding: 6px 8px;
-  font-size: 11px;
+  font-size: calc(11px * var(--vn-text-mult, 1));
   color: var(--visual-notes-card-text);
 }
 

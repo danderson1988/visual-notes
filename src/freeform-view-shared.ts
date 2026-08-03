@@ -13,6 +13,7 @@ import {
   TableCard,
   MapCard, SwatchCard, FileCard, CalloutCard, GroupCard,
   CalendarCard, CalendarNoteImportance, CheckersCard,
+  StickyTextScale, STICKY_TEXT_SCALES,
 } from './file-types';
 import { isDarkTheme } from './color-utils';
 
@@ -141,8 +142,12 @@ const STICKY_COLORS_DARK: { color: string; name: string }[] = [
   { color: '#374151', name: 'Grey' },
   { color: '#1F2937', name: 'Light Grey' },
 ];
-export function STICKY_COLORS(): { color: string; name: string }[] {
-  return isDarkTheme() ? STICKY_COLORS_DARK : STICKY_COLORS_LIGHT;
+// `dark` lets a board pin its own light/dark surface (board.appearance) —
+// without it these would follow Obsidian's theme and hand a pale pastel to a
+// dark board sitting in a light vault, the exact glare the dark set exists to
+// avoid. Omitted by callers with no board in scope, e.g. the settings picker.
+export function STICKY_COLORS(dark = isDarkTheme()): { color: string; name: string }[] {
+  return dark ? STICKY_COLORS_DARK : STICKY_COLORS_LIGHT;
 }
 
 // A saved "default sticky color" is a literal hex captured at the moment the
@@ -151,12 +156,25 @@ export function STICKY_COLORS(): { color: string; name: string }[] {
 // picker only ever offers palette swatches, re-map a stored hex to its
 // same-named swatch in the *current* theme's palette instead of returning it
 // verbatim.
-export function resolveDefaultStickyColor(stored: string | undefined): string {
-  if (!stored) return STICKY_COLORS()[0].color;
+export function resolveDefaultStickyColor(stored: string | undefined, dark = isDarkTheme()): string {
+  if (!stored) return STICKY_COLORS(dark)[0].color;
   const lower = stored.toLowerCase();
   const idx = STICKY_COLORS_LIGHT.findIndex(c => c.color.toLowerCase() === lower);
   const resolvedIdx = idx !== -1 ? idx : STICKY_COLORS_DARK.findIndex(c => c.color.toLowerCase() === lower);
-  return resolvedIdx !== -1 ? STICKY_COLORS()[resolvedIdx].color : stored;
+  return resolvedIdx !== -1 ? STICKY_COLORS(dark)[resolvedIdx].color : stored;
+}
+
+// Per-card text size, written as a plain multiplier onto the *card* element.
+// It has to land there rather than on the inner text node: --vn-text-mult is
+// declared on .visual-notes-freeform-card, and custom properties inherit
+// their already-computed value, so an override set further down would never
+// re-enter that calc. Clearing it falls back to the global setting alone.
+export function applyStickyTextScale(cardEl: HTMLElement, scale: StickyTextScale | undefined): void {
+  if (scale && scale in STICKY_TEXT_SCALES) {
+    cardEl.style.setProperty('--vn-card-text-scale', String(STICKY_TEXT_SCALES[scale]));
+  } else {
+    cardEl.style.removeProperty('--vn-card-text-scale');
+  }
 }
 
 export const KANBAN_COLORS: { color: string; name: string }[] = [
@@ -494,12 +512,12 @@ const KANBAN_ITEM_COLORS_DARK = [
   '#7F1D1D', '#78350F', '#064E3B', '#1E3A8A', '#4C1D95', '#831843',
   '#7C2D12', '#0C4A6E', '#1F2937', '#EF4444', '#3B82F6', '#22C55E',
 ];
-export function KANBAN_ITEM_COLORS(): string[] {
-  return isDarkTheme() ? KANBAN_ITEM_COLORS_DARK : KANBAN_ITEM_COLORS_LIGHT;
+export function KANBAN_ITEM_COLORS(dark = isDarkTheme()): string[] {
+  return dark ? KANBAN_ITEM_COLORS_DARK : KANBAN_ITEM_COLORS_LIGHT;
 }
 
 export class KanbanItemColorModal extends Modal {
-  constructor(app: App, private current: string | undefined, private onSubmit: (hex: string | undefined) => void) { super(app); }
+  constructor(app: App, private current: string | undefined, private onSubmit: (hex: string | undefined) => void, private dark = isDarkTheme()) { super(app); }
 
   override onOpen(): void {
     const { contentEl } = this;
@@ -509,7 +527,7 @@ export class KanbanItemColorModal extends Modal {
     const noneSwatch = grid.createDiv('visual-notes-modal-swatch visual-notes-modal-swatch--none');
     noneSwatch.setAttribute('aria-label', 'Default');
     noneSwatch.addEventListener('click', () => { this.close(); this.onSubmit(undefined); });
-    for (const hex of KANBAN_ITEM_COLORS()) {
+    for (const hex of KANBAN_ITEM_COLORS(this.dark)) {
       const swatch = grid.createDiv('visual-notes-modal-swatch');
       swatch.style.backgroundColor = hex;
       if (hex === this.current) swatch.addClass('is-selected');

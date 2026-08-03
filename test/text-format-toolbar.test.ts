@@ -77,3 +77,127 @@ describe('TextFormatToolbar: gated off on phone (mobile UX phase 1)', () => {
     expect(container.querySelector('.visual-notes-text-fmt-toolbar')).not.toBeNull();
   });
 });
+
+describe('TextFormatToolbar: per-selection text size', () => {
+  let originalGetClientRects: (() => DOMRectList) | undefined;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    originalGetClientRects = Range.prototype.getClientRects;
+    Range.prototype.getClientRects = () => [] as unknown as DOMRectList;
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    Platform.isPhone = false;
+    document.body.innerHTML = '';
+    if (originalGetClientRects) Range.prototype.getClientRects = originalGetClientRects;
+  });
+
+  async function openToolbarOver(html: string) {
+    Platform.isPhone = false;
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const editor = document.createElement('div');
+    editor.contentEditable = 'true';
+    editor.innerHTML = html;
+    container.appendChild(editor);
+    new TextFormatToolbar(editor, container, container);
+
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    const sel = window.getSelection()!;
+    sel.removeAllRanges(); sel.addRange(range);
+    document.dispatchEvent(new Event('selectionchange'));
+    await vi.advanceTimersByTimeAsync(150);
+    return { container, editor };
+  }
+
+  const sizeBtn = (container: HTMLElement, label: string) =>
+    Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-text-fmt-size-btn'))
+      .find(b => b.textContent === label)!;
+
+  it('wraps the selection in an em-based font-size, so it scales with the card', async () => {
+    const { container, editor } = await openToolbarOver('hello');
+
+    sizeBtn(container, '2X').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const span = editor.querySelector('span')!;
+    // em, not px — an inline size has to multiply the card/global scale
+    // rather than pin the text to an absolute size that ignores both.
+    expect(span.style.fontSize).toBe('2em');
+    expect(span.textContent).toBe('hello');
+  });
+
+  it('the reset step strips the size instead of writing 1em', async () => {
+    const { container, editor } = await openToolbarOver('<span style="font-size:2em">hello</span>');
+
+    sizeBtn(container, 'M').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(editor.querySelector('span')).toBeNull();
+    expect(editor.textContent).toBe('hello');
+  });
+
+  it('setting a size keeps an existing text colour (both live on <span>)', async () => {
+    // Regression guard: wrapRange flattens every same-tag element in range,
+    // so routing size through it would have silently dropped the colour.
+    const { container, editor } = await openToolbarOver('<span style="color:#EF4444">hello</span>');
+
+    sizeBtn(container, 'XL').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(editor.textContent).toBe('hello');
+    const styles = Array.from(editor.querySelectorAll('span')).map(s => s.getAttribute('style') ?? '');
+    expect(styles.join(' ')).toContain('font-size: 1.5em');
+    expect(styles.join(' ')).toContain('color:');
+  });
+
+  it('hoists a whole-item size onto the <li> so the bullet marker grows too', async () => {
+    // A marker is sized by its <li>, never by a span nested inside it, so
+    // leaving the size on the span gives big text beside a tiny bullet.
+    const { container, editor } = await openToolbarOver('<ul><li>milk</li></ul>');
+
+    sizeBtn(container, '3X').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const li = editor.querySelector('li')!;
+    expect(li.style.fontSize).toBe('2.5em');
+    expect(li.querySelector('span[style*="font-size"]')).toBeNull();
+  });
+
+  it('hoists when several spans cover the item at one size, not just a lone span', async () => {
+    const { container, editor } = await openToolbarOver(
+      '<ul><li><span style="color:#EF4444">buy</span> milk</li></ul>');
+
+    sizeBtn(container, 'XL').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const li = editor.querySelector('li')!;
+    expect(li.style.fontSize).toBe('1.5em');
+    expect(li.querySelector('[style*="font-size"]')).toBeNull();
+    expect(li.textContent).toBe('buy milk');
+  });
+
+  it('leaves the marker alone when only part of the item is resized', async () => {
+    const { editor } = await openToolbarOver('<ul><li>buy milk today</li></ul>');
+    const li = editor.querySelector('li')!;
+    // Select just "milk" — the line itself hasn't changed size, so the
+    // bullet should stay put rather than jumping to the biggest word.
+    const textNode = li.firstChild!;
+    const range = document.createRange();
+    range.setStart(textNode, 4);
+    range.setEnd(textNode, 8);
+    const sel = window.getSelection()!;
+    sel.removeAllRanges(); sel.addRange(range);
+    document.dispatchEvent(new Event('selectionchange'));
+    await vi.advanceTimersByTimeAsync(150);
+
+    sizeBtn(document.body, '4X').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(li.style.fontSize).toBe('');
+    expect(li.querySelector('span')!.style.fontSize).toBe('3em');
+  });
+
+  it('offers a wide spread of steps, biggest well past the default', async () => {
+    const { container } = await openToolbarOver('hello');
+    const labels = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-text-fmt-size-btn'))
+      .map(b => b.textContent);
+    expect(labels).toEqual(['XS', 'S', 'M', 'L', 'XL', '2X', '3X', '4X', '5X']);
+  });
+});

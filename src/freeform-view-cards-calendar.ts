@@ -333,7 +333,7 @@ export const cardsCalendarMethods = {
     menu.addItem(i => i.setTitle(style?.color ? 'Change day color…' : 'Set day color…').setIcon('palette').onClick(() => {
       new KanbanItemColorModal(this.app, style?.color, (hex) => {
         mutate(s => { s.color = hex; });
-      }).open();
+      }, this.boardIsDark()).open();
     }));
 
     menu.addSeparator();
@@ -422,7 +422,7 @@ export const cardsCalendarMethods = {
       menu.addItem(i => i.setTitle(note.color ? 'Change color…' : 'Set color…').setIcon('palette').onClick(() => {
         new KanbanItemColorModal(this.app, note.color, (hex) => {
           this.pushUndo(); note.color = hex; commit();
-        }).open();
+        }, this.boardIsDark()).open();
       }));
 
       menu.addSeparator();

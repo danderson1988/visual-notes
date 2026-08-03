@@ -15,6 +15,7 @@ import { nearestColorName, randomNamedColor, NamedColor } from './named-colors';
 import { TileModal } from './tile-modal';
 import { isCustomIconRef, resolveCustomIconSrc } from './custom-icons';
 import { TextFormatToolbar } from './text-format-toolbar';
+import { toggleBulletList } from './bullet-list';
 import { sortAssetFile, saveNewAsset } from './asset-manager';
 import {
   TILE_DEFAULT_W, TILE_DEFAULT_H, STICKY_DEFAULT_W, STICKY_DEFAULT_H,
@@ -26,7 +27,7 @@ import {
   CALLOUT_DEFAULT_W, CALLOUT_DEFAULT_H, GROUP_DEFAULT_W, GROUP_DEFAULT_H,
   GROUP_PAD, AUDIO_EXTS,
   IMAGE_EXTS,
-  resolveDefaultStickyColor, commentInitial, formatCommentTime,
+  resolveDefaultStickyColor, applyStickyTextScale, commentInitial, formatCommentTime,
   NoteLinkPickerModal, VaultAnyFilePickerModal,
   MediaSourceModal,
 } from './freeform-view-shared';
@@ -173,9 +174,9 @@ export const cardsBasicMethods = {
       const strip = el.createDiv('visual-notes-card-top-strip');
       strip.style.backgroundColor = card.topColor;
     }
+    applyStickyTextScale(el, card.textScale);
     const inner = el.createDiv('visual-notes-sticky-inner');
     const textEl = inner.createDiv('visual-notes-sticky-text');
-    if (card.textScale) textEl.addClass(`text-scale-${card.textScale}`);
     // A pastel/bright background (the default palette is all pale colors)
     // read against the theme's own text color regardless of contrast —
     // white theme text on a pale yellow sticky was reported as barely
@@ -216,6 +217,45 @@ export const cardsBasicMethods = {
     // bubble menu — every other inline text editor (checklist item, kanban
     // item, …) already gets this too.
     const fmtToolbar = new TextFormatToolbar(editor, el, this.container);
+
+    // "- " at the start of a line becomes a bullet, the way Obsidian's own
+    // editor behaves. This is the only route into a list from an *empty*
+    // line: the selection toolbar's bullet button needs text selected before
+    // it will even appear.
+    editor.addEventListener('input', () => {
+      const sel = window.getSelection();
+      if (!sel || !sel.isCollapsed || !editor.contains(sel.anchorNode)) return;
+      const node = sel.anchorNode;
+      if (!node || node.nodeType !== Node.TEXT_NODE) return;
+      const text = node.textContent ?? '';
+      if (!text.startsWith('- ') || sel.anchorOffset < 2) return;
+      // Only when "- " opens the line, not mid-sentence: the text must be
+      // first in its block, and that block must be the editor itself or one
+      // of its direct children (not, say, text nested inside a <strong>).
+      if (node.previousSibling) return;
+      const parent = node.parentElement;
+      if (parent !== editor && parent?.parentElement !== editor) return;
+      // Already a list item — Enter already continues the list natively.
+      if (parent?.tagName === 'LI') return;
+
+      node.textContent = text.slice(2);
+      const caret = activeDocument.createRange();
+      caret.setStart(node, Math.max(0, sel.anchorOffset - 2));
+      caret.collapse(true);
+      sel.removeAllRanges(); sel.addRange(caret);
+      toggleBulletList(editor);
+
+      // toggleBulletList clears the selection (it rebuilds the blocks it
+      // touched) — put the caret back at the end of the new item so typing
+      // simply continues.
+      const li = editor.querySelector('ul > li:last-child');
+      if (li) {
+        const r = activeDocument.createRange();
+        r.selectNodeContents(li); r.collapse(false);
+        sel.removeAllRanges(); sel.addRange(r);
+      }
+      editor.focus();
+    });
 
     // ── Inline tag toggle (Cmd/Ctrl+B/I/U, Cmd/Ctrl+Shift+S) ───────
     let savedRange: Range | null = null;
@@ -1227,7 +1267,7 @@ export const cardsBasicMethods = {
   addSticky(this: FreeformRenderer): void { const p = this.centerPos(STICKY_DEFAULT_W, STICKY_DEFAULT_H); this.addStickyAt(p.x, p.y); },
 
   addStickyAt(this: FreeformRenderer, x: number, y: number, initialText = ''): void {
-    const card: StickyCard = { id: crypto.randomUUID(), kind: 'sticky', x, y, w: STICKY_DEFAULT_W, z: this.nextZ(), text: initialText, color: resolveDefaultStickyColor(this.defaultStickyColor) };
+    const card: StickyCard = { id: crypto.randomUUID(), kind: 'sticky', x, y, w: STICKY_DEFAULT_W, z: this.nextZ(), text: initialText, color: resolveDefaultStickyColor(this.defaultStickyColor, this.boardIsDark()) };
     this.pushUndo(); this.board.cards.push(card); void this.saveNow();
     const el = this.createCardEl(card);
     this.selection.select(card.id); this.refreshSelectionVisuals();

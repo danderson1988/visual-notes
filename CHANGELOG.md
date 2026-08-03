@@ -2,6 +2,16 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.14
+
+### Added
+- **Text size, at three levels.** A new **Card text size** setting (Settings → Freeform canvas) scales the text on every card from 100% to 250%, updating any open board live; the plugin's own toolbars and panels deliberately stay put, since scaling those makes the interface unwieldy. Individual Notes can override it from a new **Size** button on the card's floating bar (XS through 4X), and any *selection* of text can be sized on its own from the formatting popover (XS through 5X) — so a single note can carry a big bold heading above ordinary body text. Selection sizes are relative, so they stay proportional when you change either of the other two.
+- **Bullet points in Notes.** A **Bullet** button on the card's floating bar turns the line the cursor is on into a bullet — no need to select the text first — and typing `- ` at the start of a line converts it as you go. Enter continues the list, Enter on an empty item leaves it. Bullets take the size of the text they're on, so a large heading gets a large marker.
+- **Per-board light/dark appearance.** A new button in the bottom-right controls flips a board's canvas and cards between light and dark independently of your Obsidian theme — so a dark moodboard can live in a light vault. The choice is saved with the board and travels with the file, and the colour swatches offered for cards, stickies and kanban items follow the board rather than the theme. Boards you never toggle keep following Obsidian exactly as before.
+
+### Fixed
+- The Note text-size control existed in the file format but had no way to reach it — no button, menu item or command ever set it, so it could only be used by hand-editing the `.canvas` file, and topped out well below a usable heading size.
+
 ## 1.1.13
 
 ### Changed

@@ -20,6 +20,7 @@ import { FreeformRenderer } from '../src/freeform-view';
 import { ContextBar } from '../src/context-bar';
 import { resolveDefaultStickyColor, STICKY_COLORS } from '../src/freeform-view-shared';
 import { PenOptionsPanel, DEFAULT_PEN_DRAW_OPTIONS, type PenDrawOptions } from '../src/pen-options-panel';
+import { visualNotesToCanvas, canvasToVisualNotes } from '../src/canvas-format';
 import { fakeApp } from './fake-app';
 import { Platform, Menu } from 'obsidian';
 import type {
@@ -1905,7 +1906,7 @@ describe('UI smoke: card background color palette follows the active theme', () 
   function bgSwatchColors(): string[] {
     const container = document.createElement('div');
     document.body.appendChild(container);
-    const bar = new ContextBar(document.createElement('div'), container, () => null, () => {});
+    const bar = new ContextBar(document.createElement('div'), container, () => null, () => document.body.hasClass('theme-dark'), () => {});
     const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
     bar.show(sticky, document.createElement('div'));
     const colorBtn = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-tb-btn'))
@@ -1939,15 +1940,163 @@ describe('UI smoke: sticky context bar no longer shows the broken Bold/Italic/Un
   // Highlight) the instant text is actually selected, so removed as
   // duplicated, broken functionality rather than trying to make them work
   // on a whole-card selection.
-  it('only shows Edit and Color for a sticky, not the old format buttons', () => {
+  it('only shows Edit, Bullet, Size and Color for a sticky, not the old format buttons', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
-    const bar = new ContextBar(document.createElement('div'), container, () => null, () => {});
+    const bar = new ContextBar(document.createElement('div'), container, () => null, () => document.body.hasClass('theme-dark'), () => {});
     const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
     bar.show(sticky, document.createElement('div'));
     const labels = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-tb-btn'))
       .map(b => b.getAttribute('aria-label'));
-    expect(labels).toEqual(['Edit', 'Color', 'Delete']);
+    expect(labels).toEqual(['Edit', 'Bullet', 'Size', 'Color', 'Delete']);
+  });
+
+  it('the Bullet button suppresses the default pointerdown, so the caret survives the click', () => {
+    // Without this the click blurs the editor, and the sticky's blur handler
+    // commits and tears it down before the bullet can be applied — the
+    // button would appear to do nothing.
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const bar = new ContextBar(document.createElement('div'), container, () => null, () => document.body.hasClass('theme-dark'), () => {});
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    bar.show(sticky, document.createElement('div'));
+
+    const bulletBtn = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-tb-btn'))
+      .find(b => b.getAttribute('aria-label') === 'Bullet')!;
+    const ev = new PointerEvent('pointerdown', { bubbles: true, cancelable: true });
+    bulletBtn.dispatchEvent(ev);
+
+    expect(ev.defaultPrevented).toBe(true);
+  });
+});
+
+describe('UI smoke: per-board light/dark appearance', () => {
+  afterEach(() => { document.body.removeClass('theme-dark'); });
+
+  it('follows Obsidian while the board has never been toggled', () => {
+    // Undefined appearance must keep the pre-existing behaviour, so opening an
+    // old board doesn't suddenly repaint it.
+    document.body.addClass('theme-dark');
+    const { renderer, board } = setup([]);
+    expect(board.appearance).toBeUndefined();
+    expect(renderer.boardIsDark()).toBe(true);
+    expect(renderer.outer.hasClass('visual-notes-appearance-dark')).toBe(true);
+  });
+
+  it('pins the board light even while Obsidian is dark', () => {
+    document.body.addClass('theme-dark');
+    const { renderer, board } = setup([]);
+
+    renderer.toggleBoardAppearance();
+
+    expect(board.appearance).toBe('light');
+    expect(renderer.boardIsDark()).toBe(false);
+    expect(renderer.outer.hasClass('visual-notes-appearance-light')).toBe(true);
+    expect(renderer.outer.hasClass('visual-notes-appearance-dark')).toBe(false);
+  });
+
+  it("scopes the override to the canvas, leaving the chrome on Obsidian's theme", () => {
+    // The toolbars/context bar/minimap are siblings of outer inside container,
+    // so the class must not land on container or they would flip too.
+    const { renderer, container } = setup([]);
+    renderer.toggleBoardAppearance();
+
+    expect(container.hasClass('visual-notes-appearance-dark')).toBe(false);
+    expect(container.hasClass('visual-notes-appearance-light')).toBe(false);
+  });
+
+  it('survives a canvas round trip', () => {
+    const { renderer, board } = setup([]);
+    renderer.toggleBoardAppearance();
+
+    const round = canvasToVisualNotes(visualNotesToCanvas(board));
+
+    expect(round.appearance).toBe(board.appearance);
+  });
+
+  it("offers swatches matching the board, not Obsidian's theme", () => {
+    // A dark board in a light vault handing out pale pastels is the exact
+    // glare the dark palette exists to avoid.
+    document.body.removeClass('theme-dark');
+    const { renderer } = setup([]);
+    expect(renderer.boardIsDark()).toBe(false);
+
+    renderer.toggleBoardAppearance();
+
+    expect(renderer.boardIsDark()).toBe(true);
+    expect(resolveDefaultStickyColor(undefined, renderer.boardIsDark()))
+      .toBe(STICKY_COLORS(true)[0].color);
+  });
+
+  it('updates the button to offer the opposite of what the board now is', () => {
+    document.body.removeClass('theme-dark');
+    const { renderer } = setup([]);
+    expect(renderer.themeToggleBtn!.getAttribute('aria-label')).toContain('switch to dark');
+
+    renderer.toggleBoardAppearance();
+
+    expect(renderer.themeToggleBtn!.getAttribute('aria-label')).toContain('switch to light');
+  });
+});
+
+describe('UI smoke: per-card text size (Note/Card)', () => {
+  // textScale shipped as a declared field that was read on render but never
+  // written by anything — no menu item, button, or command set it, so the
+  // only way to reach it was hand-editing the .canvas JSON. These lock in
+  // the control that finally drives it.
+  it('sets the multiplier CSS var on the card element, not the inner text', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff', textScale: 'xl' };
+    const { container } = setup([sticky]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+
+    // Must land on the card itself: --vn-text-mult is declared there, and
+    // custom properties inherit their already-computed value, so an override
+    // further down would never re-enter that calc.
+    expect(el.style.getPropertyValue('--vn-card-text-scale')).toBe('1.7');
+  });
+
+  it('leaves the var unset when the card has no textScale, falling back to the global setting', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { container } = setup([sticky]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+
+    expect(el.style.getPropertyValue('--vn-card-text-scale')).toBe('');
+  });
+
+  it('the context bar size sub-panel emits the chosen step', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const events: unknown[] = [];
+    const bar = new ContextBar(document.createElement('div'), container, () => null, () => document.body.hasClass('theme-dark'), e => events.push(e));
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    bar.show(sticky, document.createElement('div'));
+
+    Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-tb-btn'))
+      .find(b => b.getAttribute('aria-label') === 'Size')!
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const steps = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-ctx-size-btn'));
+    expect(steps.map(b => b.textContent)).toEqual(['XS', 'S', 'M', 'L', 'XL', '2X', '3X', '4X']);
+
+    steps.find(b => b.textContent === '4X')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(events).toEqual([{ type: 'sticky-text-scale', scale: 'huge' }]);
+  });
+
+  it('applies the scale to the live card and persists it through a canvas round trip', () => {
+    const sticky: StickyCard = { id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color: '#fff' };
+    const { renderer, board, container } = setup([sticky]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+
+    renderer.selection.select('s1');
+    renderer.handleCtxEvent({ type: 'sticky-text-scale', scale: 'lg' });
+
+    expect((board.cards[0] as StickyCard).textScale).toBe('lg');
+    expect(el.style.getPropertyValue('--vn-card-text-scale')).toBe('1.3');
+
+    // stashable() keeps every non-positional card field under the `vn` key,
+    // so this needs no canvas-format change — assert that rather than trust it.
+    const round = canvasToVisualNotes(visualNotesToCanvas(board));
+    expect((round.cards[0] as StickyCard).textScale).toBe('lg');
   });
 });
 

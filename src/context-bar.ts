@@ -1,6 +1,5 @@
 import { setIcon, setTooltip, Platform } from 'obsidian';
-import { Card } from './file-types';
-import { isDarkTheme } from './color-utils';
+import { Card, StickyTextScale, STICKY_TEXT_SCALES } from './file-types';
 
 export type CtxEvent =
   | { type: 'delete' }
@@ -12,6 +11,8 @@ export type CtxEvent =
   | { type: 'edit-card' }
   | { type: 'sticky-color'; hex: string }
   | { type: 'sticky-top-color'; hex: string | null }
+  | { type: 'sticky-text-scale'; scale: StickyTextScale }
+  | { type: 'sticky-bullet' }
   | { type: 'checklist-accent'; hex: string }
   | { type: 'checklist-bg'; hex: string }
   | { type: 'checklist-top-color'; hex: string | null }
@@ -49,7 +50,7 @@ const ACCENT_COLORS  = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855
 // palette untouched.
 const BG_COLORS_LIGHT = ['#FFFFFF','#F3F4F6','#FEF9C3','#FEE2E2','#D1FAE5','#DBEAFE','#EDE9FE','#FCE7F3','#ECFDF5','#FFF7ED','#F0F9FF','#E0F2FE'];
 const BG_COLORS_DARK  = ['#1F2937','#374151','#713F12','#7F1D1D','#064E3B','#1E3A8A','#4C1D95','#831843','#134E4A','#7C2D12','#0C4A6E','#164E63'];
-function BG_COLORS(): string[] { return isDarkTheme() ? BG_COLORS_DARK : BG_COLORS_LIGHT; }
+function BG_COLORS(dark: boolean): string[] { return dark ? BG_COLORS_DARK : BG_COLORS_LIGHT; }
 
 const STRIP_COLORS = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899','#6b7280','#14b8a6','#f43f5e','#1d4ed8','#84cc16'];
 
@@ -72,6 +73,9 @@ export class ContextBar {
     private readonly toolbarEl: HTMLElement,
     private readonly container: HTMLElement,
     private readonly getTrashZoneEl: () => HTMLElement | null,
+    // The board's own light/dark surface (board.appearance), not Obsidian's
+    // theme — so the swatches offered match the canvas they'll land on.
+    private readonly isDark: () => boolean,
     private readonly emit: (e: CtxEvent) => void,
   ) {
     if (this.floating) {
@@ -205,9 +209,16 @@ export class ContextBar {
         // same commands (plus Color/Highlight) the moment text is actually
         // selected, so they were pure duplication once genuinely fixed.
         this.mkBtn(p, 'Edit', 'edit-2', () => this.emit({ type: 'edit-card' }));
+        // Keeps the caret alive: without suppressing the default pointerdown
+        // the click blurs the editor, and the sticky's blur handler commits
+        // and tears it down before the bullet could be applied. Same trick
+        // TextFormatToolbar uses on its own popover.
+        this.mkBtn(p, 'Bullet', 'list', () => this.emit({ type: 'sticky-bullet' }))
+          .addEventListener('pointerdown', e => e.preventDefault());
+        this.mkBtn(p, 'Size', 'a-large-small', () => this.openTextScaleSub(p, card));
         this.mkBtn(p, 'Color', 'palette', () => this.openBgTopColorSub(
           p, card,
-          BG_COLORS(),
+          BG_COLORS(this.isDark()),
           hex => this.emit({ type: 'sticky-color', hex }),
           STRIP_COLORS,
           hex => this.emit({ type: 'sticky-top-color', hex }),
@@ -217,7 +228,7 @@ export class ContextBar {
       case 'checklist':
         this.mkBtn(p, 'Color', 'palette', () => this.openBgTopColorSub(
           p, card,
-          BG_COLORS(),
+          BG_COLORS(this.isDark()),
           hex => this.emit({ type: 'checklist-bg', hex }),
           ACCENT_COLORS,
           hex => this.emit({ type: 'checklist-top-color', hex }),
@@ -226,7 +237,7 @@ export class ContextBar {
         break;
 
       case 'table':
-        this.mkBtn(p, 'Color', 'palette', () => this.openColorSub(p, BG_COLORS(), hex => this.emit({ type: 'table-bg', hex }), card));
+        this.mkBtn(p, 'Color', 'palette', () => this.openColorSub(p, BG_COLORS(this.isDark()), hex => this.emit({ type: 'table-bg', hex }), card));
         this.mkBtn(p, 'Title', 'heading', () => this.emit({ type: 'table-title' }));
         break;
 
@@ -252,7 +263,7 @@ export class ContextBar {
       case 'kanban-column':
         this.mkBtn(p, 'Color', 'palette', () => this.openBgTopColorSub(
           p, card,
-          BG_COLORS(),
+          BG_COLORS(this.isDark()),
           hex => this.emit({ type: 'kanban-bg', hex }),
           STRIP_COLORS,
           hex => this.emit({ type: 'kanban-top-color', hex }),
@@ -288,7 +299,7 @@ export class ContextBar {
         this.mkBtn(p, 'Rename', 'edit-2', () => this.emit({ type: 'edit-card' }));
         this.mkBtn(p, 'Color', 'palette', () => this.openBgTopColorSub(
           p, card,
-          BG_COLORS(),
+          BG_COLORS(this.isDark()),
           hex => this.emit({ type: 'group-bg', hex }),
           ACCENT_COLORS,
           // "None" resets the border/label to the default grey rather than
@@ -402,6 +413,36 @@ export class ContextBar {
     });
 
     renderSwatches('bg');
+    this.mkTrash(p);
+    this.syncPos();
+  }
+
+  // ── Text size sub-panel (Note/Card) ─────────────────────────────────────────
+
+  // Multiplies the global "Card text size" setting rather than replacing it,
+  // so a board stays internally consistent when that setting is changed later.
+  private openTextScaleSub(p: HTMLElement, card: Card): void {
+    p.empty();
+    this.cancelTrashConfirm();
+    this.mkBack(p, () => this.fill(card));
+
+    const current = (card.kind === 'sticky' ? card.textScale : undefined) ?? 'md';
+    const row = p.createDiv('visual-notes-ctx-size-row');
+    const labels: Record<StickyTextScale, string> = {
+      xs: 'XS', sm: 'S', md: 'M', lg: 'L', xl: 'XL', xxl: '2X', xxxl: '3X', huge: '4X',
+    };
+    for (const key of Object.keys(STICKY_TEXT_SCALES) as StickyTextScale[]) {
+      const btn = row.createDiv('visual-notes-ctx-size-btn');
+      btn.setText(labels[key]);
+      btn.setAttribute('tabindex', '0');
+      btn.setAttribute('aria-label', `Text size ${labels[key]}`);
+      setTooltip(btn, `Text size ${labels[key]}`);
+      if (key === current) btn.addClass('is-active');
+      const choose = () => { this.emit({ type: 'sticky-text-scale', scale: key }); this.openTextScaleSub(p, card); };
+      btn.addEventListener('click', choose);
+      btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); } });
+    }
+
     this.mkTrash(p);
     this.syncPos();
   }

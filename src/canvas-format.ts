@@ -106,6 +106,7 @@ export interface CanvasEdge {
 // Root-level extra keys are spec-legal the same way node/edge extras are.
 export interface BoardMeta {
   version: number; layout: 'grid' | 'freeform'; dotsHidden?: boolean;
+  appearance?: 'light' | 'dark';
   viewport?: { x: number; y: number; zoom: number }; drawings?: DrawingStroke[];
   // Connections with a free (non-card) end at either side — the JSON
   // Canvas edge spec requires both fromNode/toNode to reference real
@@ -245,6 +246,7 @@ export function visualNotesToCanvas(board: VisualNotesFile): CanvasData {
       version: VN_FORMAT_VERSION,
       layout: board.layout,
       dotsHidden: board.dotsHidden,
+      appearance: board.appearance,
       viewport: board.viewport,
       drawings: board.drawings.length ? board.drawings : undefined,
       freeLines: freeLines.length ? freeLines : undefined,
@@ -636,6 +638,7 @@ export function canvasToVisualNotes(data: CanvasData): VisualNotesFile {
     version: 3,
     layout: meta?.layout ?? 'freeform',
     dotsHidden: meta?.dotsHidden,
+    appearance: meta?.appearance,
     viewport: meta?.viewport,
     cards,
     connections,

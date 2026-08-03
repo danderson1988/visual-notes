@@ -894,6 +894,7 @@ export const canvasMethods = {
     // at phone widths — the CSS these classes drive is scoped there).
     this.zoomPill?.toggleClass('is-hidden-for-ctx-bar', ctxBarActive);
     this.snapToggleBtn?.toggleClass('is-hidden-for-ctx-bar', ctxBarActive);
+    this.themeToggleBtn?.toggleClass('is-hidden-for-ctx-bar', ctxBarActive);
     this.minimapEl?.toggleClass('is-hidden-for-ctx-bar', ctxBarActive);
   },
 
@@ -2212,7 +2213,7 @@ export const canvasMethods = {
         for (const s of strokes) s.color = hex;
         for (const id of groupIds) this.rerenderGroup(id);
         this.scheduleSave();
-      }).open();
+      }, this.boardIsDark()).open();
     }));
     // Highlighter strokes carry the marker's 3.5× width scale, so the same
     // Thin/Medium/Thick labels map to proportionally broader ink for them.

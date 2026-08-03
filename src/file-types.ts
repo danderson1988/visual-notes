@@ -4,6 +4,11 @@ export interface VisualNotesFile {
   version: 2 | 3;
   layout: 'grid' | 'freeform';
   dotsHidden?: boolean;
+  // Board's own light/dark surface, independent of Obsidian's theme — a
+  // moodboard can be dark in a light vault. Undefined means "follow
+  // Obsidian", which is how every board behaved before this existed and
+  // stays the default for boards that have never been toggled.
+  appearance?: 'light' | 'dark';
   viewport?: { x: number; y: number; zoom: number }; // freeform only
   cards: Card[];
   connections: Connection[];  // empty for grid; freeform only
@@ -168,12 +173,23 @@ export interface DraggedTilePayload {
 
 // ── Other card types ──────────────────────────────────────────
 
+// Per-card text size for Note/Card cards, multiplying whatever the global
+// "Card text size" setting is (see the Text scale block in styles.css).
+// 'sm'/'md'/'lg' predate the xl/xxl steps and keep their original meaning,
+// so a board that already carries one still renders the same.
+export type StickyTextScale = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'xxxl' | 'huge';
+
+// Ascending — the context bar renders the steps in this key order.
+export const STICKY_TEXT_SCALES: Record<StickyTextScale, number> = {
+  xs: 0.7, sm: 0.85, md: 1, lg: 1.3, xl: 1.7, xxl: 2.2, xxxl: 2.8, huge: 3.6,
+};
+
 export interface StickyCard extends BaseCard {
   kind: 'sticky';
   text: string;
   color: string;
   topColor?: string;
-  textScale?: 'sm' | 'md' | 'lg';
+  textScale?: StickyTextScale;
   textColor?: string;
   textAlign?: 'left' | 'center' | 'right' | 'justify';
   // True for cards created via the "Card" tool (a plain neutral card, no
