@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.16
+
+### Changed
+- The project moved to a new GitHub address after an account rename: https://github.com/dandersondev/visual-notes. Links in the README, the plugin manifest metadata, and the bundled file header now point there. The old address still redirects, so nothing breaks either way.
+
 ## 1.1.15
 
 ### Fixed

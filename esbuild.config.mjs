@@ -15,7 +15,7 @@ const context = await esbuild.context({
   // so it would bundle type declarations instead of the real modules.
   tsconfig: "tsconfig.build.json",
   banner: {
-    js: `/* Visual Notes v${manifest.version} — bundled file, do not edit. Source: https://github.com/danderson1988/visual-notes */`,
+    js: `/* Visual Notes v${manifest.version} — bundled file, do not edit. Source: https://github.com/dandersondev/visual-notes */`,
   },
   // Bakes the version being built into the bundle itself, so the running
   // code can report which main.js it actually is. That's a different fact

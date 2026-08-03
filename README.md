@@ -201,7 +201,7 @@ Visual Notes only reads and writes files inside your own vault — it makes no n
 ## Development
 
 ```bash
-git clone https://github.com/danderson1988/visual-notes.git
+git clone https://github.com/dandersondev/visual-notes.git
 cd visual-notes
 npm install
 npm run dev        # watch mode — rebuilds on save

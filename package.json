@@ -1,6 +1,6 @@
 {
   "name": "visual-notes",
-  "version": "1.1.15",
+  "version": "1.1.16",
   "description": "Visual Notes — a visual workspace for Obsidian",
   "main": "main.js",
   "scripts": {
@@ -23,12 +23,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/danderson1988/visual-notes.git"
+    "url": "https://github.com/dandersondev/visual-notes.git"
   },
   "bugs": {
-    "url": "https://github.com/danderson1988/visual-notes/issues"
+    "url": "https://github.com/dandersondev/visual-notes/issues"
   },
-  "homepage": "https://github.com/danderson1988/visual-notes#readme",
+  "homepage": "https://github.com/dandersondev/visual-notes#readme",
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/sortablejs": "^1.15.9",
