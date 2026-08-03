@@ -198,6 +198,21 @@ Visual Notes only reads and writes files inside your own vault — it makes no n
 
 ---
 
+## How this is built
+
+Visual Notes is built with heavy AI assistance. Most of the code is written by Claude; I direct it, test it, and decide what ships.
+
+I'm saying so up front because "who actually maintains this, and will it still work in six months" is a fair question to ask of any plugin, and a fairer one when AI is involved. The honest answers:
+
+- **Every release is tested in my own vault** — desktop and iPad — before it goes out.
+- **The test suite runs on every build**: 518 tests, including regressions written for specific bugs people reported, each verified by reintroducing the bug and confirming the test catches it.
+- **The [changelog](CHANGELOG.md) records every release and what prompted it.** Most entries started as a user report.
+- **Bugs get fixed.** [Open an issue](https://github.com/dandersondev/visual-notes/issues) and you'll get a reply.
+
+And the part that matters most if you're weighing the risk: **your boards are plain `.canvas` files** in your own vault, in Obsidian's own spec-compliant format. They open in the built-in Canvas view whether this plugin is installed or not. If it were abandoned tomorrow, nothing you built with it would be locked up or lost — which is a deliberate design decision, not a happy accident.
+
+---
+
 ## Development
 
 ```bash
@@ -212,8 +227,16 @@ Copy or symlink the folder into `<vault>/.obsidian/plugins/visual-notes/`, then 
 
 ---
 
+## Credits
+
+Visual Notes began as a fork of **[Icon Board](https://github.com/RK-Admin-01/obsidian-icon-board)** by **RK-Media**, used under the MIT licence. Thanks to them — the icon-tile board it started from is still the idea at the centre of this plugin.
+
+It has diverged substantially since. The largest change is the storage format: Icon Board keeps a board in its own `.iboard` file, while Visual Notes writes Obsidian's spec-compliant `.canvas` format, so boards open in the built-in Canvas view and nest inside each other. Most of what's listed above — tables, columns, group frames, calendars, connections, pen and highlighter drawing, templates, and export — was written for this plugin. If you want the original, simpler icon-tile board, [Icon Board](https://github.com/RK-Admin-01/obsidian-icon-board) is still there and worth a look.
+
+---
+
 ## License
 
-[MIT](LICENSE) — © Daniel Anderson
+[MIT](LICENSE) — © 2025 RK-Media and © 2025 Daniel Anderson
 
 Pen strokes are rendered with [perfect-freehand](https://github.com/steveruizok/perfect-freehand) by Steve Ruiz (MIT license).

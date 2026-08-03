@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.17
+
+### Changed
+- **Credit where it's due.** Visual Notes began as a fork of [Icon Board](https://github.com/RK-Admin-01/obsidian-icon-board) by RK-Media, and that wasn't recorded anywhere. Their copyright notice is now retained in the licence as the MIT terms require, and the README carries a Credits section explaining what was inherited, how the two have diverged, and where to find the original.
+- **Documented how the plugin is built.** A new README section states plainly that most of the code is written with AI assistance, and sets out what that means for maintenance: every release tested in a real vault, a test suite that runs on each build, a changelog driven by user reports, and boards stored as ordinary `.canvas` files that stay readable in Obsidian's native Canvas view with or without this plugin installed.
+
 ## 1.1.16
 
 ### Changed
