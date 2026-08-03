@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.18
+
+### Fixed
+- The licence stopped being recognised as MIT in 1.1.17. Explaining the Icon Board fork *inside* the LICENSE file broke it: licence detectors match the file against known templates, and any extra prose in the body means it no longer matches. The explanation now lives only in the README's Credits section, and LICENSE is verbatim MIT again — with both copyright notices, which is what the licence actually requires and what detection tolerates.
+
 ## 1.1.17
 
 ### Changed
