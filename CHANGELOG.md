@@ -2,6 +2,11 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.22
+
+### Fixed
+- **A compatibility warning in Obsidian's plugin health check.** The bullet indent added in 1.1.21 was built with `text-indent`, which Obsidian's checker reports as only partially supported. The property is flagged as a whole because two of its keywords have patchy support; the plain measurement used here does not, but the check goes by the property name. The indent is now built from margins instead, which nothing flags. **Bullets should look exactly as they did in 1.1.21** — this is a change of method, not of appearance. A test now fails the build if a flagged property returns to the stylesheet, since the health check itself only runs on Obsidian's side.
+
 ## 1.1.21
 
 ### Fixed

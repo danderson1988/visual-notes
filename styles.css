@@ -3358,13 +3358,8 @@ input.visual-notes-table-date-input {
 .visual-notes-sticky-editor li {
   margin: 0 0 2px;
   padding-left: var(--vn-bullet-indent);
-  text-indent: calc(-1 * var(--vn-bullet-indent));
 }
-/* Block children start at the text column, not pulled back by the negative
-   indent they'd otherwise inherit. */
-.visual-notes-sticky-text li > *,
-.visual-notes-sticky-editor li > * { text-indent: 0; }
-/* …except the first one, which is inlined so the marker keeps its company. */
+/* The first child is inlined so the marker keeps its company on line one. */
 .visual-notes-sticky-text li > p:first-child,
 .visual-notes-sticky-editor li > p:first-child,
 .visual-notes-sticky-text li > div:first-child,
@@ -3379,8 +3374,14 @@ input.visual-notes-table-date-input {
      the glyph's advance width. */
   display: inline-block;
   width: var(--vn-bullet-w);
+  /* The marker alone is pulled back out of the padding, which is what creates
+     the hang. A negative text-indent on the <li> does the same job in one
+     line, but Obsidian's health check flags `text-indent` wholesale — the
+     caniuse entry is "partial" over the `hanging`/`each-line` keywords, not
+     over the plain length we were using. This is in-flow either way, so the
+     marker still baseline-aligns with the first line for free. */
+  margin-left: calc(-1 * var(--vn-bullet-indent));
   margin-right: var(--vn-bullet-gap);
-  text-indent: 0;
   line-height: inherit;
 }
 .visual-notes-sticky-editor p { margin: 0 0 4px; }
