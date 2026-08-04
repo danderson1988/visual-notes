@@ -1,5 +1,8 @@
 import { setIcon, setTooltip, Platform } from 'obsidian';
-import { Card, StickyTextScale, STICKY_TEXT_SCALES } from './file-types';
+import {
+  Card, StickyTextScale, STICKY_TEXT_SCALES, StickyFontFamily, STICKY_FONT_FAMILIES,
+  TEXT_CARD_FONT_PRESETS,
+} from './file-types';
 
 export type CtxEvent =
   | { type: 'delete' }
@@ -13,6 +16,11 @@ export type CtxEvent =
   | { type: 'sticky-top-color'; hex: string | null }
   | { type: 'sticky-text-scale'; scale: StickyTextScale }
   | { type: 'sticky-bullet' }
+  | { type: 'sticky-transparent'; transparent: boolean }
+  | { type: 'sticky-font'; font: StickyFontFamily | null }
+  | { type: 'text-font-size'; size: number }
+  | { type: 'text-font'; font: StickyFontFamily | null }
+  | { type: 'text-color'; hex: string }
   | { type: 'checklist-accent'; hex: string }
   | { type: 'checklist-bg'; hex: string }
   | { type: 'checklist-top-color'; hex: string | null }
@@ -216,13 +224,32 @@ export class ContextBar {
         this.mkBtn(p, 'Bullet', 'list', () => this.emit({ type: 'sticky-bullet' }))
           .addEventListener('pointerdown', e => e.preventDefault());
         this.mkBtn(p, 'Size', 'a-large-small', () => this.openTextScaleSub(p, card));
+        this.mkBtn(p, 'Font', 'type', () => this.openFontSub(p, card));
         this.mkBtn(p, 'Color', 'palette', () => this.openBgTopColorSub(
           p, card,
           BG_COLORS(this.isDark()),
           hex => this.emit({ type: 'sticky-color', hex }),
           STRIP_COLORS,
           hex => this.emit({ type: 'sticky-top-color', hex }),
+          'Top strip',
+          {
+            value: card.transparent ?? false,
+            // "No background" rather than the group frame's "Transparent":
+            // the request this came from was phrased as not wanting the
+            // background at all, and a note has no see-through tint state to
+            // distinguish it from.
+            label: 'No background',
+            onChange: transparent => this.emit({ type: 'sticky-transparent', transparent }),
+          },
         ));
+        break;
+
+      case 'text':
+        this.mkBtn(p, 'Edit', 'edit-2', () => this.emit({ type: 'edit-card' }));
+        this.mkBtn(p, 'Size', 'a-large-small', () => this.openTextSizeSub(p, card));
+        this.mkBtn(p, 'Font', 'type', () => this.openFontSub(p, card));
+        // Text colour only — a text card has no background to set.
+        this.mkBtn(p, 'Color', 'palette', () => this.openColorSub(p, ACCENT_COLORS, hex => this.emit({ type: 'text-color', hex }), card));
         break;
 
       case 'checklist':
@@ -343,7 +370,7 @@ export class ContextBar {
     // Group frames only: an explicit fill can be switched off in favor of
     // the original see-through tint without losing whatever fill color was
     // picked, so flipping it back on later doesn't need reselecting.
-    bgTransparent?: { value: boolean; onChange: (transparent: boolean) => void },
+    bgTransparent?: { value: boolean; label?: string; onChange: (transparent: boolean) => void },
   ): void {
     p.empty();
     this.cancelTrashConfirm();
@@ -367,7 +394,7 @@ export class ContextBar {
         // so without mutating it here every re-render would draw the switch
         // back at its original position regardless of how many times it'd
         // actually been flipped.
-        if (bgTransparent) this.mkToggleRow(swatchArea, 'Transparent', bgTransparent.value, (v) => {
+        if (bgTransparent) this.mkToggleRow(swatchArea, bgTransparent.label ?? 'Transparent', bgTransparent.value, (v) => {
           bgTransparent.value = v;
           bgTransparent.onChange(v);
           renderSwatches('bg');
@@ -439,6 +466,74 @@ export class ContextBar {
       setTooltip(btn, `Text size ${labels[key]}`);
       if (key === current) btn.addClass('is-active');
       const choose = () => { this.emit({ type: 'sticky-text-scale', scale: key }); this.openTextScaleSub(p, card); };
+      btn.addEventListener('click', choose);
+      btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); } });
+    }
+
+    this.mkTrash(p);
+    this.syncPos();
+  }
+
+  // ── Text card size sub-panel ─────────────────────────────────────────────────
+
+  // Absolute px, the same unit dragging a corner writes. That's the whole
+  // point: an earlier version had presets as multipliers while the drag was
+  // open-ended, so picking a preset after dragging something large silently
+  // shrank it.
+  private openTextSizeSub(p: HTMLElement, card: Card): void {
+    p.empty();
+    this.cancelTrashConfirm();
+    this.mkBack(p, () => this.fill(card));
+
+    const current = card.kind === 'text' ? card.fontSize : undefined;
+    const row = p.createDiv('visual-notes-ctx-size-row');
+    for (const size of TEXT_CARD_FONT_PRESETS) {
+      const btn = row.createDiv('visual-notes-ctx-size-btn');
+      btn.setText(String(size));
+      btn.setAttribute('tabindex', '0');
+      btn.setAttribute('aria-label', `Font size ${size}`);
+      setTooltip(btn, `Font size ${size}px`);
+      if (current === size) btn.addClass('is-active');
+      const choose = () => { this.emit({ type: 'text-font-size', size }); this.openTextSizeSub(p, card); };
+      btn.addEventListener('click', choose);
+      btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); } });
+    }
+
+    this.mkTrash(p);
+    this.syncPos();
+  }
+
+  // ── Font sub-panel ───────────────────────────────────────────────────────────
+
+  // Obsidian's own three fonts plus a Default reset. Deliberately not a free
+  // font-name field: these are the faces the user already configured under
+  // Appearance → Font, so they exist on every platform the plugin runs on and
+  // a board doesn't render differently on iPad than on desktop.
+  private openFontSub(p: HTMLElement, card: Card): void {
+    p.empty();
+    this.cancelTrashConfirm();
+    this.mkBack(p, () => this.fill(card));
+
+    const current = card.kind === 'sticky' || card.kind === 'text' ? card.fontFamily : undefined;
+    const emitFont = (font: StickyFontFamily | null) =>
+      this.emit(card.kind === 'text' ? { type: 'text-font', font } : { type: 'sticky-font', font });
+    const options: { key: StickyFontFamily | null; label: string }[] = [
+      { key: null,         label: 'Default' },
+      { key: 'text',       label: 'Text' },
+      { key: 'interface',  label: 'Interface' },
+      { key: 'monospace',  label: 'Mono' },
+    ];
+
+    const row = p.createDiv('visual-notes-ctx-font-row');
+    for (const { key, label } of options) {
+      const btn = row.createDiv('visual-notes-ctx-font-btn');
+      btn.setText(label);
+      if (key) btn.style.fontFamily = STICKY_FONT_FAMILIES[key];
+      btn.setAttribute('tabindex', '0');
+      btn.setAttribute('aria-label', `Font ${label}`);
+      setTooltip(btn, `Font ${label}`);
+      if ((current ?? null) === key) btn.addClass('is-active');
+      const choose = () => { emitFont(key); this.openFontSub(p, card); };
       btn.addEventListener('click', choose);
       btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); } });
     }

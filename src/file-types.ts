@@ -186,6 +186,20 @@ export const STICKY_TEXT_SCALES: Record<StickyTextScale, number> = {
   xs: 0.7, sm: 0.85, md: 1, lg: 1.3, xl: 1.7, xxl: 2.2, xxxl: 2.8, huge: 3.6,
 };
 
+// Deliberately limited to the three fonts Obsidian itself exposes, rather than
+// arbitrary family names: these are the fonts the user has already configured
+// under Appearance → Font, they exist on every platform including iPad, and
+// they keep the promise made when the plugin's hard-coded serif stack was
+// removed (see the --visual-notes-font-display comment in styles.css) that
+// everything follows the user's own font settings.
+export type StickyFontFamily = 'text' | 'interface' | 'monospace';
+
+export const STICKY_FONT_FAMILIES: Record<StickyFontFamily, string> = {
+  text: 'var(--font-text)',
+  interface: 'var(--font-interface)',
+  monospace: 'var(--font-monospace)',
+};
+
 export interface StickyCard extends BaseCard {
   kind: 'sticky';
   text: string;
@@ -204,6 +218,52 @@ export interface StickyCard extends BaseCard {
   // non-square box naturally produces an ellipse. Default is a plain
   // rounded rectangle when unset.
   shape?: 'rect' | 'round';
+  // Drops the card's fill, border and shadow, leaving bare text on the
+  // canvas — what the "Text" tool creates, and available to any note from the
+  // colour panel. Note this also disables the auto-contrast text colour: with
+  // no fill the text sits on the canvas, so a colour derived from `color`
+  // would be contrasting against a background that isn't being drawn.
+  transparent?: boolean;
+  // Unset inherits the pane font, which is what every card did before this
+  // existed.
+  fontFamily?: StickyFontFamily;
+}
+
+// Bare text placed straight on the canvas — no fill, border or shadow, and no
+// wrapping: the box is exactly as wide as the longest line, and you press
+// Enter for a new one.
+//
+// Deliberately its own kind rather than a Note with the background switched
+// off. That was the first attempt, and size was the thing that broke it: a
+// Note carries a *multiplier* (an 8-step preset enum), so dragging a corner
+// and picking a preset wrote two different units for one property and
+// disagreed with each other. Here `fontSize` is real canvas px and is the only
+// size input there is.
+//
+// Not wrapping is also what makes dragging smooth: the box scales linearly
+// with the font size, so a resize can compute the new box size arithmetically
+// instead of measuring it every frame.
+// Font sizes a text card can reach by dragging. The floor keeps the box big
+// enough to grab again after shrinking it; the ceiling only exists to stop a
+// runaway drag, and sits far past any sane headline.
+export const TEXT_CARD_MIN_FONT = 4;
+export const TEXT_CARD_MAX_FONT = 800;
+export const TEXT_CARD_DEFAULT_FONT = 32;
+
+// The px sizes offered in the context bar — the same unit a corner drag
+// writes, so picking one after dragging is never a surprise.
+export const TEXT_CARD_FONT_PRESETS = [16, 24, 32, 48, 64, 96, 128];
+
+export interface TextCard extends BaseCard {
+  kind: 'text';
+  // Inline HTML, same as StickyCard.text — rendered as-is rather than through
+  // MarkdownRenderer, so what you see while editing is what you get after.
+  text: string;
+  fontSize: number;
+  // Unset follows the theme's own text colour.
+  color?: string;
+  fontFamily?: StickyFontFamily;
+  align?: 'left' | 'center' | 'right';
 }
 
 export interface CommentReply {
@@ -595,4 +655,4 @@ export type Card =
   | TileCard | StickyCard | ChecklistCard | CommentCard | TableCard
   | ImageCard | AudioCard | NoteLinkCard | BookmarkCard
   | KanbanColumnCard | KanbanBoardCard | ColumnCard | MapCard | SwatchCard | FileCard | CalloutCard
-  | GroupCard | CalendarCard | CheckersCard;
+  | GroupCard | CalendarCard | CheckersCard | TextCard;

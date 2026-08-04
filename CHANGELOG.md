@@ -2,6 +2,20 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.20
+
+### Added
+- **A Text tool.** Press `T` (or pick **Text** from the toolbar) and click anywhere to drop bare text straight onto the canvas — no card, border or background. Text cards never wrap, so the box is exactly as wide as its longest line and you press Enter for a new one; **dragging a corner scales the words themselves**, the way resizing a drawing scales the strokes. There's no width limit, so you can drag a headline as large as you want. The **Size** button offers exact pixel sizes (16 / 24 / 32 / 48 / 64 / 96 / 128) — the same unit a drag sets, so picking one never fights what you dragged. Requested independently by two people, one of whom asked for the `T` shortcut by name. Boards stay readable in Obsidian's native Canvas view, where a text card shows up as its plain words.
+- **Fonts on notes and text.** A new **Font** button switches a card between Obsidian's Text, Interface and Monospace fonts, so it follows whatever you've set under Appearance → Font rather than a font this plugin picked for you.
+- **"No background" for notes.** A toggle in any note's **Colour** panel strips its fill, border and shadow, leaving the writing free-floating on the canvas. Turning it back on restores the colour you had.
+
+### Fixed
+- **Kanban items couldn't be ticked off.** The circle at the left of each item was a working checkbox that never received the click: pressing it started a card drag instead, which swallowed the click before it landed. It also had no hover state at all, so nothing about it suggested it could be pressed — which is why it read as a bullet point rather than a control. Both fixed. Reported by a user; thank you.
+- **The kanban tick sat off-centre** in its circle, and further off in the larger item size, which used the same fixed offsets. It's now centred at either size.
+
+### Note on sizes
+Per-card text sizes and text colours already existed before this release — on a note's **Size** button and in the formatting popover that appears when you select text. Two people asked for features that were already there, so they clearly weren't findable enough; the README now covers them properly.
+
 ## 1.1.19
 
 ### Fixed

@@ -7,7 +7,7 @@ import {
   FuzzySuggestModal,
 } from 'obsidian';
 import {
-  TileCard, StickyCard, ChecklistCard, NoteLinkCard,
+  TileCard, StickyCard, TextCard, ChecklistCard, NoteLinkCard,
   ImageCard, AudioCard, BookmarkCard, KanbanColumnCard, KanbanBoardCard,
   KanbanItem, Card, ColumnCard, ColumnChildCard, CommentCard,
   TableCard,
@@ -177,6 +177,7 @@ export function applyStickyTextScale(cardEl: HTMLElement, scale: StickyTextScale
   }
 }
 
+
 export const KANBAN_COLORS: { color: string; name: string }[] = [
   { color: '#6b7280', name: 'Gray' },
   { color: '#ef4444', name: 'Red' },
@@ -192,7 +193,7 @@ export const KANBAN_COLORS: { color: string; name: string }[] = [
 // ColumnChildCard in file-types.ts. Containers (kanban/board/column
 // itself) are excluded to avoid unbounded nesting.
 export const COLUMN_CHILD_KINDS = new Set<Card['kind']>([
-  'tile', 'sticky', 'checklist', 'table', 'image', 'audio', 'note-link', 'bookmark', 'swatch', 'file', 'callout',
+  'tile', 'sticky', 'text', 'checklist', 'table', 'image', 'audio', 'note-link', 'bookmark', 'swatch', 'file', 'callout',
 ]);
 export function isColumnChildKind(kind: Card['kind']): kind is ColumnChildCard['kind'] {
   return COLUMN_CHILD_KINDS.has(kind);
@@ -218,11 +219,14 @@ export interface AppWithPrivateAPIs extends App {
   plugins?: { enabledPlugins?: Set<string> };
 }
 
-export type SupportedCard = TileCard | StickyCard | ChecklistCard | CommentCard | TableCard | NoteLinkCard | ImageCard | AudioCard | BookmarkCard | KanbanColumnCard | KanbanBoardCard | ColumnCard | MapCard | SwatchCard | FileCard | CalloutCard | GroupCard | CalendarCard | CheckersCard;
+export type SupportedCard = TileCard | StickyCard | TextCard | ChecklistCard | CommentCard | TableCard | NoteLinkCard | ImageCard | AudioCard | BookmarkCard | KanbanColumnCard | KanbanBoardCard | ColumnCard | MapCard | SwatchCard | FileCard | CalloutCard | GroupCard | CalendarCard | CheckersCard;
 
 export const KANBAN_BOARD_MIN_W = 320;
 
 export function cardMinSize(kind: Card['kind']): { w: number; h: number } {
+  // Tiny, because a text card's real size comes from its font size rather
+  // than from w/h — this only has to stop a resize collapsing it to nothing.
+  if (kind === 'text')      return { w: 12,              h: 10              };
   if (kind === 'sticky')    return { w: STICKY_MIN_W,    h: STICKY_MIN_H    };
   if (kind === 'checklist') return { w: CHECKLIST_MIN_W, h: CHECKLIST_MIN_H };
   if (kind === 'comment')   return { w: COMMENT_MIN_W,   h: COMMENT_MIN_H   };

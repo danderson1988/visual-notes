@@ -3,7 +3,7 @@ import {
 } from 'obsidian';
 import { TouchActionSheet } from './touch-action-sheet';
 import {
-  ChecklistCard, ChecklistItem,
+  ChecklistCard, ChecklistItem, STICKY_FONT_FAMILIES,
 } from './file-types';
 import {
   parseYouTubeId,
@@ -615,6 +615,7 @@ export const overlaysMethods = {
       return btn;
     };
 
+    this.textToolBtn = mkBtn('Text', 'type', 'text');
     mkBtn('Note',    'square',           'blank-card');
     mkBtn('Tile',    'layout-template', 'tile-board');
     mkBtn('Sticky',  'sticky-note',  'sticky');
@@ -1137,6 +1138,7 @@ export const overlaysMethods = {
         for (const child of card.children) parts.push(this.cardSearchText(child));
         break;
       case 'map': parts.push(card.url); break;
+      case 'text': parts.push(this.stripHtml(card.text)); break;
       case 'swatch': parts.push(card.color, nearestColorName(card.color)); break;
       case 'file': parts.push(card.path); break;
       case 'callout': parts.push(card.text); break;
@@ -1340,6 +1342,7 @@ export const overlaysMethods = {
 
   openQuickAdd(this: FreeformRenderer): void {
     const entries: QuickAddEntry[] = [
+      { label: 'Text',            tool: 'text' },
       { label: 'Note',            tool: 'blank-card' },
       { label: 'Tile',            tool: 'tile-board' },
       { label: 'Sticky note',     tool: 'sticky' },
@@ -1451,6 +1454,7 @@ export const overlaysMethods = {
         if (!card || !el) return;
         switch (card.kind) {
           case 'sticky':  this.editStickyInline(el, card); break;
+          case 'text':    this.editTextInline(el, card); break;
           case 'callout': this.editCalloutInline(el, card); break;
           case 'group':   this.editGroupLabel(el, card); break;
           case 'calendar': {
@@ -1532,6 +1536,68 @@ export const overlaysMethods = {
         // would tear down the card element the context bar is positioned
         // against, and the inner text/editor inherit the var anyway.
         applyStickyTextScale(el, card.textScale);
+        this.scheduleSave();
+        break;
+      }
+      case 'sticky-transparent': {
+        if (card?.kind !== 'sticky' || !el) return;
+        this.pushUndo();
+        card.transparent = e.transparent;
+        el.toggleClass('is-transparent', e.transparent);
+        const fillEl = el.querySelector<HTMLElement>('.visual-notes-sticky-shape-fill');
+        if (fillEl) fillEl.style.backgroundColor = e.transparent ? '' : card.color;
+        // The auto-contrast text colour is derived from the card's fill, so it
+        // has to be recomputed here rather than left as-is: turning the fill
+        // off strands dark ink on whatever the canvas happens to be, and
+        // turning it back on has to restore the pairing. An explicit
+        // card.textColor always wins and is left alone.
+        const stickyTextEl = el.querySelector<HTMLElement>('.visual-notes-sticky-text');
+        if (stickyTextEl) {
+          stickyTextEl.style.color = card.textColor
+            ?? (!e.transparent && isHexColor(card.color) ? contrastColor(card.color) : '');
+        }
+        this.scheduleSave();
+        break;
+      }
+      case 'sticky-font': {
+        if (card?.kind !== 'sticky' || !el) return;
+        this.pushUndo();
+        if (e.font) {
+          card.fontFamily = e.font;
+          el.style.setProperty('--vn-card-font', STICKY_FONT_FAMILIES[e.font]);
+        } else {
+          delete card.fontFamily;
+          el.style.removeProperty('--vn-card-font');
+        }
+        this.scheduleSave();
+        break;
+      }
+      case 'text-font-size': {
+        if (card?.kind !== 'text' || !el) return;
+        this.pushUndo();
+        // Same px field a corner drag writes, so the two can never disagree
+        // about what size the card is.
+        card.fontSize = e.size;
+        this.renderCardContent(el, card);
+        this.updateConnectionsForCard(card.id);
+        this.scheduleSave();
+        break;
+      }
+      case 'text-font': {
+        if (card?.kind !== 'text' || !el) return;
+        this.pushUndo();
+        if (e.font) card.fontFamily = e.font; else delete card.fontFamily;
+        this.renderCardContent(el, card);
+        this.updateConnectionsForCard(card.id);
+        this.scheduleSave();
+        break;
+      }
+      case 'text-color': {
+        if (card?.kind !== 'text' || !el) return;
+        this.pushUndo();
+        card.color = e.hex;
+        const textBody = el.querySelector<HTMLElement>('.visual-notes-text-body');
+        if (textBody) textBody.style.color = e.hex;
         this.scheduleSave();
         break;
       }

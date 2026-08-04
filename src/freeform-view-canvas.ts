@@ -53,6 +53,7 @@ import {
   isValidURL,
   KanbanItemColorModal,
 } from './freeform-view-shared';
+import { TEXT_CARD_MIN_FONT, TEXT_CARD_MAX_FONT, TEXT_CARD_DEFAULT_FONT } from './file-types';
 import type { FreeformRenderer } from './freeform-view';
 
 declare module './freeform-view' {
@@ -388,6 +389,14 @@ export const canvasMethods = {
       if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && activeDocument.activeElement === this.outer) {
         e.preventDefault();
         this.openQuickAdd();
+      }
+      // "T" arms the text tool, then the next click on the canvas places it —
+      // the same two-step every toolbar button uses, rather than dropping a
+      // card at a guessed position. Gated on the canvas itself holding focus,
+      // so a plain "t" typed into any editor is untouched.
+      if ((e.key === 't' || e.key === 'T') && !e.ctrlKey && !e.metaKey && !e.altKey && activeDocument.activeElement === this.outer) {
+        e.preventDefault();
+        if (this.textToolBtn) this.activateTool('text', this.textToolBtn);
       }
     };
     this.docKeyUp = (e: KeyboardEvent) => {
@@ -1283,6 +1292,7 @@ export const canvasMethods = {
       switch (card.kind) {
         case 'tile':      await this.activateTile(card); break;
         case 'sticky':    this.editStickyInline(el, card); break;
+        case 'text':      this.editTextInline(el, card); break;
         case 'note-link': await this.activateNoteLink(card); break;
         case 'image':
           if (target.closest('.visual-notes-image-caption-wrap')) break;
@@ -1331,6 +1341,9 @@ export const canvasMethods = {
     const startX = card.x ?? 0, startY = card.y ?? 0;
     const startW = card.w ?? TILE_DEFAULT_W, startH = card.h ?? TILE_DEFAULT_H;
     const { w: minW, h: minH } = cardMinSize(card.kind);
+    // Snapshot, so a drag multiplies from the size the card actually is
+    // rather than restarting each frame.
+    const startFontSize = card.kind === 'text' ? card.fontSize : TEXT_CARD_DEFAULT_FONT;
     el.setPointerCapture(e.pointerId);
 
     let imgAspect: number | null = null;
@@ -1359,7 +1372,26 @@ export const canvasMethods = {
       const hSign = (corner === 'se' || corner === 'sw') ? 1 : -1;
       const newW = Math.max(minW, this.applySnap(startW + wSign * cdx));
 
-      if (card.kind === 'sticky' && !card.blank) {
+      if (card.kind === 'text') {
+        // Scales the type rather than reflowing to a new width. Because a text
+        // card never wraps, the box grows in exact proportion to the font
+        // size, so the new size can be *computed* rather than measured — no
+        // per-frame reflow read, which is what made the first attempt at this
+        // feel like it was snapping around under the cursor.
+        const ratio = startW > 0 ? (startW + wSign * cdx) / startW : 1;
+        const next = Math.min(TEXT_CARD_MAX_FONT, Math.max(TEXT_CARD_MIN_FONT, startFontSize * ratio));
+        const grew = next / startFontSize;
+        card.fontSize = next;
+        card.w = startW * grew;
+        card.h = startH * grew;
+        // Pin the corner opposite the one being dragged.
+        card.x = corner === 'sw' || corner === 'nw' ? startX + startW - card.w : startX;
+        card.y = corner === 'nw' || corner === 'ne' ? startY + startH - card.h : startY;
+        const inner = el.querySelector<HTMLElement>('.visual-notes-text-body');
+        if (inner) inner.style.fontSize = `${next}px`;
+        el.style.left = `${card.x}px`;
+        el.style.top = `${card.y}px`;
+      } else if (card.kind === 'sticky' && !card.blank) {
         card.w = newW;
         if (corner === 'sw' || corner === 'nw') card.x = this.applySnap(startX + startW - newW);
         el.style.width = `${card.w}px`;
@@ -1406,6 +1438,9 @@ export const canvasMethods = {
       el.removeEventListener('pointercancel', onUp);
       if (moveFramePending) { window.cancelAnimationFrame(moveFrameId); moveFramePending = false; applyResize(latestEv); }
       this.renderCardContent(el, card);
+      // The drag worked from predicted sizes to avoid a layout read per frame;
+      // reconcile with what the browser actually laid out, once, at the end.
+      if (card.kind === 'text') this.syncTextCardSize(el, card);
       this.updateConnectionsForCard(card.id);
       this.scheduleSave();
     };
@@ -1649,6 +1684,8 @@ export const canvasMethods = {
         this.addDefaultArrowAt(cx, cy); break;
       case 'blank-card':
         this.addBlankCardAt(s(cx - STICKY_DEFAULT_W / 2), s(cy - STICKY_DEFAULT_H / 2)); break;
+      case 'text':
+        this.addTextCardAt(s(cx - STICKY_DEFAULT_W / 2), s(cy - STICKY_DEFAULT_H / 2)); break;
       case 'sticky':
         this.addStickyAt(s(cx - STICKY_DEFAULT_W / 2), s(cy - STICKY_DEFAULT_H / 2)); break;
       case 'checklist':

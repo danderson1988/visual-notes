@@ -82,6 +82,20 @@ Paste a Google Maps link to get a live, fully interactive embed that matches the
 ### Swatches
 A colour swatch card showing the hex value and a nearest named-colour label. Double-click (or use the pipette button) to open the native colour picker, or right-click for a menu of approximate named palettes (Muted, Vivid, Pastel, Earth Tones, Grayscale) to generate a grid from. A reroll button in the name bar picks a new random colour.
 
+### Text
+Press `T` (or pick **Text**) and click anywhere to drop bare text on the canvas — no card, border or background.
+
+- **Drag to resize the type.** Text cards never wrap, so the box is exactly as wide as its longest line and dragging a corner scales the words themselves, the way resizing a drawing scales the strokes. Press Enter for a new line. There's no width limit — drag it as large as you like.
+- **Exact sizes** on the **Size** button (16 / 24 / 32 / 48 / 64 / 96 / 128 px). These are the same px value a drag sets, so picking one never fights what you dragged.
+- **Fonts** — Obsidian's Text, Interface and Monospace, so text follows whatever you've configured under Appearance → Font.
+- **Colour**, plus the usual bold/italic/underline/highlight on any selection.
+
+Notes are still the card for longer writing, and they gained two things of their own:
+
+- **No background** — a toggle in any note's **Colour** panel strips its fill.
+- **Fonts and sizes** — the same **Font** picker, plus eight per-card sizes (XS–4X) and per-selection sizing, so one note can carry a big heading above ordinary body text.
+- **Bullets** — the **Bullet** button, or type `- ` at the start of a line.
+
 ### Text Formatting
 Select any text in a sticky note, checklist, kanban item, or image caption to reveal a floating toolbar: bold, italic, underline, strikethrough, text colour (preset + colour picker), and highlight colour.
 
@@ -123,6 +137,7 @@ Select any text in a sticky note, checklist, kanban item, or image caption to re
 | Underline (sticky editor) | ⌘ U |
 | Strikethrough (sticky editor) | ⌘ ⇧ S |
 | Quick-add card | / |
+| Text tool | T |
 
 ---
 

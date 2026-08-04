@@ -102,6 +102,9 @@ export class FreeformRenderer extends Component {
   connectSourceId: string | null = null;
   ghostPath: SVGPathElement | null = null;
   connectToolBtn: HTMLElement | null = null;
+  // Held so the "T" shortcut can arm the tool *and* light its button up, the
+  // same as clicking it would.
+  textToolBtn: HTMLElement | null = null;
   connectMoveListener: ((e: PointerEvent) => void) | null = null;
 
   connectionHitPaths = new Map<string, SVGPathElement>();
@@ -438,10 +441,15 @@ export class FreeformRenderer extends Component {
   positionCardEl(el: HTMLElement, card: Card): void {
     el.style.left   = `${card.x ?? 0}px`;
     el.style.top    = `${card.y ?? 0}px`;
-    el.style.width  = `${card.w ?? TILE_DEFAULT_W}px`;
+    // A text card is sized entirely by its content at the current font size —
+    // no wrapping means no width to impose — so both axes are left to CSS.
+    // Its w/h are still maintained (see syncTextCardSize) for connections,
+    // the minimap and export, which read them rather than the DOM.
+    el.style.width  = card.kind === 'text' ? '' : `${card.w ?? TILE_DEFAULT_W}px`;
     // Regular sticky notes auto-size to content; blank cards and every
     // other kind use their saved height.
-    el.style.height = (card.kind === 'sticky' && !card.blank) ? '' : `${card.h ?? TILE_DEFAULT_H}px`;
+    el.style.height = (card.kind === 'text' || (card.kind === 'sticky' && !card.blank))
+      ? '' : `${card.h ?? TILE_DEFAULT_H}px`;
     el.setCssProps({ '--card-z': String(card.z ?? 0) });
   }
 
@@ -455,7 +463,7 @@ export class FreeformRenderer extends Component {
       'visual-notes-freeform-table-card', 'visual-notes-table-alt',
       'visual-notes-freeform-notelink-card',
       'visual-notes-freeform-image-card', 'visual-notes-freeform-audio-card',
-      'visual-notes-freeform-bookmark-card'
+      'visual-notes-freeform-bookmark-card', 'visual-notes-freeform-text-card'
     );
     switch (card.kind) {
       case 'tile':      this.renderTileContent(el, card);      break;
@@ -471,6 +479,7 @@ export class FreeformRenderer extends Component {
       case 'kanban-board': this.renderKanbanBoardContent(el, card); break;
       case 'column': this.renderColumnContent(el, card); break;
       case 'map': this.renderMapContent(el, card); break;
+      case 'text': this.renderTextContent(el, card); break;
       case 'swatch': this.renderSwatchContent(el, card); break;
       case 'file': this.renderFileContent(el, card); break;
       case 'callout': this.renderCalloutContent(el, card); break;

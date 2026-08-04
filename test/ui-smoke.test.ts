@@ -19,6 +19,7 @@ import { join } from 'node:path';
 import { FreeformRenderer } from '../src/freeform-view';
 import { ContextBar } from '../src/context-bar';
 import { resolveDefaultStickyColor, STICKY_COLORS } from '../src/freeform-view-shared';
+import { TEXT_CARD_DEFAULT_FONT, TEXT_CARD_MIN_FONT } from '../src/file-types';
 import { PenOptionsPanel, DEFAULT_PEN_DRAW_OPTIONS, type PenDrawOptions } from '../src/pen-options-panel';
 import { visualNotesToCanvas, canvasToVisualNotes } from '../src/canvas-format';
 import { fakeApp } from './fake-app';
@@ -26,7 +27,7 @@ import { Platform, Menu } from 'obsidian';
 import type {
   VisualNotesFile, StickyCard, TileCard, TableCard, CommentCard,
   CalloutCard, GroupCard, CalendarCard, ColumnCard, KanbanColumnCard,
-  KanbanBoardCard, DrawingStroke, BookmarkCard,
+  KanbanBoardCard, DrawingStroke, BookmarkCard, TextCard, Card,
 } from '../src/file-types';
 
 function setup(
@@ -577,6 +578,263 @@ describe('UI smoke: sticky editor text colour', () => {
   });
 });
 
+describe('UI smoke: transparent cards and card fonts', () => {
+  afterEach(() => { document.body.removeClass('theme-dark'); });
+
+  const render = (extra: Partial<StickyCard>) => {
+    const sticky: StickyCard = {
+      id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160,
+      text: 'hi', color: '#FDE68A', ...extra,
+    };
+    const { renderer, board, container } = setup([sticky]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+    return { renderer, board, container, el, sticky };
+  };
+
+  it('paints no fill on a transparent card', () => {
+    const { el } = render({ transparent: true });
+    const fill = el.querySelector<HTMLElement>('.visual-notes-sticky-shape-fill')!;
+    expect(el.hasClass('is-transparent')).toBe(true);
+    expect(fill.style.backgroundColor).toBe('');
+  });
+
+  it('still paints the fill on an ordinary card', () => {
+    const { el } = render({});
+    const fill = el.querySelector<HTMLElement>('.visual-notes-sticky-shape-fill')!;
+    expect(el.hasClass('is-transparent')).toBe(false);
+    expect(fill.style.backgroundColor).toBeTruthy();
+  });
+
+  it('skips the auto-contrast text colour when transparent', () => {
+    // With no fill the text sits on the canvas, so a colour contrasted against
+    // `color` would be pairing with a background that never gets drawn — dark
+    // ink derived from a pale card, floating on a dark canvas.
+    document.body.addClass('theme-dark');
+    const { el } = render({ transparent: true });
+    const textEl = el.querySelector<HTMLElement>('.visual-notes-sticky-text')!;
+    expect(textEl.style.color).toBe('');
+  });
+
+  it('honours an explicit textColor even when transparent', () => {
+    const { el } = render({ transparent: true, textColor: '#7f1d1d' });
+    const textEl = el.querySelector<HTMLElement>('.visual-notes-sticky-text')!;
+    expect(textEl.style.color).toBeTruthy();
+  });
+
+  it('sets the font custom property on the card, not the text span', () => {
+    // On the card so the rendered text and the editor both inherit it — the
+    // editor is a sibling of the text span, which is what made the 1.1.19
+    // colour bug possible in the first place.
+    const { el } = render({ fontFamily: 'monospace' });
+    expect(el.style.getPropertyValue('--vn-card-font')).toBe('var(--font-monospace)');
+  });
+
+  it('sets no font property when the card has no fontFamily', () => {
+    const { el } = render({});
+    expect(el.style.getPropertyValue('--vn-card-font')).toBe('');
+  });
+
+  it('round-trips transparent and fontFamily through the canvas format', () => {
+    const { board } = render({ transparent: true, fontFamily: 'interface' });
+
+    const round = canvasToVisualNotes(visualNotesToCanvas(board));
+    const card = round.cards[0] as StickyCard;
+
+    expect(card.transparent).toBe(true);
+    expect(card.fontFamily).toBe('interface');
+  });
+
+  it('recomputes the auto-contrast colour when transparency is toggled', () => {
+    // Turning the fill off has to drop the derived colour, and turning it back
+    // on has to restore it — otherwise dark ink is stranded on the canvas.
+    const { renderer, el, sticky } = render({});
+    const textEl = el.querySelector<HTMLElement>('.visual-notes-sticky-text')!;
+    expect(textEl.style.color).toBeTruthy();
+
+    renderer.selection.select('s1');
+    (renderer as any).handleCtxEvent({ type: 'sticky-transparent', transparent: true });
+    expect(sticky.transparent).toBe(true);
+    expect(el.hasClass('is-transparent')).toBe(true);
+    expect(textEl.style.color).toBe('');
+
+    (renderer as any).handleCtxEvent({ type: 'sticky-transparent', transparent: false });
+    expect(el.hasClass('is-transparent')).toBe(false);
+    expect(textEl.style.color).toBeTruthy();
+  });
+
+  it('sets and clears the font from the context bar', () => {
+    const { renderer, el, sticky } = render({});
+
+    renderer.selection.select('s1');
+    (renderer as any).handleCtxEvent({ type: 'sticky-font', font: 'monospace' });
+    expect(sticky.fontFamily).toBe('monospace');
+    expect(el.style.getPropertyValue('--vn-card-font')).toBe('var(--font-monospace)');
+
+    (renderer as any).handleCtxEvent({ type: 'sticky-font', font: null });
+    expect(sticky.fontFamily).toBeUndefined();
+    expect(el.style.getPropertyValue('--vn-card-font')).toBe('');
+  });
+});
+
+describe('UI smoke: the Text tool', () => {
+  const textCard = (extra: Partial<TextCard> = {}): TextCard => ({
+    id: 't1', kind: 'text', x: 0, y: 0, w: 200, h: 100,
+    text: 'hello', fontSize: 32, ...extra,
+  });
+
+  const mount = (card: TextCard) => {
+    const { renderer, board, container } = setup([card]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="t1"]')!;
+    return { renderer, board, container, el };
+  };
+
+  const dragCorner = (renderer: any, el: HTMLElement, card: Card, corner: string, dx: number) => {
+    const handle = el.querySelector<HTMLElement>(`.visual-notes-card-resize-handle--${corner}`)!;
+    renderer.startCardResize(pointer('pointerdown', 0, 0), handle, el, card);
+    el.dispatchEvent(pointer('pointermove', dx, 0));
+    el.dispatchEvent(pointer('pointerup', dx, 0));
+  };
+
+  it('creates a text card already in edit mode', () => {
+    const { renderer, board, container } = setup([]);
+
+    (renderer as any).addTextCardAt(40, 60);
+
+    expect(board.cards).toHaveLength(1);
+    const card = board.cards[0] as TextCard;
+    expect(card.kind).toBe('text');
+    expect(card.fontSize).toBe(TEXT_CARD_DEFAULT_FONT);
+    const el = container.querySelector<HTMLElement>(`.visual-notes-freeform-card[data-id="${card.id}"]`)!;
+    expect(el.querySelector('.visual-notes-text-editor')).not.toBeNull();
+  });
+
+  it('places a text card through the pending-tool flow', () => {
+    const { renderer, board } = setup([]);
+    renderer.pendingTool = 'text';
+
+    (renderer as any).placePendingTool(100, 120);
+
+    expect(board.cards).toHaveLength(1);
+    expect(board.cards[0].kind).toBe('text');
+  });
+
+  it('leaves width and height to the content instead of writing them inline', () => {
+    // Nothing wraps, so there is no width to impose — CSS sizes the box from
+    // the font size. That is exactly what lets a resize predict the new size
+    // rather than measuring it every frame.
+    const { el } = mount(textCard());
+    expect(el.style.width).toBe('');
+    expect(el.style.height).toBe('');
+  });
+
+  it('renders the stored HTML directly, so editing and viewing match', () => {
+    const { el } = mount(textCard({ text: 'a <strong>bold</strong> word' }));
+    const body = el.querySelector<HTMLElement>('.visual-notes-text-body')!;
+    expect(body.querySelector('strong')?.textContent).toBe('bold');
+  });
+
+  it('scales the font when a corner is dragged out', () => {
+    const card = textCard();
+    const { renderer, el } = mount(card);
+
+    dragCorner(renderer, el, card, 'se', 100);
+
+    // 200px wide dragged 100px right → 1.5× → 48px.
+    expect(card.fontSize).toBeCloseTo(48, 5);
+  });
+
+  it('multiplies from the size the card is already at', () => {
+    const card = textCard({ fontSize: 64 });
+    const { renderer, el } = mount(card);
+
+    dragCorner(renderer, el, card, 'se', 100);
+
+    expect(card.fontSize).toBeCloseTo(96, 5);
+  });
+
+  it('has no practical ceiling, so the box drags as big as you want', () => {
+    const card = textCard({ fontSize: 128 });
+    const { renderer, el } = mount(card);
+
+    dragCorner(renderer, el, card, 'se', 600);
+
+    expect(card.fontSize).toBeCloseTo(512, 5);
+  });
+
+  it('clamps at the low end so a shrunk card stays grabbable', () => {
+    const card = textCard();
+    const { renderer, el } = mount(card);
+
+    dragCorner(renderer, el, card, 'se', -500);
+
+    expect(card.fontSize).toBe(TEXT_CARD_MIN_FONT);
+  });
+
+  it('pins the corner opposite the one being dragged', () => {
+    const card = textCard({ x: 100, y: 50 });
+    const { renderer, el } = mount(card);
+    const rightBefore = card.x + card.w!, bottomBefore = card.y + card.h!;
+
+    dragCorner(renderer, el, card, 'nw', -100);
+
+    expect(card.x + card.w!).toBeCloseTo(rightBefore, 5);
+    expect(card.y + card.h!).toBeCloseTo(bottomBefore, 5);
+  });
+
+  // The reported bug. Presets used to be multipliers capped at 3.6× while the
+  // drag was open-ended, so picking one after dragging something large made it
+  // abruptly smaller. Both now write the same px field, in the same unit.
+  it('a preset sets exactly the px size it names, whatever the card was dragged to', () => {
+    const card = textCard({ fontSize: 300 });
+    const { renderer, el } = mount(card);
+
+    renderer.selection.select('t1');
+    (renderer as any).handleCtxEvent({ type: 'text-font-size', size: 128 });
+
+    expect(card.fontSize).toBe(128);
+    expect(el.querySelector<HTMLElement>('.visual-notes-text-body')!.style.fontSize).toBe('128px');
+  });
+
+  it('sets the font and colour from the context bar', () => {
+    const card = textCard();
+    const { renderer, el } = mount(card);
+    renderer.selection.select('t1');
+
+    (renderer as any).handleCtxEvent({ type: 'text-font', font: 'monospace' });
+    expect(card.fontFamily).toBe('monospace');
+
+    (renderer as any).handleCtxEvent({ type: 'text-color', hex: '#7f1d1d' });
+    expect(card.color).toBe('#7f1d1d');
+    expect(el.querySelector<HTMLElement>('.visual-notes-text-body')!.style.color).toBeTruthy();
+  });
+
+  it('round-trips through the canvas format, leaving plain words in the node', () => {
+    const card = textCard({ text: 'line one<br>line two', fontSize: 48, fontFamily: 'interface' });
+    const { board } = mount(card);
+
+    const canvas = visualNotesToCanvas(board);
+    const back = canvasToVisualNotes(canvas).cards[0] as TextCard;
+
+    expect(back.kind).toBe('text');
+    expect(back.fontSize).toBe(48);
+    expect(back.fontFamily).toBe('interface');
+    expect(back.text).toBe('line one<br>line two');
+    // Native Canvas shows readable words, not markup.
+    expect((canvas.nodes[0] as any).text).toBe('line one\nline two');
+  });
+
+  it('no longer scales an ordinary Note — that still reflows', () => {
+    const note: StickyCard = { id: 'n1', kind: 'sticky', x: 0, y: 0, w: 200, h: 100, text: 'hi', color: '#FDE68A' };
+    const { renderer, container } = setup([note]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="n1"]')!;
+
+    dragCorner(renderer, el, note, 'se', 100);
+
+    expect(note.w).toBe(300);
+    expect((note as any).textScaleFactor).toBeUndefined();
+  });
+});
+
 describe('UI smoke: context menu commits pending inline edits (bug #5)', () => {
   it('opening a context menu blurs whatever is currently focused, before any menu builds', () => {
     // Regression test for a reported bug: right-click (unlike left-click)
@@ -844,6 +1102,46 @@ describe('UI smoke: single-tap "Edit" for dblclick-gated card kinds (mobile UX p
     itemEl.dispatchEvent(pointer('pointerdown', 50, 50));
     itemEl.dispatchEvent(pointer('pointerup', 50, 50));
     expect(itemEl.querySelector('.visual-notes-kanban-item-editor')).not.toBeNull();
+  });
+
+  // Reported: "You can add items but you can[']t tick it when a task's done."
+  // The checkbox registered only a `click` listener. Every other control in
+  // the kanban file — column menu, collapse, add-item, and the *subtask*
+  // checkbox, which works — pairs `click` with a pointerdown stopPropagation
+  // guard, because otherwise the event travels up to the card-level drag
+  // machinery, which begins a card drag and swallows the click that would
+  // have ticked the item.
+  const kanbanWithItem = (): KanbanColumnCard => ({
+    id: 'kb1', kind: 'kanban-column', x: 0, y: 0, w: 260, h: 300, color: '#fff',
+    items: [{ id: 'it1', text: 'Buy milk', done: false }],
+  });
+
+  it('stops an item checkbox pointerdown before it reaches the card', () => {
+    const kb = kanbanWithItem();
+    const { container } = setup([kb]);
+    const cardEl = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="kb1"]')!;
+    const cb = container.querySelector<HTMLElement>('.visual-notes-kanban-item[data-item-id="it1"] .visual-notes-kanban-item-cb')!;
+    expect(cb).toBeTruthy();
+
+    let reachedCard = false;
+    cardEl.addEventListener('pointerdown', () => { reachedCard = true; });
+
+    cb.dispatchEvent(pointer('pointerdown', 10, 10));
+
+    expect(reachedCard).toBe(false);
+  });
+
+  it('ticks the item when its checkbox is clicked', () => {
+    const kb = kanbanWithItem();
+    const { container } = setup([kb]);
+    const itemEl = container.querySelector<HTMLElement>('.visual-notes-kanban-item[data-item-id="it1"]')!;
+    const cb = itemEl.querySelector<HTMLElement>('.visual-notes-kanban-item-cb')!;
+
+    cb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(kb.items[0].done).toBe(true);
+    expect(itemEl.hasClass('is-done')).toBe(true);
+    expect(cb.hasClass('is-checked')).toBe(true);
   });
 });
 
@@ -1983,7 +2281,7 @@ describe('UI smoke: sticky context bar no longer shows the broken Bold/Italic/Un
   // Highlight) the instant text is actually selected, so removed as
   // duplicated, broken functionality rather than trying to make them work
   // on a whole-card selection.
-  it('only shows Edit, Bullet, Size and Color for a sticky, not the old format buttons', () => {
+  it('only shows Edit, Bullet, Size, Font and Color for a sticky, not the old format buttons', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const bar = new ContextBar(document.createElement('div'), container, () => null, () => document.body.hasClass('theme-dark'), () => {});
@@ -1991,7 +2289,7 @@ describe('UI smoke: sticky context bar no longer shows the broken Bold/Italic/Un
     bar.show(sticky, document.createElement('div'));
     const labels = Array.from(container.querySelectorAll<HTMLElement>('.visual-notes-tb-btn'))
       .map(b => b.getAttribute('aria-label'));
-    expect(labels).toEqual(['Edit', 'Bullet', 'Size', 'Color', 'Delete']);
+    expect(labels).toEqual(['Edit', 'Bullet', 'Size', 'Font', 'Color', 'Delete']);
   });
 
   it('the Bullet button suppresses the default pointerdown, so the caret survives the click', () => {

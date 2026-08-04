@@ -5,7 +5,8 @@ import {
 import {
   TileCard, StickyCard, ChecklistCard, ChecklistItem, NoteLinkCard,
   Card, CommentCard, CommentReply,
-  SwatchCard, FileCard, CalloutCard, GroupCard,
+  SwatchCard, FileCard, CalloutCard, GroupCard, STICKY_FONT_FAMILIES, TextCard,
+  TEXT_CARD_DEFAULT_FONT,
 } from './file-types';
 import { contrastColor, isHexColor } from './color-utils';
 import {
@@ -83,6 +84,11 @@ declare module './freeform-view' {
     addStickyAt(x: number, y: number, initialText?: string): void;
     addBlankCard(): void;
     addBlankCardAt(x: number, y: number): void;
+    addTextCardAt(x: number, y: number): void;
+    renderTextContent(el: HTMLElement, card: TextCard): void;
+    editTextInline(el: HTMLElement, card: TextCard): void;
+    syncTextCardSize(el: HTMLElement, card: TextCard): void;
+    styleTextBody(target: HTMLElement, card: TextCard): void;
     addChecklist(): void;
     addChecklistAt(x: number, y: number): void;
     addComment(): void;
@@ -163,11 +169,17 @@ export const cardsBasicMethods = {
     el.addClass('visual-notes-freeform-sticky-card');
     if (card.blank) el.addClass('is-blank-card');
     if (card.shape === 'round') el.addClass('is-shape-round');
+    if (card.transparent) el.addClass('is-transparent');
+    // On the card rather than the text span so the rendered text and the
+    // inline editor both inherit it — the editor is a *sibling* of the span,
+    // which is exactly how the text colour ended up wrong before 1.1.19.
+    if (card.fontFamily) el.style.setProperty('--vn-card-font', STICKY_FONT_FAMILIES[card.fontFamily]);
 
     // The colored/shaped fill lives on its own layer behind the content,
-    // separate from `el` itself.
+    // separate from `el` itself — which is what makes a transparent card a
+    // matter of simply not painting it.
     const shapeFill = el.createDiv('visual-notes-sticky-shape-fill');
-    shapeFill.style.backgroundColor = card.color;
+    if (!card.transparent) shapeFill.style.backgroundColor = card.color;
     if (card.shape === 'round') shapeFill.addClass('is-shape-round');
 
     if (card.topColor) {
@@ -184,7 +196,13 @@ export const cardsBasicMethods = {
     // user picked an explicit text color; skipped for theme-driven
     // defaults (e.g. a blank Note's `var(--visual-notes-card-bg)`), which already
     // pair correctly with the CSS-level --visual-notes-card-text fallback.
-    const autoTextColor = card.textColor ?? (isHexColor(card.color) ? contrastColor(card.color) : undefined);
+    // Skipped entirely when transparent: with no fill drawn, contrasting
+    // against `color` would pair the text with a background that isn't there
+    // — dark ink derived from a pale card, sitting on a dark canvas. Falling
+    // through to the CSS-level --visual-notes-card-text tracks the theme,
+    // which is what the text is actually sitting on.
+    const autoTextColor = card.textColor
+      ?? (!card.transparent && isHexColor(card.color) ? contrastColor(card.color) : undefined);
     if (autoTextColor) textEl.style.color = autoTextColor;
     if (card.textAlign) textEl.style.textAlign = card.textAlign;
     const placeholder = card.blank ? '*Start Typing…*' : '*Double-click to edit…*';
@@ -1296,6 +1314,87 @@ export const cardsBasicMethods = {
     const el = this.createCardEl(card);
     this.selection.select(card.id); this.refreshSelectionVisuals();
     this.editStickyInline(el, card);
+  },
+
+  addTextCardAt(this: FreeformRenderer, x: number, y: number): void {
+    const card: TextCard = {
+      id: crypto.randomUUID(), kind: 'text', x, y, z: this.nextZ(),
+      text: '', fontSize: TEXT_CARD_DEFAULT_FONT,
+    };
+    this.pushUndo(); this.board.cards.push(card); void this.saveNow();
+    const el = this.createCardEl(card);
+    this.selection.select(card.id); this.refreshSelectionVisuals();
+    this.editTextInline(el, card);
+  },
+
+  renderTextContent(this: FreeformRenderer, el: HTMLElement, card: TextCard): void {
+    el.addClass('visual-notes-freeform-text-card');
+    const body = el.createDiv('visual-notes-text-body');
+    this.styleTextBody(body, card);
+    // Rendered from the same HTML the editor produces, rather than through
+    // MarkdownRenderer — so the card doesn't visibly change shape when you
+    // enter and leave edit mode.
+    if (card.text) body.appendChild(sanitizeHTMLToDom(card.text));
+    else { body.addClass('is-placeholder'); body.setText('Text'); }
+    this.appendResizeHandles(el);
+    this.syncTextCardSize(el, card);
+  },
+
+  // A text card's on-screen size comes from CSS (content width at the current
+  // font size), not from card.w/h. But connection anchors, the minimap,
+  // marquee hit-testing and export bounds all read w/h, so they're kept in
+  // step here. Only ever called once the content has settled — never during a
+  // drag, which is what keeps resizing free of layout reads.
+  syncTextCardSize(this: FreeformRenderer, el: HTMLElement, card: TextCard): void {
+    const w = Math.ceil(el.offsetWidth), h = Math.ceil(el.offsetHeight);
+    // jsdom, and a card not yet laid out, report 0 — writing that through
+    // would leave a card with no clickable area at all.
+    if (w > 0 && h > 0) { card.w = w; card.h = h; }
+  },
+
+  editTextInline(this: FreeformRenderer, el: HTMLElement, card: TextCard): void {
+    const body = el.querySelector<HTMLElement>('.visual-notes-text-body');
+    if (!body || el.querySelector('.visual-notes-text-editor')) return;
+    body.hide();
+
+    const editor = el.createDiv('visual-notes-text-editor');
+    editor.contentEditable = 'true';
+    this.styleTextBody(editor, card);
+    if (card.text) editor.appendChild(sanitizeHTMLToDom(card.text));
+    editor.addEventListener('pointerdown', e => e.stopPropagation());
+    // Enter is deliberately not intercepted: a new line is the whole point,
+    // since a text card never wraps.
+    editor.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); editor.blur(); }
+      e.stopPropagation();
+    });
+    new TextFormatToolbar(editor, el, this.container);
+
+    editor.focus();
+    const r = activeDocument.createRange();
+    r.selectNodeContents(editor);
+    r.collapse(false);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(r);
+
+    let committed = false;
+    editor.addEventListener('blur', () => {
+      if (committed) return;
+      committed = true;
+      card.text = editor.innerHTML;
+      // Full re-render rather than swapping the editor out by hand: it rebuilds
+      // the body from card.text and re-syncs w/h in one place.
+      this.renderCardContent(el, card);
+      this.scheduleSave();
+    });
+  },
+
+  styleTextBody(this: FreeformRenderer, target: HTMLElement, card: TextCard): void {
+    target.style.fontSize = `${card.fontSize}px`;
+    if (card.color) target.style.color = card.color;
+    if (card.fontFamily) target.style.fontFamily = STICKY_FONT_FAMILIES[card.fontFamily];
+    if (card.align) target.style.textAlign = card.align;
   },
 
   addChecklist(this: FreeformRenderer): void { const p = this.centerPos(CHECKLIST_DEFAULT_W, CHECKLIST_DEFAULT_H); this.addChecklistAt(p.x, p.y); },

@@ -68,6 +68,22 @@ function readStash(o: { vn?: unknown; ib?: unknown } | null | undefined): unknow
   return o.vn ?? o.ib;
 }
 
+// A text card stores inline HTML. The node's own `text` gets a plain-text
+// mirror of it so the card still reads sensibly in Obsidian's native Canvas
+// view; the HTML itself round-trips in the stash. Regex rather than a DOM
+// parse because this module is deliberately free of any document dependency.
+function stripHtmlToText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li)\s*>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&amp;/gi, '&')
+    .trim();
+}
+
 export interface CanvasNodeBase {
   id: string;
   x: number;
@@ -212,6 +228,9 @@ const DEFAULT_SIZE: Record<Card['kind'], { w: number; h: number }> = {
   'column': { w: 260, h: 320 },
   'map': { w: 480, h: 360 },
   'swatch': { w: 160, h: 160 },
+  // Only a fallback for a text card whose measured size hasn't been written
+  // yet; the real size is derived from its font size on render.
+  'text': { w: 120, h: 40 },
   'file': { w: 260, h: 300 },
   'callout': { w: 320, h: 100 },
   'group': { w: 400, h: 300 },
@@ -334,6 +353,14 @@ function cardToNodes(card: Card): CanvasNode[] {
     case 'swatch': {
       const s = card;
       return [{ ...base, type: 'text', text: `${s.color.toUpperCase()} — ${nearestColorName(s.color)}`, color: s.color, vn: stashable(s) }];
+    }
+
+    case 'text': {
+      const t = card;
+      // The node's own `text` carries the words as plain text so a text card
+      // still reads sensibly in Obsidian's native Canvas view; the HTML and
+      // font size ride along in the stash.
+      return [{ ...base, type: 'text', text: stripHtmlToText(t.text), vn: stashable(t) }];
     }
 
     case 'file': {

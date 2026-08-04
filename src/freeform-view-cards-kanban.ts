@@ -809,6 +809,15 @@ export const cardsKanbanMethods = {
 
     const cb = itemEl.createDiv('visual-notes-kanban-item-cb');
     cb.toggleClass('is-checked', item.done ?? false);
+    cb.setAttribute('aria-label', 'Mark done');
+    // Without this the pointerdown reaches the card-level drag machinery,
+    // which starts a card drag and swallows the click below — the checkbox
+    // looked completely dead. The item's own pointerdown handler does skip
+    // drag-start for this element, but it returns without stopping
+    // propagation, so the event still escapes to the card. Same guard every
+    // other control here uses (column menu, collapse, add-item, subtask
+    // checkbox); this one was simply missing it.
+    cb.addEventListener('pointerdown', e => e.stopPropagation());
     cb.addEventListener('click', (e) => {
       e.stopPropagation();
       this.pushUndo();

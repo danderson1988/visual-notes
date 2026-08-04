@@ -1423,6 +1423,43 @@ path.is-marquee-selected {
   color: #ffffff;
 }
 
+/* Font picker — same mechanics as the size row, but each button is set in the
+   face it selects, so the choice is legible without applying it first. */
+.visual-notes-ctx-font-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 2px;
+}
+
+.visual-notes-ctx-font-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 7px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: background 80ms ease, color 80ms ease;
+}
+
+.visual-notes-ctx-font-btn:hover,
+.visual-notes-ctx-font-btn:focus-visible {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  outline: none;
+}
+
+.visual-notes-ctx-font-btn.is-active {
+  background: var(--interactive-accent);
+  color: #ffffff;
+}
+
 /* Custom color wheel input — invisible, triggered by its sibling button */
 .visual-notes-ctx-color-wheel-input {
   position: absolute;
@@ -2794,6 +2831,15 @@ input.visual-notes-table-date-input {
   transition: background 0.12s, border-color 0.12s;
 }
 
+/* An unfilled circle with a muted border reads as a bullet, not a control —
+   the transition above never had anything to trigger it while unchecked, so
+   pointing at it gave no signal it was clickable. This was very likely why it
+   got reported as "you can't tick items" rather than "clicking does nothing". */
+.visual-notes-kanban-item-cb:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+
 .visual-notes-kanban-item-cb.is-checked {
   background: var(--interactive-accent);
   border-color: var(--interactive-accent);
@@ -2802,13 +2848,19 @@ input.visual-notes-table-date-input {
 .visual-notes-kanban-item-cb.is-checked::after {
   content: '';
   position: absolute;
-  top: 3px;
-  left: 4px;
+  left: 50%;
+  top: 50%;
   width: 5px;
   height: 3px;
   border-left: 1.5px solid white;
   border-bottom: 1.5px solid white;
-  transform: rotate(-45deg);
+  /* Centred by percentage rather than the fixed top/left this used to carry,
+     which was tuned for the 16px circle and so sat off-centre in the 19px
+     "large item" one. The extra nudge is because the tick's ink is only the
+     left and bottom borders, putting its visual centre down-left of the
+     element's box centre; after the -45° rotation that lands it about 1px low
+     and 1px left of where it should be. */
+  transform: translate(calc(-50% + 0.9px), calc(-50% - 1.4px)) rotate(-45deg);
 }
 
 .visual-notes-kanban-item-body {
@@ -3249,6 +3301,9 @@ input.visual-notes-table-date-input {
 .visual-notes-sticky-text {
   font-size: calc(14px * var(--vn-text-mult, 1));
   line-height: 1.5;
+  /* --vn-card-font is set on the card element, so the rendered text and the
+     editor below both pick it up. Unset falls through to the pane font. */
+  font-family: var(--vn-card-font, inherit);
   color: var(--visual-notes-card-text);
   word-break: break-word;
   cursor: text;
@@ -3303,7 +3358,7 @@ input.visual-notes-table-date-input {
   outline: none;
   font-size: calc(14px * var(--vn-text-mult, 1));
   line-height: 1.5;
-  font-family: var(--font-text);
+  font-family: var(--vn-card-font, var(--font-text));
   color: var(--visual-notes-card-text);
   padding: 0;
   word-break: break-word;
@@ -5540,6 +5595,42 @@ input.visual-notes-accent-pop-hex {
   pointer-events: none;
 }
 
+/* ── Text card ──────────────────────────────────────────────────
+   Bare text on the canvas: no fill, border or shadow, and no wrapping. The
+   box is exactly as wide as the longest line — `white-space: pre` plus
+   width/height left unset by positionCardEl — which is also what lets a
+   resize compute the new box size instead of measuring it. */
+.visual-notes-freeform-text-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  width: max-content;
+  height: max-content;
+}
+
+.visual-notes-text-body,
+.visual-notes-text-editor {
+  white-space: pre;
+  line-height: 1.25;
+  color: var(--visual-notes-card-text);
+  font-family: var(--font-text);
+  /* Padding gives the resize handles something to sit on and stops a
+     descender clipping; kept small so the box still reads as "just text". */
+  padding: 2px 4px;
+  cursor: text;
+}
+
+.visual-notes-text-editor {
+  outline: none;
+  background: transparent;
+  border: none;
+}
+
+.visual-notes-text-body.is-placeholder {
+  opacity: 0.4;
+  font-style: italic;
+}
+
 /* ── Card shapes (blank cards only) ─────────────────────────── */
 
 .visual-notes-sticky-shape-fill {
@@ -5565,6 +5656,17 @@ input.visual-notes-accent-pop-hex {
 }
 
 .visual-notes-freeform-sticky-card.is-shape-round {
+  box-shadow: none;
+}
+
+/* The "Text" tool, and any note switched to "No background": bare text sitting
+   on the canvas. The fill layer is simply left unpainted (see
+   renderStickyContent), so only the card's own chrome needs clearing here.
+   The selection outline and resize handles are deliberately untouched — with
+   no fill drawn they are the only way to tell where the card actually is. */
+.visual-notes-freeform-sticky-card.is-transparent {
+  background: transparent;
+  border: none;
   box-shadow: none;
 }
 
