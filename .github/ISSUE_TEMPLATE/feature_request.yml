@@ -1,0 +1,45 @@
+name: Feature request
+description: Suggest something Visual Notes should be able to do
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are genuinely welcome — a good part of what's in the plugin started as somebody else's suggestion.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe what you're trying to achieve rather than the feature you have in mind. Sometimes there's already a way to do it, and sometimes there's a better one than either of us thought of.
+      placeholder: I'm building moodboards and I want the headings on my notes to be much larger than the body text.
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to see?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the plugin?
+      options:
+        - "Freeform canvas"
+        - "Grid / icon tiles"
+        - "Notes, sticky notes & checklists"
+        - "Kanban"
+        - "Tables"
+        - "Columns & group frames"
+        - "Images, audio & files"
+        - "Bookmarks & maps"
+        - "Drawing (pen & highlighter)"
+        - "Text formatting"
+        - "Templates"
+        - "Mobile / touch"
+        - "Something else"
+    validations:
+      required: false

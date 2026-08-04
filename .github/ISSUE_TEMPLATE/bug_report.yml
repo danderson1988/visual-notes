@@ -1,0 +1,83 @@
+name: Bug report
+description: Something in Visual Notes isn't working the way it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        Two quick checks first — they resolve a surprising number of reports:
+
+        - **Toggle the plugin off and on** (Settings → Community plugins). Obsidian doesn't always pick up a new version until you do, so a bug that was already fixed can look like it's still there.
+        - **If Apple Pencil strokes are vanishing on iPad**, check whether iPadOS **Scribble** is enabled (Settings → Apple Pencil → Scribble). Scribble intercepts fast strokes before the plugin ever sees them, and turning it off has explained every report of this so far.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the problem. Screenshots or a short screen recording help a lot.
+      placeholder: The pen thickness picker doesn't change anything — every stroke comes out the same width.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What should I do to see it happen?
+      placeholder: |
+        1. Open a board
+        2. Pick the pen tool and choose "Thick"
+        3. Draw a stroke
+        4. Choose "Thin" and draw another — both look identical
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Where are you seeing this?
+      options:
+        - "Desktop — Windows"
+        - "Desktop — macOS"
+        - "Desktop — Linux"
+        - "iPad"
+        - "iPhone"
+        - "Android phone"
+        - "Android tablet"
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Visual Notes version
+      description: "Settings → Community plugins → Visual Notes shows the version."
+      placeholder: "1.1.18"
+    validations:
+      required: true
+
+  - type: input
+    id: obsidian-version
+    attributes:
+      label: Obsidian version
+      description: "Settings → About → Current version."
+      placeholder: "1.12.7"
+    validations:
+      required: true
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else?
+      description: Other plugins involved, a custom theme or CSS snippet, or the board's `.canvas` file if you're able to share it.
+    validations:
+      required: false

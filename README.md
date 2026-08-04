@@ -128,7 +128,7 @@ Select any text in a sticky note, checklist, kanban item, or image caption to re
 
 ## Installation
 
-### Community Plugin Browser *(once listed)*
+### Community Plugin Browser
 1. Open **Settings → Community plugins → Browse**
 2. Search for **Visual Notes**
 3. Click **Install**, then **Enable**
@@ -195,6 +195,21 @@ Visual Notes only reads and writes files inside your own vault — it makes no n
 | Obsidian desktop (Mac, Windows, Linux) | ✅ Supported |
 | Obsidian mobile (iOS, iPadOS) | ✅ Supported |
 | Minimum Obsidian version | 1.7.2 |
+
+---
+
+## Reporting bugs & requesting features
+
+Found something broken, or want the plugin to do something it doesn't?
+
+- **[Report a bug](https://github.com/dandersondev/visual-notes/issues/new?template=bug_report.yml)** — the form asks for your Obsidian version, plugin version, and platform, which is usually what decides whether I can reproduce it.
+- **[Request a feature](https://github.com/dandersondev/visual-notes/issues/new?template=feature_request.yml)** — a good part of what's in the plugin started as somebody else's suggestion.
+- **[Browse open issues](https://github.com/dandersondev/visual-notes/issues)** to see what's already known or being worked on.
+
+Two things worth checking before you file:
+
+- **Toggle the plugin off and on after an update.** Obsidian doesn't always load a new version straight away, so an already-fixed bug can look like it's still there.
+- **On iPad, if Apple Pencil strokes vanish**, check whether iPadOS **Scribble** is enabled (Settings → Apple Pencil → Scribble). It intercepts fast strokes before the plugin sees them.
 
 ---
 
