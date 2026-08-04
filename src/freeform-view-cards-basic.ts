@@ -198,6 +198,15 @@ export const cardsBasicMethods = {
     const inner = el.querySelector<HTMLElement>('.visual-notes-sticky-inner') ?? el;
 
     const editor = inner.createDiv('visual-notes-sticky-editor');
+    // Carry the rendered text's colour across. The editor is a *sibling* of
+    // .visual-notes-sticky-text rather than a child, so it inherits none of the
+    // auto-contrast colour renderStickyContent computed from the card's own
+    // background, and would fall back to the theme's --text-normal — near-white
+    // on a pale sticky under a dark theme, which turned the text unreadable the
+    // moment you started editing. Copying the resolved value also picks up an
+    // explicit card.textColor for free. Empty when the card uses a theme-driven
+    // var() colour, which is deliberate: those pair with the CSS-level default.
+    editor.style.color = textEl.style.color;
     editor.contentEditable = 'true';
     editor.empty();
     if (card.text) editor.appendChild(sanitizeHTMLToDom(textEl.innerHTML));

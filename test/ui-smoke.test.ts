@@ -534,6 +534,49 @@ describe('UI smoke: note editor gets the text-format bubble menu (bug #8)', () =
   });
 });
 
+describe('UI smoke: sticky editor text colour', () => {
+  afterEach(() => { document.body.removeClass('theme-dark'); });
+
+  // Reported: editing a pale sticky under a dark theme turned the text
+  // near-white and unreadable. renderStickyContent gives the *rendered* span an
+  // inline auto-contrast color computed from the card's own background, but the
+  // editor is created as a sibling of that span rather than a child, so it
+  // inherited none of it and fell back to the theme's --text-normal.
+  const openEditor = (color: string, textColor?: string) => {
+    document.body.addClass('theme-dark');
+    const sticky: StickyCard = {
+      id: 's1', kind: 'sticky', x: 0, y: 0, w: 240, h: 160, text: 'hi', color,
+      ...(textColor ? { textColor } : {}),
+    };
+    const { renderer, container } = setup([sticky]);
+    const el = container.querySelector<HTMLElement>('.visual-notes-freeform-card[data-id="s1"]')!;
+    const textEl = el.querySelector<HTMLElement>('.visual-notes-sticky-text')!;
+    (renderer as any).editStickyInline(el, sticky);
+    return { textEl, editor: el.querySelector<HTMLElement>('.visual-notes-sticky-editor')! };
+  };
+
+  it('gives the editor the same colour as the rendered text on a light sticky', () => {
+    const { textEl, editor } = openEditor('#FDE68A');
+    // Dark ink on a pale yellow background — the readable pairing.
+    expect(textEl.style.color).toBeTruthy();
+    expect(editor.style.color).toBe(textEl.style.color);
+  });
+
+  it('carries an explicit textColor into the editor too', () => {
+    const { textEl, editor } = openEditor('#FDE68A', '#7f1d1d');
+    expect(editor.style.color).toBe(textEl.style.color);
+  });
+
+  it('leaves the editor to CSS when the sticky uses a theme-driven colour', () => {
+    // A blank Note's color is a var() reference, which has no meaningful
+    // contrast value; those already pair correctly with --visual-notes-card-text,
+    // so neither element should carry an inline colour.
+    const { textEl, editor } = openEditor('var(--visual-notes-card-bg)');
+    expect(textEl.style.color).toBe('');
+    expect(editor.style.color).toBe('');
+  });
+});
+
 describe('UI smoke: context menu commits pending inline edits (bug #5)', () => {
   it('opening a context menu blurs whatever is currently focused, before any menu builds', () => {
     // Regression test for a reported bug: right-click (unlike left-click)
@@ -1970,72 +2013,44 @@ describe('UI smoke: sticky context bar no longer shows the broken Bold/Italic/Un
   });
 });
 
-describe('UI smoke: per-board light/dark appearance', () => {
+describe('UI smoke: board light/dark appearance', () => {
   afterEach(() => { document.body.removeClass('theme-dark'); });
 
-  it('follows Obsidian while the board has never been toggled', () => {
-    // Undefined appearance must keep the pre-existing behaviour, so opening an
-    // old board doesn't suddenly repaint it.
+  it("tracks Obsidian's theme", () => {
+    // Boards could once pin their own surface via a canvas toggle. That was
+    // removed — two independent places to set appearance confused people — so
+    // the theme is now the only input.
     document.body.addClass('theme-dark');
-    const { renderer, board } = setup([]);
-    expect(board.appearance).toBeUndefined();
-    expect(renderer.boardIsDark()).toBe(true);
-    expect(renderer.outer.hasClass('visual-notes-appearance-dark')).toBe(true);
-  });
-
-  it('pins the board light even while Obsidian is dark', () => {
-    document.body.addClass('theme-dark');
-    const { renderer, board } = setup([]);
-
-    renderer.toggleBoardAppearance();
-
-    expect(board.appearance).toBe('light');
-    expect(renderer.boardIsDark()).toBe(false);
-    expect(renderer.outer.hasClass('visual-notes-appearance-light')).toBe(true);
-    expect(renderer.outer.hasClass('visual-notes-appearance-dark')).toBe(false);
-  });
-
-  it("scopes the override to the canvas, leaving the chrome on Obsidian's theme", () => {
-    // The toolbars/context bar/minimap are siblings of outer inside container,
-    // so the class must not land on container or they would flip too.
-    const { renderer, container } = setup([]);
-    renderer.toggleBoardAppearance();
-
-    expect(container.hasClass('visual-notes-appearance-dark')).toBe(false);
-    expect(container.hasClass('visual-notes-appearance-light')).toBe(false);
-  });
-
-  it('survives a canvas round trip', () => {
-    const { renderer, board } = setup([]);
-    renderer.toggleBoardAppearance();
-
-    const round = canvasToVisualNotes(visualNotesToCanvas(board));
-
-    expect(round.appearance).toBe(board.appearance);
-  });
-
-  it("offers swatches matching the board, not Obsidian's theme", () => {
-    // A dark board in a light vault handing out pale pastels is the exact
-    // glare the dark palette exists to avoid.
-    document.body.removeClass('theme-dark');
     const { renderer } = setup([]);
-    expect(renderer.boardIsDark()).toBe(false);
-
-    renderer.toggleBoardAppearance();
-
     expect(renderer.boardIsDark()).toBe(true);
+
+    document.body.removeClass('theme-dark');
+    expect(renderer.boardIsDark()).toBe(false);
+  });
+
+  it('offers swatches matching the theme', () => {
+    // Pale pastels on a dark canvas are the glare the dark palette exists to
+    // avoid.
+    document.body.addClass('theme-dark');
+    const { renderer } = setup([]);
     expect(resolveDefaultStickyColor(undefined, renderer.boardIsDark()))
       .toBe(STICKY_COLORS(true)[0].color);
   });
 
-  it('updates the button to offer the opposite of what the board now is', () => {
-    document.body.removeClass('theme-dark');
-    const { renderer } = setup([]);
-    expect(renderer.themeToggleBtn!.getAttribute('aria-label')).toContain('switch to dark');
+  it('no longer renders an appearance toggle on the canvas', () => {
+    const { container } = setup([]);
+    expect(container.querySelector('.visual-notes-theme-toggle-btn')).toBeNull();
+  });
 
-    renderer.toggleBoardAppearance();
+  it('preserves a legacy pinned appearance through a canvas round trip', () => {
+    // The value is no longer read, but a board written by an older version
+    // must not have it silently stripped out of the user's file on save.
+    const { board } = setup([]);
+    board.appearance = 'dark';
 
-    expect(renderer.themeToggleBtn!.getAttribute('aria-label')).toContain('switch to light');
+    const round = canvasToVisualNotes(visualNotesToCanvas(board));
+
+    expect(round.appearance).toBe('dark');
   });
 });
 

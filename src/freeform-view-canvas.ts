@@ -894,7 +894,6 @@ export const canvasMethods = {
     // at phone widths — the CSS these classes drive is scoped there).
     this.zoomPill?.toggleClass('is-hidden-for-ctx-bar', ctxBarActive);
     this.snapToggleBtn?.toggleClass('is-hidden-for-ctx-bar', ctxBarActive);
-    this.themeToggleBtn?.toggleClass('is-hidden-for-ctx-bar', ctxBarActive);
     this.minimapEl?.toggleClass('is-hidden-for-ctx-bar', ctxBarActive);
   },
 

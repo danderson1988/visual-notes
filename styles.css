@@ -44,75 +44,6 @@ body.theme-dark {
   --visual-notes-shadow-high: 0 8px 28px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.30);
 }
 
-/* ── Board appearance (per-board light/dark) ───────────────────────
-   A board can pin its own surface light or dark regardless of Obsidian's
-   theme — a dark moodboard in a light vault. `board.appearance` drives the
-   class; unset means "follow Obsidian" and neither class is present, which
-   is how every board behaved before this existed.
-
-   These are the one deliberate exception to the rule stated above, that the
-   plugin never hardcodes light/dark pairs and instead derives everything from
-   Obsidian's own variables. Pinning a surface against the active theme is
-   precisely a request for fixed values, so the tier the canvas and cards
-   derive from is redeclared here.
-
-   Scoped to .visual-notes-canvas-outer, NOT the whole container: the
-   toolbars, context bar, pen panel and minimap are siblings of it inside
-   .visual-notes-container, and they keep following Obsidian's theme so the
-   pane's chrome stays consistent with the rest of the app. */
-.visual-notes-canvas-outer.visual-notes-appearance-light {
-  --background-primary: #ffffff;
-  --background-primary-alt: #f8f8f8;
-  --background-secondary: #f2f3f5;
-  --background-secondary-alt: #e8eaed;
-  --background-modifier-border: #dcddde;
-  --background-modifier-hover: rgba(0, 0, 0, 0.05);
-  --background-modifier-active-hover: rgba(0, 0, 0, 0.08);
-  --text-normal: #2e3338;
-  --text-muted: #6e7681;
-  --text-faint: #999da3;
-  --text-on-accent: #ffffff;
-}
-
-.visual-notes-canvas-outer.visual-notes-appearance-dark {
-  --background-primary: #1e1e1e;
-  --background-primary-alt: #1a1a1a;
-  --background-secondary: #161616;
-  --background-secondary-alt: #111111;
-  --background-modifier-border: #333333;
-  --background-modifier-hover: rgba(255, 255, 255, 0.075);
-  --background-modifier-active-hover: rgba(255, 255, 255, 0.12);
-  --text-normal: #dadada;
-  --text-muted: #999999;
-  --text-faint: #6e6e6e;
-  --text-on-accent: #ffffff;
-  /* Shadows are near-invisible over a dark surface at the light-theme
-     opacities, so the canvas takes the dark set even in a light vault. */
-  --visual-notes-shadow-low:  0 1px 3px rgba(0,0,0,0.28), 0 1px 6px rgba(0,0,0,0.18);
-  --visual-notes-shadow-mid:  0 3px 10px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.22);
-  --visual-notes-shadow-high: 0 8px 28px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.30);
-}
-
-/* Re-derive the plugin's own surface vars on the same element. Overriding the
-   base tier above is not enough on its own: these were already computed up on
-   `body`, and a custom property inherits its *computed* value — so without
-   redeclaring them here the canvas backdrop and card fills would keep whatever
-   they resolved to under Obsidian's theme, and only the odd detail that reads a
-   theme var directly would actually flip.
-
-   This also means a pinned appearance takes precedence over the global "Canvas
-   background colour" setting (applied inline on body). That's the intended
-   order: a board-specific choice should beat a global default, the same way a
-   per-card text size beats the global scale. */
-.visual-notes-canvas-outer.visual-notes-appearance-light,
-.visual-notes-canvas-outer.visual-notes-appearance-dark {
-  --visual-notes-card-bg: var(--background-primary);
-  --visual-notes-card-text: var(--text-normal);
-  --visual-notes-column-bg: var(--background-primary);
-  --visual-notes-canvas-bg: var(--background-secondary);
-  --visual-notes-dot-color: var(--background-modifier-border);
-}
-
 /* Container */
 .visual-notes-container {
   display: flex;
@@ -1045,11 +976,6 @@ path.is-marquee-selected {
   .visual-notes-content.mobile-fab-top-left .visual-notes-zoom-pill ~ .visual-notes-snap-toggle-btn {
     left: 88px;
   }
-  .visual-notes-content.mobile-fab-bottom-right .visual-notes-theme-toggle-btn,
-  .visual-notes-content.mobile-fab-top-right .visual-notes-theme-toggle-btn,
-  .visual-notes-content.mobile-fab-top-left .visual-notes-theme-toggle-btn {
-    right: auto; left: 124px;
-  }
   .visual-notes-content.mobile-fab-bottom-right .visual-notes-minimap,
   .visual-notes-content.mobile-fab-top-right .visual-notes-minimap,
   .visual-notes-content.mobile-fab-top-left .visual-notes-minimap {
@@ -1059,7 +985,6 @@ path.is-marquee-selected {
 
   .visual-notes-zoom-pill.is-hidden-for-ctx-bar,
   .visual-notes-snap-toggle-btn.is-hidden-for-ctx-bar,
-  .visual-notes-theme-toggle-btn.is-hidden-for-ctx-bar,
   .visual-notes-minimap.is-hidden-for-ctx-bar {
     display: none;
   }
@@ -1698,37 +1623,6 @@ path.is-marquee-selected {
 .visual-notes-zoom-pill:hover {
   color: var(--interactive-accent);
   border-color: var(--interactive-accent);
-}
-
-/* Third in the bottom-right row, continuing from the zoom pill (right: 16)
-   and the snap toggle (right: 80). */
-.visual-notes-theme-toggle-btn {
-  position: absolute;
-  bottom: 16px;
-  right: 116px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 2px;
-  color: var(--text-muted);
-  cursor: pointer;
-  z-index: 100;
-  box-shadow: var(--visual-notes-shadow-low);
-  transition: color 80ms ease, border-color 80ms ease, background 80ms ease;
-}
-
-.visual-notes-theme-toggle-btn:hover {
-  color: var(--text-normal);
-  border-color: var(--interactive-accent);
-}
-
-.visual-notes-theme-toggle-btn svg {
-  width: 16px;
-  height: 16px;
 }
 
 .visual-notes-snap-toggle-btn {
@@ -3418,7 +3312,11 @@ input.visual-notes-table-date-input {
 
 .visual-notes-sticky-editor:empty::before {
   content: 'Start typing…';
-  color: var(--visual-notes-card-text);
+  /* inherit, not --visual-notes-card-text: the editor carries the card's own
+     auto-contrast colour inline (see editStickyInline), and hard-coding the
+     theme colour here left the placeholder unreadable on a pale sticky under a
+     dark theme. Falls back to the same var via the editor when none is set. */
+  color: inherit;
   opacity: 0.4;
   font-style: italic;
   pointer-events: none;

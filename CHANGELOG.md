@@ -2,6 +2,14 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.19
+
+### Fixed
+- **Note text turned unreadable while you were editing it on a light-coloured card.** Card text is coloured to contrast with the card's own background, so a pale sticky gets dark text — but the editor that opens when you start typing sits outside the element carrying that colour, and fell back to your Obsidian theme's text colour instead. Under a dark theme that meant near-white text on a pale note the moment you clicked into it, and the same applied to the "Start typing…" placeholder on an empty one. Both now use the same colour as the finished text, including any text colour you've picked yourself. Thanks to the user who reported this against 1.1.18 with a clear set of steps.
+
+### Removed
+- **The board light/dark appearance button** has been taken off the canvas controls. Added in 1.1.14, it let a board pin its own light or dark surface regardless of your Obsidian theme, but having two separate places that changed how a board looked caused more confusion than the flexibility was worth. Boards now follow your Obsidian theme, set in **Settings → Appearance** as usual. If you had pinned a board, it will follow your theme from now on — the pinned value is left in the file rather than stripped out, so nothing is removed from your boards.
+
 ## 1.1.18
 
 ### Fixed

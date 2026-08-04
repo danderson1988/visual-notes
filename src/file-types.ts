@@ -4,10 +4,12 @@ export interface VisualNotesFile {
   version: 2 | 3;
   layout: 'grid' | 'freeform';
   dotsHidden?: boolean;
-  // Board's own light/dark surface, independent of Obsidian's theme — a
-  // moodboard can be dark in a light vault. Undefined means "follow
-  // Obsidian", which is how every board behaved before this existed and
-  // stays the default for boards that have never been toggled.
+  // Legacy: a board could once pin its own light/dark surface independently of
+  // Obsidian's theme, set by a toggle on the canvas. The toggle was removed —
+  // having two separate places to change appearance confused people more than
+  // the flexibility helped — and boards now always follow Obsidian's theme.
+  // The field is still parsed and written so an older board keeps its value
+  // rather than having it silently stripped on the next save; nothing reads it.
   appearance?: 'light' | 'dark';
   viewport?: { x: number; y: number; zoom: number }; // freeform only
   cards: Card[];

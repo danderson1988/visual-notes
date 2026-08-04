@@ -50,10 +50,7 @@ declare module './freeform-view' {
     closeFab(): void;
     showAccentColorPopover(cardEl: HTMLElement, card: ChecklistCard): void;
     renderZoomPill(): void;
-    refreshThemeToggleIcon(): void;
     boardIsDark(): boolean;
-    applyBoardAppearance(): void;
-    toggleBoardAppearance(): void;
     renderMinimap(): void;
     computeBoardBBox(): { minX: number; minY: number; maxX: number; maxY: number } | null;
     computeExportBBox(): { minX: number; minY: number; maxX: number; maxY: number } | null;
@@ -661,31 +658,16 @@ export const overlaysMethods = {
     this.contextBar = new ContextBar(tb, this.container, () => this.trashZoneEl, () => this.boardIsDark(), e => this.handleCtxEvent(e));
   },
 
-  // ── Board appearance (own light/dark, independent of Obsidian's theme) ──
+  // ── Board appearance ──
 
-  // An unset `appearance` means "follow Obsidian", which is how every board
-  // behaved before this existed — so untouched boards keep tracking the theme
-  // and only an explicit toggle pins them.
-  boardIsDark(this: FreeformRenderer): boolean {
-    return this.board.appearance ? this.board.appearance === 'dark' : isDarkTheme();
-  },
-
-  // The class goes on `outer` (the canvas viewport), not `container`: the
-  // toolbars, context bar, pen panel and minimap are siblings of outer inside
-  // container, and they deliberately keep following Obsidian's theme so the
-  // pane's chrome stays consistent with the rest of the app.
-  applyBoardAppearance(this: FreeformRenderer): void {
-    const dark = this.boardIsDark();
-    this.outer.toggleClass('visual-notes-appearance-dark', dark);
-    this.outer.toggleClass('visual-notes-appearance-light', !dark);
-  },
-
-  toggleBoardAppearance(this: FreeformRenderer): void {
-    this.pushUndo();
-    this.board.appearance = this.boardIsDark() ? 'light' : 'dark';
-    this.applyBoardAppearance();
-    this.refreshThemeToggleIcon();
-    this.scheduleSave();
+  // Whether the board's surface reads as dark. Sourced from Obsidian's theme
+  // alone: boards could previously pin their own light/dark surface via a
+  // canvas toggle, but two independent places to change appearance confused
+  // people more than the flexibility helped, so the toggle was removed and the
+  // theme is now the single source of truth. A legacy `appearance` value on an
+  // existing board is preserved in the file (see canvas-format) but not read.
+  boardIsDark(): boolean {
+    return isDarkTheme();
   },
 
   renderTrashZone(this: FreeformRenderer): void {
@@ -866,26 +848,6 @@ export const overlaysMethods = {
     setIcon(this.snapToggleBtn, 'magnet');
     this.snapToggleBtn.toggleClass('is-active', this.snapToGridEnabled);
     this.snapToggleBtn.addEventListener('click', () => this.toggleSnapToGrid());
-
-    // Flips this board's own surface (canvas + cards) between light and dark,
-    // independent of Obsidian's theme — so a dark moodboard can live in a
-    // light vault. Saved per-board, so it travels with the file.
-    this.themeToggleBtn = this.container.createDiv('visual-notes-theme-toggle-btn');
-    this.refreshThemeToggleIcon();
-    this.themeToggleBtn.addEventListener('click', () => this.toggleBoardAppearance());
-  },
-
-  // Shows what a click will do: a sun while the board is dark (click for
-  // light), a moon while it's light.
-  refreshThemeToggleIcon(this: FreeformRenderer): void {
-    const btn = this.themeToggleBtn;
-    if (!btn) return;
-    const dark = this.boardIsDark();
-    btn.empty();
-    setIcon(btn, dark ? 'sun' : 'moon');
-    const label = dark ? 'Board appearance: dark — switch to light' : 'Board appearance: light — switch to dark';
-    btn.setAttribute('title', label);
-    btn.setAttribute('aria-label', label);
   },
 
   renderMinimap(this: FreeformRenderer): void {
