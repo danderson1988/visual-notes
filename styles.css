@@ -3335,16 +3335,52 @@ input.visual-notes-table-date-input {
 }
 .visual-notes-sticky-text ul:last-child,
 .visual-notes-sticky-editor ul:last-child { margin-bottom: 0; }
+/* Hanging indent, so every line of an item lines up under its text rather
+   than under its marker. Without it only the *first* line box of an <li>
+   cleared the bullet, which showed up three ways: a <br> from Shift+Enter,
+   naturally wrapped text, and a block child (Obsidian's markdown renderer
+   emits <p> inside a loose list item, as do notes written before bullets
+   existed) — that last one couldn't share a line with the inline marker at
+   all, stranding the bullet on a line of its own.
+
+   Deliberately NOT flex or grid on the <li>: those wrap every bare text run
+   and inline element in its own anonymous item, so <br>, <strong> and the
+   colour/size spans this editor produces would each become a separate box. */
+.visual-notes-sticky-text ul,
+.visual-notes-sticky-editor ul {
+  /* The two knobs. --vn-bullet-w is the marker's own box; --vn-bullet-gap is
+     the distance from it to the text, tuned by eye. */
+  --vn-bullet-w: 0.5em;
+  --vn-bullet-gap: 0.3em;
+  --vn-bullet-indent: calc(var(--vn-bullet-w) + var(--vn-bullet-gap));
+}
 .visual-notes-sticky-text li,
-.visual-notes-sticky-editor li { margin: 0 0 2px; padding-left: 0; }
+.visual-notes-sticky-editor li {
+  margin: 0 0 2px;
+  padding-left: var(--vn-bullet-indent);
+  text-indent: calc(-1 * var(--vn-bullet-indent));
+}
+/* Block children start at the text column, not pulled back by the negative
+   indent they'd otherwise inherit. */
+.visual-notes-sticky-text li > *,
+.visual-notes-sticky-editor li > * { text-indent: 0; }
+/* …except the first one, which is inlined so the marker keeps its company. */
+.visual-notes-sticky-text li > p:first-child,
+.visual-notes-sticky-editor li > p:first-child,
+.visual-notes-sticky-text li > div:first-child,
+.visual-notes-sticky-editor li > div:first-child { display: inline; }
 /* No font-size here on purpose: inheriting the <li> is what makes the bullet
    grow with a resized item (see hoistListItemSizes, which puts whole-item
-   sizes on the <li> rather than a nested span). Tune the gap with
-   margin-right alone. */
+   sizes on the <li> rather than a nested span). */
 .visual-notes-sticky-text li::before,
 .visual-notes-sticky-editor li::before {
   content: '•';
-  margin-right: 0.3em;
+  /* Explicit box, so the hanging indent above is exact rather than a guess at
+     the glyph's advance width. */
+  display: inline-block;
+  width: var(--vn-bullet-w);
+  margin-right: var(--vn-bullet-gap);
+  text-indent: 0;
   line-height: inherit;
 }
 .visual-notes-sticky-editor p { margin: 0 0 4px; }

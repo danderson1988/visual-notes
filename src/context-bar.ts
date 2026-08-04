@@ -3,6 +3,7 @@ import {
   Card, StickyTextScale, STICKY_TEXT_SCALES, StickyFontFamily, STICKY_FONT_FAMILIES,
   TEXT_CARD_FONT_PRESETS,
 } from './file-types';
+import { placeFloatingPanel } from './floating-placement';
 
 export type CtxEvent =
   | { type: 'delete' }
@@ -158,30 +159,26 @@ export class ContextBar {
     const cardEl = this.currentCardEl;
     if (!cardEl) return;
     const cardRect = cardEl.getBoundingClientRect();
-    const contRect = this.container.getBoundingClientRect();
-    const panelW = this.ctxPanelEl.offsetWidth;
-    const panelH = this.ctxPanelEl.offsetHeight;
-    const gap = 8;
-    let left = (cardRect.left + cardRect.right) / 2 - contRect.left - panelW / 2;
-    let top = cardRect.top - contRect.top - panelH - gap;
-    if (top < 4) top = cardRect.bottom - contRect.top + gap; // no room above — flip below
-    const margin = 4;
-    left = Math.max(margin, Math.min(left, contRect.width - margin - panelW));
-    top = Math.max(margin, Math.min(top, contRect.height - margin - panelH));
-    this.ctxPanelEl.setCssStyles({ top: `${top}px`, left: `${left}px`, right: '', bottom: '' });
 
-    // Still overlapping the bottom-left trash zone? Nudge above it instead
-    // of just clamping sideways — same fix positionPenPicker already needed.
+    // The card is in `avoid`, not just used as the anchor: clamping the panel
+    // back inside the container is what used to park it on top of a card
+    // taller than the viewport, so the overlap pass has to run after the
+    // clamp and win. The trash zone is the same idea — it used to need its own
+    // bespoke nudge here, and now goes through the same path.
+    const avoid = [cardRect];
     const trash = this.getTrashZoneEl();
-    if (!trash) return;
-    const pRect = this.ctxPanelEl.getBoundingClientRect();
-    const tRect = trash.getBoundingClientRect();
-    const overlaps = pRect.left < tRect.right + margin && pRect.right > tRect.left - margin
-      && pRect.top < tRect.bottom + margin && pRect.bottom > tRect.top - margin;
-    if (overlaps) {
-      const flippedTop = Math.max(margin, tRect.top - contRect.top - panelH - margin);
-      this.ctxPanelEl.setCssStyles({ top: `${flippedTop}px` });
-    }
+    if (trash) avoid.push(trash.getBoundingClientRect());
+
+    const { top, left } = placeFloatingPanel({
+      anchor: cardRect,
+      container: this.container.getBoundingClientRect(),
+      panelW: this.ctxPanelEl.offsetWidth,
+      panelH: this.ctxPanelEl.offsetHeight,
+      prefer: 'above',
+      avoid,
+    });
+
+    this.ctxPanelEl.setCssStyles({ top: `${top}px`, left: `${left}px`, right: '', bottom: '' });
   }
 
   // Sub-panels (color grid, bg/strip tabs) resize the already-visible panel

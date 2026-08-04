@@ -7,6 +7,7 @@
 
 import { setIcon, Platform } from 'obsidian';
 import { hoistListItemSizes } from './bullet-list';
+import { placeFloatingPanel, Rect } from './floating-placement';
 
 const TEXT_COLORS: (string | null)[] = [
   null,      // Default — removes colour
@@ -214,30 +215,34 @@ export class TextFormatToolbar {
     window.requestAnimationFrame(() => {
       if (!this.popover || !this.savedRange) return;
 
-      const rects   = this.savedRange.getClientRects();
-      const contRect = this.container.getBoundingClientRect();
-      const popW    = pop.offsetWidth;
-      const popH    = pop.offsetHeight;
-      const contW   = this.container.clientWidth;
+      // Anchored to the card, not to the selection. Anchoring to the selection
+      // meant "above the selected text" — which on anything but a short card
+      // with the selection near its top is directly on top of the note being
+      // edited. Horizontal centring still follows the selection, so the
+      // popover stays near where you're typing without ever covering it.
+      const rects = this.savedRange.getClientRects();
+      const centerOn = rects.length > 0
+        ? (rects[0].left + rects[rects.length - 1].right) / 2
+        : undefined;
 
-      let selLeft: number, selRight: number, selTop: number, selBottom: number;
-      if (rects.length > 0) {
-        selLeft   = rects[0].left;
-        selRight  = rects[rects.length - 1].right;
-        selTop    = Math.min(...Array.from(rects).map(r => r.top));
-        selBottom = Math.max(...Array.from(rects).map(r => r.bottom));
-      } else {
-        const fb = this.cardEl.getBoundingClientRect();
-        selLeft = fb.left; selRight = fb.right;
-        selTop  = fb.top;  selBottom = fb.bottom;
+      // The context bar prefers the space above a card, so this takes the
+      // space below — the two only need avoidance for the cases where one of
+      // them has to flip.
+      const avoid: Rect[] = [];
+      const ctxBar = this.container.querySelector<HTMLElement>('.visual-notes-ctx-bar-panel');
+      if (ctxBar && !ctxBar.hasClass('visual-notes-invisible')) {
+        avoid.push(ctxBar.getBoundingClientRect());
       }
 
-      let left = (selLeft + selRight) / 2 - contRect.left - popW / 2;
-      let top  = selTop  - contRect.top  - popH - 8;
-
-      if (top < 4) top = selBottom - contRect.top + 8; // flip below
-      if (left < 4) left = 4;
-      if (left + popW > contW - 4) left = contW - 4 - popW;
+      const { top, left } = placeFloatingPanel({
+        anchor: this.cardEl.getBoundingClientRect(),
+        container: this.container.getBoundingClientRect(),
+        panelW: pop.offsetWidth,
+        panelH: pop.offsetHeight,
+        prefer: 'below',
+        centerOn,
+        avoid,
+      });
 
       pop.style.top  = `${top}px`;
       pop.style.left = `${left}px`;

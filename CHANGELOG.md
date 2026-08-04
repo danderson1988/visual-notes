@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.21
+
+### Fixed
+- **Bullet points lost their indent on continuation lines.** Starting a bullet and then pressing Shift+Enter to add more lines to that same bullet left those lines flush against the marker instead of lined up under the text. The same fault also affected any bullet long enough to wrap on its own, and — more visibly — notes written before bullets existed, where a single bullet holding several paragraphs rendered with its marker stranded on a line of its own. All three were the same thing: list items had no hanging indent, so only the *first* line of an item ever cleared the bullet. Reported with an exceptionally clear write-up and side-by-side screenshots; thank you.
+- **The formatting popover could cover the note you were editing.** It positioned itself above the *selected text*, which meant that selecting anything below the first line or two put it directly over the rest of the note. It now sits clear of the card entirely — below it by default, since the card's own toolbar takes the space above — while still following your selection left and right so it stays near what you're working on. It also no longer lands on top of the toolbar when it has to flip, and the toolbar can no longer be pushed onto a card taller than the window.
+
 ## 1.1.20
 
 ### Added
