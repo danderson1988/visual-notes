@@ -1,7 +1,7 @@
 import { FileView, WorkspaceLeaf, TFile, Notice, setIcon } from 'obsidian';
 import type VisualNotesPlugin from './main';
 import { VisualNotesFile } from './file-types';
-import { readBoardFile, writeBoardFile, isVisualNotesOwnedFile, NATIVE_BAK_SUFFIX } from './file-io';
+import { readBoardFile, writeBoardFile, classifyCanvasFile, NATIVE_BAK_SUFFIX } from './file-io';
 import { GridRenderer } from './grid-view';
 import { FreeformRenderer } from './freeform-view';
 import { DEFAULT_PEN_DRAW_OPTIONS } from './pen-options-panel';
@@ -49,7 +49,12 @@ export class VisualNotesView extends FileView {
     // to share the extension. Never render those with Visual Notes' UI —
     // hand the leaf straight back to Obsidian's real native Canvas view
     // instead.
-    if (file.extension === 'canvas' && !(await isVisualNotesOwnedFile(this.app, file))) {
+    // Only a file that reads cleanly AND isn't ours goes to native Canvas.
+    // A file we couldn't read falls through to readBoardFile instead, which
+    // backs it up, says so, and returns a board that can never be written
+    // back — because native Canvas rewrites whatever it's given, so handing
+    // it an unparsed board is how a bad read becomes permanent damage.
+    if (file.extension === 'canvas' && (await classifyCanvasFile(this.app, file)) === 'foreign') {
       await this.leaf.setViewState({ type: NATIVE_CANVAS_VIEW_TYPE, state: { file: file.path } });
       return;
     }

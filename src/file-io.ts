@@ -16,6 +16,13 @@ const CORRUPT_BAK_SUFFIX = '.bak';
 // neither can clobber the other.
 export const NATIVE_BAK_SUFFIX = '.native-backup.bak';
 
+// Written when a save is about to replace a board that has cards on disk with
+// one that has none. Clearing a whole board by hand is legitimate and rare, so
+// this never blocks the write — but every route to total board loss ends at
+// this same shape of write, whatever caused it upstream, so a snapshot here
+// makes the damage recoverable without needing to know the cause first.
+export const EMPTIED_BAK_SUFFIX = '.before-empty.bak';
+
 // `overwrite: false` keeps the earliest copy (best when the current state is
 // the damaged one); `true` refreshes it (best when the current state is known
 // good and a newer snapshot is strictly more useful).
@@ -53,7 +60,16 @@ export async function backupBeforeNativeEdit(app: App, file: TFile): Promise<boo
 // ── Read ──────────────────────────────────────────────────────
 
 export async function readBoardFile(app: App, file: TFile): Promise<VisualNotesFile> {
-  const raw = await app.vault.read(file);
+  let raw: string;
+  try {
+    raw = await app.vault.read(file);
+  } catch {
+    // Previously this rejected and the caller had nothing to catch it. Now it
+    // returns a board flagged unreadable, which renders as empty but can
+    // never be written back — so a file we couldn't even open is left alone.
+    new Notice(`Visual Notes: Could not open "${file.name}". The file has been left untouched.`, 8000);
+    return unreadableBoard();
+  }
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') throw new Error('Not a valid canvas/board file');
@@ -84,30 +100,97 @@ export async function readBoardFile(app: App, file: TFile): Promise<VisualNotesF
     } catch { /* ignore */ }
     new Notice(
       `Visual Notes: Could not read "${file.name}" — it may be corrupted. ` +
-      `A backup was saved as "${file.name}${CORRUPT_BAK_SUFFIX}".`,
+      `A backup was saved as "${file.name}${CORRUPT_BAK_SUFFIX}", and the file has been left untouched.`,
       8000
     );
-    return emptyBoard('grid');
+    return unreadableBoard();
+  }
+}
+
+/** The placeholder returned when a file can't be read: renders empty, never saves. */
+function unreadableBoard(): VisualNotesFile {
+  const board = emptyBoard('grid');
+  board.unreadable = true;
+  return board;
+}
+
+/**
+ * What a `.canvas` file is, from Visual Notes' point of view.
+ *
+ * `unreadable` is deliberately its own answer rather than being folded into
+ * `foreign`. Those two demand opposite responses: a foreign canvas should be
+ * handed to Obsidian's native Canvas view, whereas a file we merely failed to
+ * read must NOT be — native Canvas rebuilds a file from its own model when it
+ * saves, so handing it a board we couldn't parse is how a transient read
+ * error turns into permanent loss of the board's metadata. "I couldn't read
+ * this" has to mean stop, not hand it to something that will rewrite it.
+ */
+export type CanvasFileKind = 'ours' | 'foreign' | 'unreadable';
+
+export async function classifyCanvasFile(app: App, file: TFile): Promise<CanvasFileKind> {
+  let raw: string;
+  try {
+    raw = await app.vault.read(file);
+  } catch {
+    return 'unreadable';
+  }
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    // A genuinely foreign canvas is still valid JSON with an object at the
+    // root; anything else means we can't tell what this file is.
+    if (!parsed || typeof parsed !== 'object') return 'unreadable';
+    return isVisualNotesCanvas(parsed as CanvasData) ? 'ours' : 'foreign';
+  } catch {
+    return 'unreadable';
   }
 }
 
 /** True if the given vault file is a JSON Canvas authored by Visual Notes (carries our `vn` marker, or the legacy `ib` one). */
 export async function isVisualNotesOwnedFile(app: App, file: TFile): Promise<boolean> {
-  try {
-    const raw = await app.vault.read(file);
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return false;
-    return isVisualNotesCanvas(parsed as CanvasData);
-  } catch {
-    return false;
-  }
+  return (await classifyCanvasFile(app, file)) === 'ours';
 }
 
 // ── Write ─────────────────────────────────────────────────────
 
 export async function writeBoardFile(app: App, file: TFile, board: VisualNotesFile): Promise<void> {
+  // A board we failed to read is a placeholder, not the user's data. Writing
+  // it back is precisely how an unreadable file becomes an empty one.
+  if (board.unreadable) return;
+  await snapshotIfEmptying(app, file, board);
   const data = visualNotesToCanvas(board);
   await app.vault.modify(file, JSON.stringify(data, null, 2));
+}
+
+/**
+ * Backs the file up when this write would take a board from having cards on
+ * disk to having none.
+ *
+ * Deliberately does not block the write: clearing a board by hand is a real
+ * thing to do, and refusing would break it. The value is that total loss
+ * becomes recoverable no matter which upstream path caused it — a guard at
+ * the point of damage rather than at each of the many ways to reach it.
+ *
+ * The backup is refreshed rather than kept-earliest (unlike the corrupt-file
+ * one): the pre-empty state is by definition the fuller of the two, so the
+ * most recent snapshot is always the most useful.
+ */
+async function snapshotIfEmptying(app: App, file: TFile, board: VisualNotesFile): Promise<void> {
+  if (board.cards.length > 0) return;
+  try {
+    const raw = await app.vault.read(file);
+    const parsed: unknown = JSON.parse(raw);
+    const nodes = (parsed as CanvasData | null)?.nodes;
+    if (!Array.isArray(nodes) || nodes.length === 0) return;
+    await writeBackup(app, file.path + EMPTIED_BAK_SUFFIX, raw, true);
+    new Notice(
+      `Visual Notes: "${file.basename}" just went from ${nodes.length} item${nodes.length === 1 ? '' : 's'} ` +
+      `to empty. If that wasn't deliberate, the previous version is saved as ` +
+      `"${file.name}${EMPTIED_BAK_SUFFIX}".`,
+      12000
+    );
+  } catch {
+    // Nothing readable on disk to preserve — the write is no worse than what's there.
+  }
 }
 
 // ── Create ────────────────────────────────────────────────────

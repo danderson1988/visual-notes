@@ -2,6 +2,18 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.23
+
+### Added
+- **A board can no longer be emptied without a copy being kept.** If a save is about to replace a board that has cards in it with one that has none, the previous contents are written alongside it as `YourBoard.canvas.before-empty.bak` first, and a message tells you it happened. Clearing a board yourself still works exactly as before — this never blocks the change, it just means the previous version is always there to go back to.
+
+### Fixed
+- **A board that couldn't be read could be overwritten with an empty one.** If a board file failed to open or parse, what appeared on screen was an empty placeholder — and the next automatic save wrote that placeholder over the real file. The placeholder is now marked as such and is never saved, so a file we can't read is left exactly as it is.
+- **A board that couldn't be read is no longer handed to Obsidian's native Canvas.** Visual Notes passes `.canvas` files it doesn't recognise to Obsidian's own Canvas view, which is correct for a canvas made elsewhere — but a file that merely *failed to read* was treated the same way, and native Canvas rebuilds a file from its own model when it saves, which drops Visual Notes' board data. "Couldn't read this file" now means stop, not hand it to something that will rewrite it.
+
+### Note
+This release is a response to a report of a board opening empty, which we have not yet been able to reproduce. It does not claim to fix the cause. What it does is make that outcome recoverable rather than permanent, and visible rather than silent — and if it happens again, the presence or absence of the `.before-empty.bak` file says which half of the code to look in. Thanks to the user who reported it and patiently answered several rounds of questions.
+
 ## 1.1.22
 
 ### Fixed

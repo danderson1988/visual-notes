@@ -50,6 +50,12 @@ export class FakeVault {
     return this.entries.has(path) || this.folders.has(path);
   }
 
+  // Lets a test hold a valid TFile whose content is gone, which is how a read
+  // failure is simulated — vault.read throws for anything not in the map.
+  remove(path: string): void {
+    this.entries.delete(path);
+  }
+
   toApp(): App {
     const vault = {
       getAbstractFileByPath: (path: string) => {

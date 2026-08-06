@@ -32,6 +32,13 @@ export interface VisualNotesFile {
   // metadata stripped by native Canvas, so the view knows to write the root
   // block straight back out and tell the user what was recovered.
   recoveredFromNativeEdit?: boolean;
+
+  // Runtime-only, never serialized. Set by readBoardFile when the file could
+  // not be read or parsed, so what's in memory is a placeholder rather than
+  // the user's board. writeBoardFile refuses to write a board carrying this,
+  // which is what stops a failed read from overwriting a real board with an
+  // empty one on the next autosave.
+  unreadable?: boolean;
 }
 
 // ── Drawing (free-floating pen ink) ─────────────────────────────
