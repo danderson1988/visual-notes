@@ -18,7 +18,7 @@ function setup(boardPaths: string[], currentPath: string) {
   const app = fakeApp(vault);
   const currentFile = app.vault.getAbstractFileByPath(currentPath) as TFile;
   expect(currentFile).toBeTruthy();
-  return { app, currentFile };
+  return { vault, app, currentFile };
 }
 
 describe('TileModal: self-link prevention (bug: tile pointing at its own board)', () => {
@@ -67,5 +67,81 @@ describe('TileModal: self-link prevention (bug: tile pointing at its own board)'
     expect(onSave).toHaveBeenCalledTimes(1);
     const saved = onSave.mock.calls[0][0] as TileCard;
     expect(saved.target).toEqual({ kind: 'board', path: 'Other.canvas' });
+  });
+});
+
+// An empty target used to be rejected outright ("Please select a target"),
+// which forced every new board through a second, nested NamePromptModal that
+// asked for a name the user had already typed as the tile's label. Leaving
+// the target empty now means "make one named after the label" instead.
+describe('TileModal: create-on-save when no target is picked', () => {
+  it('creates a nested board named after the label and points the tile at it', async () => {
+    const { vault, app, currentFile } = setup(['Home.canvas'], 'Home.canvas');
+    const onSave = vi.fn();
+    const modal = new TileModal(app, null, onSave, currentFile);
+    (modal as any).tile.label = 'My tile';
+    (modal as any).targetKind = 'board';
+
+    await (modal as any).handleSaveClick();
+
+    // Nested under a folder named after the current board's stem
+    expect(vault.has('Home/My tile.canvas')).toBe(true);
+    expect(onSave).toHaveBeenCalledTimes(1);
+    const saved = onSave.mock.calls[0][0] as TileCard;
+    expect(saved.target).toEqual({ kind: 'board', path: 'Home/My tile.canvas' });
+  });
+
+  it('creates a plain canvas for a canvas-kind tile', async () => {
+    const { vault, app, currentFile } = setup(['Home.canvas'], 'Home.canvas');
+    const onSave = vi.fn();
+    const modal = new TileModal(app, null, onSave, currentFile, 'canvas');
+    (modal as any).tile.label = 'Sketches';
+
+    await (modal as any).handleSaveClick();
+
+    expect(JSON.parse(vault.textAt('Sketches.canvas'))).toEqual({ nodes: [], edges: [] });
+    expect((onSave.mock.calls[0][0] as TileCard).target)
+      .toEqual({ kind: 'canvas', path: 'Sketches.canvas' });
+  });
+
+  it('creates nothing when the label is empty', async () => {
+    const { vault, app, currentFile } = setup(['Home.canvas'], 'Home.canvas');
+    const onSave = vi.fn();
+    const modal = new TileModal(app, null, onSave, currentFile);
+    (modal as any).targetKind = 'board';
+
+    await (modal as any).handleSaveClick();
+
+    // The label guard has to run before creation, or a rejected click would
+    // still leave a stray board behind.
+    expect(vault.has('Home/.canvas')).toBe(false);
+    expect(vault.has('Home/New Visual Notes board.canvas')).toBe(false);
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('leaves an explicitly chosen target alone rather than creating a second board', async () => {
+    const { vault, app, currentFile } = setup(['Home.canvas', 'Other.canvas'], 'Home.canvas');
+    const onSave = vi.fn();
+    const modal = new TileModal(app, null, onSave, currentFile);
+    (modal as any).tile.label = 'My tile';
+    (modal as any).targetKind = 'board';
+    (modal as any).targetPath = 'Other.canvas';
+
+    await (modal as any).handleSaveClick();
+
+    expect(vault.has('Home/My tile.canvas')).toBe(false);
+    expect((onSave.mock.calls[0][0] as TileCard).target)
+      .toEqual({ kind: 'board', path: 'Other.canvas' });
+  });
+
+  it('still refuses a note tile with no target, rather than inventing an empty note', async () => {
+    const { app, currentFile } = setup(['Home.canvas'], 'Home.canvas');
+    const onSave = vi.fn();
+    const modal = new TileModal(app, null, onSave, currentFile, 'note');
+    (modal as any).tile.label = 'My tile';
+
+    await (modal as any).handleSaveClick();
+
+    expect(onSave).not.toHaveBeenCalled();
   });
 });

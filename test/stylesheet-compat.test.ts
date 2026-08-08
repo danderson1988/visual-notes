@@ -29,6 +29,29 @@ describe('stylesheet: no browser features Obsidian flags as partial', () => {
   }
 });
 
+// This span shares a flex row with the Browse/Create buttons, so its
+// min-content width is what decides whether the buttons can squeeze it into a
+// vertical column. break-all puts that minimum at a single character, which is
+// how "New board from label" came to render one letter per line; break-word
+// leaves it at the longest word. overflow-wrap: anywhere looks like the same
+// fix but shrinks min-content the same way break-all does, so it is barred too.
+describe('stylesheet: the modal path display cannot collapse to a vertical column', () => {
+  const rule = declarations.match(/\.visual-notes-modal-path-display\s*\{[^}]*\}/)?.[0] ?? '';
+
+  it('still has a rule to constrain', () => {
+    expect(rule).not.toBe('');
+  });
+
+  it('never breaks at arbitrary characters', () => {
+    expect(rule).not.toMatch(/word-break:\s*break-all/);
+    expect(rule).not.toMatch(/overflow-wrap:\s*anywhere/);
+  });
+
+  it('still wraps a long vault path rather than overflowing the modal', () => {
+    expect(rule).toMatch(/overflow-wrap:\s*break-word/);
+  });
+});
+
 describe('stylesheet: bullet hanging indent survives without text-indent', () => {
   // The indent is what keeps continuation lines (Shift+Enter, natural wraps,
   // a multi-paragraph item) under the text instead of under the marker. It is

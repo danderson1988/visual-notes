@@ -2,6 +2,15 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.24
+
+### Added
+- **A default folder for new boards.** Settings → **Default folder for new boards** sets where boards are created, so the **Location** field arrives already pointing where you keep them instead of at the vault root every single time. Creating a board by right-clicking a folder in the file explorer still uses *that* folder — pointing at a folder is a clearer instruction than a setting — and **Reset** in the New board window now returns to your chosen default rather than to the vault root. Requested by a user; thank you.
+
+### Changed
+- **Adding a board tile no longer asks for the name twice.** Adding a tile meant typing a **Label**, then pressing **Create new…**, which opened a second window on top of the first asking for a **board name** — the name you had just typed. Leaving the target empty now creates that board for you, named after the label, when you press **Create**. Everything that worked before still works: **Browse…** points a tile at a board you already have, and **Create new…** is still there for when you want the board named something other than the tile. Tiles that point at a **note** or a **folder** are unchanged and still ask you to choose one, since those are links to something that already exists rather than something the tile implies making.
+- **The tile window's button now reads "Create" when you're adding a tile**, and "Save" only when you're editing one — it can now genuinely create a file, so calling it Save was understating what it did.
+
 ## 1.1.23
 
 ### Added

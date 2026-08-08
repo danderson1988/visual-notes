@@ -379,12 +379,20 @@ export class TileModal extends Modal {
         : this.targetKind === 'canvas' ? 'Canvas file'
         : 'Note';
 
+      // Only a canvas target can be conjured from the label alone. A note or
+      // folder tile is a link to something that already exists, so an empty
+      // target there stays a validation error rather than silently spawning
+      // an empty note the user never asked for.
+      const createsOnSave = this.targetKind === 'canvas';
+
       const pathSetting = new Setting(contentEl)
         .setName('Target')
-        .setDesc(`Choose the ${label.toLowerCase()} to open when clicked`);
+        .setDesc(createsOnSave
+          ? 'Leave empty to create a new canvas named after the label, or choose an existing one.'
+          : `Choose the ${label.toLowerCase()} to open when clicked`);
 
       const pathDisplay = pathSetting.controlEl.createSpan('visual-notes-modal-path-display' + (this.targetPath ? '' : ' is-empty'));
-      pathDisplay.setText(this.targetPath || 'None selected');
+      pathDisplay.setText(this.targetPath || (createsOnSave ? 'New canvas from label' : 'None selected'));
 
       pathSetting.addButton(btn =>
         btn.setButtonText('Browse…').onClick(() => {
@@ -439,15 +447,16 @@ export class TileModal extends Modal {
 
       const pathSetting = new Setting(contentEl)
         .setName('Target board')
+        // Leaving this empty is the normal path, not an error — see
+        // handleSaveClick. The board this tile lives on is deliberately not
+        // offered (a tile linking to its own board would have nowhere to go),
+        // so in a fresh vault there may be nothing to browse at all.
         .setDesc(boardPaths.length > 0
-          ? 'Choose an existing board or create a new nested one'
-          // The board this tile lives on is deliberately not offered (a tile
-          // linking to its own board would have nowhere to go) — in a fresh
-          // vault that can leave nothing to browse, which needs saying.
-          : 'No other boards exist yet — create a new nested one below');
+          ? 'Leave empty to create a new nested board named after the label, or choose an existing one.'
+          : 'Leave empty to create a new nested board named after the label.');
 
       const pathDisplay = pathSetting.controlEl.createSpan('visual-notes-modal-path-display' + (this.targetPath ? '' : ' is-empty'));
-      pathDisplay.setText(this.targetPath || 'None selected');
+      pathDisplay.setText(this.targetPath || 'New board from label');
 
       if (boardPaths.length > 0) {
         pathSetting.addButton(btn =>
@@ -463,21 +472,10 @@ export class TileModal extends Modal {
       pathSetting.addButton(btn =>
         btn.setButtonText('Create new…').onClick(() => {
           new NamePromptModal(this.app, 'New nested board', 'Board name', (name) => { void (async () => {
-            // Nested boards live in a folder named after the current board stem
-            let folderPath = '';
-            if (this.currentFile) {
-              folderPath = this.currentFile.path.replace(/\.canvas$/, '');
-            }
-            if (folderPath && !this.app.vault.getAbstractFileByPath(folderPath)) {
-              try { await this.app.vault.createFolder(folderPath); } catch { /* already exists */ }
-            }
-            const folderAbstract = folderPath ? this.app.vault.getAbstractFileByPath(folderPath) : null;
-            const folder = folderAbstract instanceof TFolder ? folderAbstract : null;
-            try {
-              const newFile = await createBoardFile(this.app, name, folder, 'freeform');
-              this.targetPath = newFile.path;
-              this.render();
-            } catch { new Notice('Failed to create board.'); }
+            const newFile = await this.createNestedBoard(name);
+            if (!newFile) return;
+            this.targetPath = newFile.path;
+            this.render();
           })(); }).open();
         })
       );
@@ -488,8 +486,68 @@ export class TileModal extends Modal {
     btnRow.createEl('button', { text: 'Cancel', cls: 'visual-notes-modal-cancel' })
       .addEventListener('click', () => this.close());
 
-    const saveBtn = btnRow.createEl('button', { text: 'Save', cls: 'mod-cta visual-notes-modal-save' });
-    saveBtn.addEventListener('click', () => { this.trySave(); });
+    // "Create" while adding, because the click can now genuinely create the
+    // target file; "Save" while editing, where it only ever updates the tile.
+    const saveBtn = btnRow.createEl('button', {
+      text: this.isEditing ? 'Save' : 'Create',
+      cls: 'mod-cta visual-notes-modal-save',
+    });
+    saveBtn.addEventListener('click', () => { void this.handleSaveClick(); });
+  }
+
+  // Creating the target is the default action rather than an error case: the
+  // label almost always IS the name the new board should get, so demanding a
+  // separate "Create new…" trip through NamePromptModal asked for the same
+  // name twice. Browsing to an existing target still overrides this.
+  private async handleSaveClick(): Promise<void> {
+    const label = this.tile.label?.trim();
+    // Checked before anything is created — trySave rejects an empty label
+    // anyway, and creating the file first would leave a stray board behind
+    // for a click that then failed validation.
+    if (!label) { new Notice('Please enter a label.'); return; }
+
+    if (!this.targetPath && (this.targetKind === 'board' || this.targetKind === 'canvas')) {
+      const path = await this.createTargetFromLabel(label);
+      if (!path) return;
+      this.targetPath = path;
+    }
+
+    this.trySave();
+  }
+
+  // Returns the new file's path, or null if creation failed (the failure is
+  // reported to the user here, so callers just bail).
+  private async createTargetFromLabel(name: string): Promise<string | null> {
+    if (this.targetKind === 'board') {
+      const file = await this.createNestedBoard(name);
+      return file?.path ?? null;
+    }
+    // 'canvas' — a plain Obsidian canvas, matching what "Create new…" makes
+    // for this kind, and placed beside the current board rather than nested.
+    const basePath = this.currentFile?.parent?.path ?? '';
+    const sep = basePath ? '/' : '';
+    try {
+      const f = await this.app.vault.create(basePath + sep + name + '.canvas', '{"nodes":[],"edges":[]}');
+      return f.path;
+    } catch { new Notice('Failed to create canvas.'); return null; }
+  }
+
+  // Nested boards live in a folder named after the current board's stem, so a
+  // board and the boards reached from it stay together. Shared by the
+  // "Create new…" button and the create-on-save path so the two can't drift.
+  private async createNestedBoard(name: string): Promise<TFile | null> {
+    let folderPath = '';
+    if (this.currentFile) {
+      folderPath = this.currentFile.path.replace(/\.canvas$/, '');
+    }
+    if (folderPath && !this.app.vault.getAbstractFileByPath(folderPath)) {
+      try { await this.app.vault.createFolder(folderPath); } catch { /* already exists */ }
+    }
+    const folderAbstract = folderPath ? this.app.vault.getAbstractFileByPath(folderPath) : null;
+    const folder = folderAbstract instanceof TFolder ? folderAbstract : null;
+    try {
+      return await createBoardFile(this.app, name, folder, 'freeform');
+    } catch { new Notice('Failed to create board.'); return null; }
   }
 
   // Validation + save, extracted from the button handler so the self-link

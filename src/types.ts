@@ -22,6 +22,7 @@ export interface VisualNotesSettings {
 
   // v2 fields
   defaultBoardPath?: string;    // path to the board opened by the ribbon/command
+  defaultNewBoardFolder?: string; // folder new boards are created in; unset = vault root
   v2migrationDone?: boolean;    // prevents re-running migration
   legacyBackup?: Tile[];        // copy of v1 rootTiles saved during migration
   preImportBackup?: Tile[];     // rootTiles as they were just before the last JSON tile import

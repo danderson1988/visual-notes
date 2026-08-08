@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting, Notice, FuzzySuggestModal, TFile, type SettingDefinitionItem } from 'obsidian';
 import type VisualNotesPlugin from './main';
 import { ConfirmModal } from './tile-modal';
+import { FolderSuggestModal } from './create-board-modal';
 import { validateTileImport } from './settings-validate';
 import { relinkAllBoards } from './asset-manager';
 import { STICKY_COLORS, resolveDefaultStickyColor } from './freeform-view-shared';
@@ -74,6 +75,8 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
         render: (s) => this.buildOpenOnStartup(s) },
       { name: 'Default board', desc: 'Board opened when you click the ribbon icon or use the "Open" command.',
         render: (s) => this.buildDefaultBoard(s) },
+      { name: 'Default folder for new boards', desc: 'Folder pre-selected as the location when you create a board. Creating a board inside a folder you right-clicked still uses that folder.',
+        render: (s) => this.buildDefaultNewBoardFolder(s) },
       { type: 'group', heading: 'Freeform canvas', items: [
         { name: 'Pan the canvas with', desc: 'Which mouse button drags the freeform canvas around. Space+left-click always works no matter what you pick here. Takes effect when you next open a board.',
           render: (s) => this.buildPanButton(s) },
@@ -154,6 +157,7 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
     this.buildVersionNotice(containerEl);
     this.buildOpenOnStartup(new Setting(containerEl));
     this.buildDefaultBoard(new Setting(containerEl));
+    this.buildDefaultNewBoardFolder(new Setting(containerEl));
 
     new Setting(containerEl).setName('Freeform canvas').setHeading();
     this.buildPanButton(new Setting(containerEl));
@@ -228,6 +232,42 @@ export class VisualNotesSettingsTab extends PluginSettingTab {
       setting.addButton(btn =>
         btn.setButtonText('Clear').onClick(() => { void (async () => {
           this.plugin.settings.defaultBoardPath = undefined;
+          await this.plugin.saveSettings();
+          this.refresh();
+        })(); })
+      );
+    }
+  }
+
+  // Stores a folder path rather than a TFolder: settings are serialised to
+  // data.json, and the folder can be renamed or deleted between sessions.
+  // Every read goes through resolveFolderPath, which turns a stale path back
+  // into null (= vault root) instead of failing.
+  private buildDefaultNewBoardFolder(setting: Setting): void {
+    setting
+      .setName('Default folder for new boards')
+      .setDesc('Folder pre-selected as the location when you create a board. Creating a board inside a folder you right-clicked still uses that folder.');
+
+    const folder = this.plugin.settings.defaultNewBoardFolder;
+    const pathDisplay = setting.controlEl.createSpan('visual-notes-modal-path-display' + (folder ? '' : ' is-empty'));
+    pathDisplay.setText(folder || 'Vault root');
+
+    setting.addButton(btn =>
+      btn.setButtonText('Browse…').onClick(() => {
+        new FolderSuggestModal(this.app, (chosen) => { void (async () => {
+          // The root folder's path is '' — storing that would be
+          // indistinguishable from "unset", which already means vault root.
+          this.plugin.settings.defaultNewBoardFolder = chosen?.path || undefined;
+          await this.plugin.saveSettings();
+          this.refresh();
+        })(); }).open();
+      })
+    );
+
+    if (folder) {
+      setting.addButton(btn =>
+        btn.setButtonText('Clear').onClick(() => { void (async () => {
+          this.plugin.settings.defaultNewBoardFolder = undefined;
           await this.plugin.saveSettings();
           this.refresh();
         })(); })

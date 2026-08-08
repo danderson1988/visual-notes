@@ -4898,7 +4898,19 @@ input.visual-notes-accent-pop-hex {
   font-size: 13px;
   color: var(--text-normal);
   margin-right: 10px;
-  word-break: break-all;
+  /* break-word, never break-all: this span is a flex item sharing its row
+     with the Browse/Create buttons, and break-all puts its min-content width
+     at a single character — so once the buttons claimed the row, the flex
+     auto-minimum let the text collapse into a one-letter-per-line column.
+     break-word leaves min-content at the longest word, which the same
+     auto-minimum then protects, while a deep vault path still wraps rather
+     than overflowing the modal. (overflow-wrap: anywhere would reintroduce
+     the bug — unlike break-word it *does* shrink min-content.) */
+  overflow-wrap: break-word;
+  /* Take the space the buttons don't need instead of being squeezed out,
+     staying right-aligned beside them like every other Obsidian control. */
+  flex: 1 1 auto;
+  text-align: right;
 }
 
 .visual-notes-modal-path-display.is-empty {

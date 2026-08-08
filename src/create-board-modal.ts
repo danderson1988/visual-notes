@@ -4,7 +4,7 @@ import type VisualNotesPlugin from './main';
 
 // ── Folder picker ─────────────────────────────────────────────
 
-class FolderSuggestModal extends FuzzySuggestModal<TFolder> {
+export class FolderSuggestModal extends FuzzySuggestModal<TFolder> {
   private folders: TFolder[];
   private onChoose: (folder: TFolder | null) => void;
 
@@ -18,6 +18,16 @@ class FolderSuggestModal extends FuzzySuggestModal<TFolder> {
   getItems(): TFolder[] { return this.folders; }
   getItemText(item: TFolder): string { return item.path || '(vault root)'; }
   onChooseItem(item: TFolder): void { this.onChoose(item); }
+}
+
+// Resolves a stored folder path back to a live TFolder. Returns null for an
+// unset path and for one that no longer resolves to a folder — the folder
+// can be renamed or deleted at any time after it was picked, and callers all
+// treat null as "vault root", which is the same thing an unset setting means.
+export function resolveFolderPath(app: App, path: string | undefined): TFolder | null {
+  if (!path) return null;
+  const f = app.vault.getAbstractFileByPath(path);
+  return f instanceof TFolder ? f : null;
 }
 
 // ── Template picker ───────────────────────────────────────────
@@ -58,7 +68,12 @@ export class CreateBoardModal extends Modal {
     super(app);
     this.plugin = plugin;
     this.onCreated = onCreated;
-    this.targetFolder = initialFolder;
+    // An explicit folder (right-clicking one in the file explorer) always
+    // beats the configured default — the user pointed at a folder in the
+    // same gesture that opened this modal. Otherwise fall back to the
+    // "Default folder for new boards" setting, whose whole purpose is to
+    // stop this field needing to be set by hand every time.
+    this.targetFolder = initialFolder ?? resolveFolderPath(app, plugin.settings.defaultNewBoardFolder);
     this.modalEl.addClass('visual-notes-create-modal');
   }
 
@@ -123,7 +138,11 @@ export class CreateBoardModal extends Modal {
       )
       .addButton(btn =>
         btn.setButtonText('Reset').onClick(() => {
-          this.targetFolder = null;
+          // Back to the configured default rather than hard-coded vault root,
+          // so Reset undoes a one-off Browse pick instead of silently
+          // overriding the setting. Vault root is still reachable by browsing
+          // to it — FolderSuggestModal lists it as "(vault root)".
+          this.targetFolder = resolveFolderPath(this.app, this.plugin.settings.defaultNewBoardFolder);
           this.render();
         })
       );
