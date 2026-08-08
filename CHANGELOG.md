@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Visual Notes.
 
+## 1.1.25
+
+### Fixed
+- **Calendar: the items behind "+N more" could not be reached.** A month cell lists the first few of a day's items and sums up the rest as "+N more" — but that line was plain text with nothing behind it, and the cell hides whatever overflows it, so anything past the third item could not be read, clicked or right-clicked by any route at all. It is now a button: click it, or press Enter or Space on it, to open the day in full, and **Show less** to close it again. The opened day floats over the days below rather than pushing the month around it, a very long day scrolls inside its own panel, and only one day stays open at a time. Reported by a user whose screenshot made the cause obvious; thank you.
+- **Calendar: adding or deleting a note on a busy day looked like it did nothing.** The same cap was behind this. A new note on a day that already held three items was rendered out of sight, and deleting one of the three visible items simply pulled a hidden one up into the gap — so either way the day looked exactly as it had a moment before, and the button appeared not to have worked. The day you just edited now opens on its own, so the change is visible where you made it.
+
 ## 1.1.24
 
 ### Added

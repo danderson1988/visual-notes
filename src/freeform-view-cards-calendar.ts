@@ -185,8 +185,15 @@ export const cardsCalendarMethods = {
     }
 
     const body = el.createDiv('visual-notes-calendar-body');
+    // Set by the add and delete paths immediately before they re-render, so
+    // the day they touched opens and the change is actually visible instead
+    // of landing past the "+N more" cap. Read once and cleared, so a later
+    // unrelated re-render doesn't reopen a day the user has moved on from.
+    const expandDay = el.dataset.vnExpandDay;
+    delete el.dataset.vnExpandDay;
     renderCalendarGrid(body, anchor, mode, items, {
       app: this.app,
+      expandDay,
       onDrop: (item, date) => {
         this.pushUndo();
         item.move(date);
@@ -246,6 +253,9 @@ export const cardsCalendarMethods = {
       const note: CalendarNote = { id: crypto.randomUUID(), date, text };
       card.notes = [...(card.notes ?? []), note];
       this.scheduleSave();
+      // A new note on an already-full day renders past the cap, so without
+      // this the day looks unchanged and the add reads as having failed.
+      el.dataset.vnExpandDay = date;
       this.rerenderCard(el, card);
     }).open();
   },
@@ -436,6 +446,10 @@ export const cardsCalendarMethods = {
       menu.addItem(i => i.setTitle('Delete note').setIcon('trash').onClick(() => {
         this.pushUndo();
         card.notes = (card.notes ?? []).filter(n => n.id !== note.id);
+        // Deleting one of the visible chips pulls a hidden one up into its
+        // place, leaving the same number showing — so the day stays open and
+        // the removal is visible, rather than looking like nothing happened.
+        el.dataset.vnExpandDay = item.start;
         commit();
       }));
     } else {

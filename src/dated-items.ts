@@ -251,6 +251,13 @@ export interface CalendarGridOptions {
   onItemContextMenu?: (item: DatedItem, evt: MouseEvent, chipEl: HTMLElement) => void;
   dayStyle?: (date: string) => CalendarDayStyle | undefined;
   onDayBadgeClick?: (date: string, style: CalendarDayStyle) => void;
+  /**
+   * Day whose cell renders already expanded. Set by the add and delete
+   * paths: on a day holding more items than fit, the change otherwise lands
+   * past the "+N more" cap, out of sight, and reads as the button having
+   * done nothing at all.
+   */
+  expandDay?: string;
 }
 
 export function renderCalendarGrid(
@@ -260,7 +267,10 @@ export function renderCalendarGrid(
   items: DatedItem[],
   opts: CalendarGridOptions,
 ): void {
-  const { app, onDrop, onDayAdd, onDayContextMenu, onItemContextMenu, dayStyle, onDayBadgeClick } = opts;
+  const { app, onDrop, onDayAdd, onDayContextMenu, onItemContextMenu, dayStyle, onDayBadgeClick, expandDay } = opts;
+  // At most one day is open at a time — two expanded panels overlap, and
+  // whichever lands on top hides the other, which reads as lost items.
+  let collapseOpenDay: (() => void) | null = null;
   const byDay = new Map<string, DatedItem[]>();
   for (const it of items) {
     const list = byDay.get(it.start) ?? [];
@@ -350,12 +360,56 @@ export function renderCalendarGrid(
     }
 
     const dayItems = byDay.get(date) ?? [];
+    // Week cells are tall enough to list a day in full; month cells show a
+    // few and hand the rest to "+N more" — which is a control, not a label.
+    // The cell clips its overflow, so until it could be expanded the items
+    // past this cap could not be seen, clicked or right-clicked at all.
     const maxChips = mode === 'week' ? dayItems.length : 3;
-    for (const it of dayItems.slice(0, maxChips)) {
-      appendCalendarChip(app, cell, it, grid, onDrop, onItemContextMenu);
-    }
-    if (dayItems.length > maxChips) {
-      cell.createDiv({ cls: 'visual-notes-cal-more', text: `+${dayItems.length - maxChips} more` });
+    const hiddenCount = dayItems.length - maxChips;
+
+    // The chips and the "+N more" line share a wrapper so expanding a day
+    // floats the two of them together over the days below, while the day
+    // number and the hover "+" button stay where they are.
+    const dayBody = cell.createDiv('visual-notes-cal-daybody');
+    const chipWrap = dayBody.createDiv('visual-notes-cal-chips');
+    const moreEl = hiddenCount > 0 ? dayBody.createDiv('visual-notes-cal-more') : null;
+
+    const paintDay = (expanded: boolean) => {
+      chipWrap.empty();
+      for (const it of expanded ? dayItems : dayItems.slice(0, maxChips)) {
+        appendCalendarChip(app, chipWrap, it, grid, onDrop, onItemContextMenu);
+      }
+      cell.toggleClass('is-day-expanded', expanded);
+      moreEl?.setText(expanded ? 'Show less' : `+${hiddenCount} more`);
+    };
+
+    const setDayExpanded = (expanded: boolean) => {
+      if (expanded && collapseOpenDay) collapseOpenDay();
+      paintDay(expanded);
+      collapseOpenDay = expanded ? () => paintDay(false) : null;
+    };
+
+    if (moreEl && expandDay === date) setDayExpanded(true);
+    else paintDay(false);
+
+    if (moreEl) {
+      moreEl.addClass('is-clickable');
+      moreEl.setAttribute('role', 'button');
+      moreEl.setAttribute('tabindex', '0');
+      moreEl.setAttribute('aria-label', `Show all ${dayItems.length} items on ${date}`);
+      // The card itself drags from pointerdown, which would swallow the
+      // click before it ever landed — the same guard the "+" button and the
+      // day badge above already carry.
+      moreEl.addEventListener('pointerdown', e => e.stopPropagation());
+      moreEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setDayExpanded(!cell.hasClass('is-day-expanded'));
+      });
+      moreEl.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault(); e.stopPropagation();
+        setDayExpanded(!cell.hasClass('is-day-expanded'));
+      });
     }
   }
 }

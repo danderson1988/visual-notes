@@ -7181,10 +7181,56 @@ input.visual-notes-calendar-month-input {
   box-shadow: var(--visual-notes-shadow-mid);
 }
 
+.visual-notes-cal-daybody,
+.visual-notes-cal-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .visual-notes-cal-more {
   font-size: calc(9px * var(--vn-text-mult, 1));
   color: var(--text-faint);
   padding-left: 4px;
+}
+
+.visual-notes-cal-more.is-clickable {
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.visual-notes-cal-more.is-clickable:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+/* An expanded day lifts its list out of the cell's clipped box and floats it
+   over the days below, which is the only way items past the cap can be read
+   and right-clicked. The cell keeps its grid slot and only the panel
+   overflows, so opening a day never reflows the month around it.
+   Must stay after the .visual-notes-cal-cell:hover rule above: the two have
+   equal specificity, and this one has to win the z-index. */
+.visual-notes-cal-cell.is-day-expanded {
+  overflow: visible;
+  z-index: 20;
+}
+
+.visual-notes-cal-cell.is-day-expanded .visual-notes-cal-daybody {
+  position: relative;
+  z-index: 1;
+  /* Without this the flex parent compresses the panel back inside the cell
+     rather than letting it overflow, which is the entire point of opening. */
+  flex: 0 0 auto;
+  padding: 3px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+  /* A day with dozens of items scrolls inside the panel instead of running
+     off the bottom of the board. */
+  max-height: 220px;
+  overflow-y: auto;
 }
 
 /* ── Table database views ───────────────────────────────────── */
